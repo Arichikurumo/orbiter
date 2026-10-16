@@ -260,7 +260,7 @@ function tasks(){
  rollover();const n=Date.now();
  const done=ALL.filter(isDone).length,resets={d:dayStart(n)+864e5,w:weekStart(n)+6048e5};
  const sec=s=>{const d=s.items.filter(isDone).length;
-  return `<section><h2>${s.title}<small>${s.reset=="d"?"":"resets in "+left(resets.w-n)}</small></h2>
+  return `<section><h2>${s.title}<small title="${s.reset=='d'?'Daily reset at 00:00 UTC':'Weekly reset on Monday at 00:00 UTC'}">resets in ${left(resets[s.reset]-n)}</small></h2>
   <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${s.items.length}" aria-valuenow="${d}"><i style="width:${d/s.items.length*100}%"></i></div><div class="tag">${d} / ${s.items.length} done</div>`+
   s.items.map(t=>{const [id,name,desc,,meta]=t,dn=isDone(t);
    return `<label class="task ${dn?'done':''}"><input type="checkbox" data-t="${id}" ${dn?'checked':''}><span><b>${esc(name)}</b><small>${esc(desc)}</small>${meta?`<small class="meta">${esc(meta)}</small>`:''}</span></label>`+
