@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Orbiter</title>
+<style>
+:root{--bg:#07090d;--card:#0f141b;--line:#2a3340;--fg:#d9dee6;--mut:#7d8896;--gold:#c9a45c;--cyan:#4fd1e8;--ok:#5be3a0;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;color:var(--fg);font:15px/1.5 "Segoe UI",system-ui,sans-serif;min-height:100vh;
+ background:radial-gradient(ellipse at top,#142230 0,transparent 60%),radial-gradient(ellipse at bottom right,#2a2110 0,transparent 50%),var(--bg) fixed}
+nav{display:flex;align-items:center;gap:8px;padding:10px 20px;background:rgba(7,9,13,.85);backdrop-filter:blur(6px);position:sticky;top:0;z-index:2;border-bottom:1px solid var(--gold)}
+.brand{color:var(--gold);font-weight:700;letter-spacing:.25em;text-transform:uppercase;margin-right:auto}
+nav a{color:var(--mut);text-decoration:none;text-transform:uppercase;letter-spacing:.15em;font-size:13px;padding:8px 14px;border:1px solid transparent;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);transition:color .2s,background .2s}
+nav a:hover{color:var(--fg)}nav a.on{color:var(--cyan);background:rgba(79,209,232,.1);border-color:var(--cyan)}
+nav button{background:none;border:1px solid transparent;color:var(--mut);text-transform:uppercase;letter-spacing:.15em;font:inherit;font-size:13px;padding:8px 14px;cursor:pointer;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);transition:color .2s,background .2s}
+nav button:hover{color:var(--fg)}nav button.on,nav .dd.open button{color:var(--cyan);background:rgba(79,209,232,.1);border-color:var(--cyan)}
+nav button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.dd{position:relative}
+.menu{display:none;position:absolute;top:100%;left:0;min-width:170px;background:rgba(7,9,13,.97);border:1px solid var(--gold);padding:4px 0;z-index:3}
+.dd.open .menu{display:block}
+.menu a{display:block;clip-path:none;padding:10px 16px;white-space:nowrap}
+.menu a.on{background:rgba(79,209,232,.1)}
+a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+main{max-width:920px;margin:0 auto;padding:20px 16px}
+section{background:linear-gradient(160deg,rgba(201,164,92,.07),transparent 40%),var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);padding:14px 20px;margin-bottom:20px;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px))}
+h2{margin:0 0 8px;font-size:15px;color:var(--gold);text-transform:uppercase;letter-spacing:.18em}
+h2 small{color:var(--cyan);font-weight:400;letter-spacing:.05em;text-transform:none;margin-left:12px}
+h2.tier{margin-top:18px;padding-bottom:4px;border-bottom:1px solid var(--line);font-size:13px}
+label{display:flex;gap:12px;align-items:flex-start;padding:6px 4px;cursor:pointer;transition:background .15s}
+label:hover{background:rgba(79,209,232,.05)}
+label.done span{text-decoration:line-through;color:var(--mut)}
+label small{color:var(--mut);display:block}
+input[type=checkbox]{appearance:none;flex:none;width:18px;height:18px;margin:2px 0 0;border:1px solid var(--gold);transform:rotate(45deg) scale(.8);background:transparent;cursor:pointer;transition:background .2s,box-shadow .2s}
+input[type=checkbox]:checked{background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+input[type=checkbox]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+select,input[type=search]{background:#0a0e14;color:var(--fg);border:1px solid var(--line);padding:7px 12px;font:inherit;min-height:36px}
+select:hover,input[type=search]:hover{border-color:var(--gold)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.frame{border-top:1px solid rgba(42,51,64,.6);padding:4px 0}
+.frame b{margin-right:8px;letter-spacing:.05em}
+.tag{font-size:12px;color:var(--gold)}
+section>.tag{color:var(--mut)}
+.how{color:var(--mut);font-size:13px;margin:0 0 6px 100px}
+.frame img{width:64px;height:64px;object-fit:contain;flex:none;filter:drop-shadow(0 0 6px rgba(79,209,232,.25))}
+.frame label{align-items:center}
+.role{font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-left:6px;padding:1px 7px;border:1px solid var(--cyan);color:var(--cyan);white-space:nowrap}
+.r-tank{border-color:#e0a050;color:#e0a050}.r-damage{border-color:#e06060;color:#e06060}.r-support{border-color:var(--ok);color:var(--ok)}.r-stealth{border-color:#a08ae0;color:#a08ae0}
+a{color:var(--cyan)}
+.hero{display:flex;align-items:center;gap:20px;margin-bottom:20px;padding:12px 8px}
+.hero svg{flex:none;filter:drop-shadow(0 0 12px rgba(79,209,232,.35));animation:spin 60s linear infinite;animation-play-state:running}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hero h1{margin:0;font-size:26px;color:var(--gold);text-transform:uppercase;letter-spacing:.25em;font-weight:600}
+.hero p{margin:4px 0 0;color:var(--mut)}
+.prog{height:6px;background:#0a0e14;border:1px solid var(--line);margin:4px 0 4px}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--cyan));transition:width .3s}
+.task.sub{margin-left:34px;padding-top:2px;padding-bottom:2px;border-left:1px solid var(--line);padding-left:12px}
+.task.sub b{font-weight:400;font-size:14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.card{display:block;text-decoration:none;color:var(--fg);padding:14px 16px;border:1px solid var(--line);border-top:2px solid var(--gold);background:var(--card);transition:border-color .2s,transform .2s}
+.card:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.card h2{margin:0 0 6px}.card p{margin:0;color:var(--mut);font-size:14px}
+.evs{list-style:none;margin:0;padding:0}.evs li{padding:6px 0;border-top:1px solid rgba(42,51,64,.6)}.evs li:first-child{border-top:0}.evs small{display:block;color:var(--mut)}
+@media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
+.baro{margin:0 0 20px;padding:12px 18px;border:1px solid var(--cyan);background:rgba(79,209,232,.07);clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
+.baro b{color:var(--cyan)}.baro small{display:block;color:var(--mut)}.baro ul{margin:6px 0 0;padding-left:20px;font-size:13px}
+.meta{color:var(--gold)!important;font-size:12px!important}
+.task small{margin-top:2px;font-size:13px;line-height:1.45}
+.task.done b{text-decoration:line-through;color:var(--mut)}.task.done small{opacity:.6}
+@media(prefers-reduced-motion:reduce){.hero svg{animation:none}}
+@media(max-width:520px){.hero svg{width:80px;height:80px}.hero h1{font-size:20px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+@media(max-width:760px){nav{padding:8px 12px;gap:2px;flex-wrap:wrap}.brand{display:none}nav a,nav button{padding:8px 10px;letter-spacing:.08em;white-space:nowrap}}
+.chartwrap{position:relative;margin:8px 0;background:#0a0e14;aspect-ratio:16/9}
+.chartwrap .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.chart{position:absolute;inset:0;width:100%;height:100%;display:block}
+.pl{cursor:pointer;outline:none}.pl circle{fill:rgba(0,0,0,0);stroke:rgba(201,164,92,.55);stroke-width:3;transition:fill .2s,stroke .2s}
+.pl .nm{fill:#fff;font-size:34px;letter-spacing:.04em;paint-order:stroke;stroke:#000;stroke-width:6px;stroke-linejoin:round}
+.pl .cnt{fill:#fff;font-size:34px;font-weight:700;paint-order:stroke;stroke:#000;stroke-width:6px}
+.pl:hover circle,.pl:focus-visible circle{stroke:var(--cyan)}.pl:focus-visible circle{stroke-width:6}
+.pl.on circle{fill:rgba(79,209,232,.22);stroke:var(--cyan);stroke-width:5;filter:drop-shadow(0 0 10px var(--cyan))}.pl.on .nm{fill:var(--cyan)}
+.pl.dim{opacity:.3}
+.task details>summary,section details>summary{cursor:pointer;list-style:none;margin-bottom:6px}summary::-webkit-details-marker{display:none}
+.grid{display:grid;gap:20px;align-items:start;margin-bottom:20px}.grid>section{margin:0;min-width:0}
+@media(min-width:900px){.grid.g2{grid-template-columns:repeat(2,1fr)}.grid.g3{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:700px) and (max-width:899px){.grid.g3{grid-template-columns:repeat(2,1fr)}}
+main.wide{max-width:1280px}
+.synhero{flex-wrap:wrap}.flagrow{display:flex;flex-wrap:wrap;gap:6px;max-width:460px}
+.flag{object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}.flag.sm{width:36px;height:55px}
+.synd{display:flex;gap:16px;align-items:flex-start}.synd .flags{flex:none;display:flex;flex-wrap:wrap;gap:6px;width:72px;justify-content:center}
+.synd .syndbody{flex:1;min-width:0}
+.bico{width:48px;height:48px;object-fit:contain;flex:none;filter:drop-shadow(0 0 6px rgba(79,209,232,.25))}
+.task:has(.bico){align-items:center}
+.imgnote{background:rgba(201,164,92,.12);border-bottom:1px solid var(--gold);padding:6px 16px;font-size:13px;text-align:center;color:var(--gold)}
+.ver{margin:6px 0 0;font-size:13px}.ver b{color:var(--cyan)}
+.kahlhero img{flex:none;filter:drop-shadow(0 0 14px rgba(201,164,92,.35))}
+.mission{padding-top:0!important;overflow:hidden}
+.banner{position:relative;margin:0 -20px 12px;height:150px;overflow:hidden;border-bottom:1px solid var(--gold)}
+.banner img{width:100%;height:100%;object-fit:cover;display:block}
+.banner::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 40%,rgba(7,9,13,.85))}
+.banner span{position:absolute;left:14px;bottom:8px;z-index:1;color:var(--cyan);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.ico{vertical-align:middle;margin-right:6px}
+.steps{margin:6px 0 8px;padding-left:22px;font-size:14px}.steps li{margin:6px 0;color:var(--fg)}
+.tip{border:1px solid var(--cyan);background:rgba(79,209,232,.07);padding:10px 14px;margin-top:8px}
+.detail{min-height:70px;border-top:1px solid var(--line);padding-top:8px}.detail h2{margin:0 0 4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:#0a0e14;color:var(--fg);border:1px solid var(--line);padding:5px 10px;font:inherit;font-size:13px;cursor:pointer}
+.chip img{width:20px;height:20px;object-fit:contain}.chip:hover{border-color:var(--gold)}.chip.on{border-color:var(--cyan);color:var(--cyan);background:rgba(79,209,232,.1)}
+@media(prefers-reduced-motion:reduce){.pl circle{transition:none}}
+.fsub{display:block;color:var(--mut);font-size:13px;margin-top:2px}
+.frame b+.tag{margin-left:2px}
+.rowtop{display:flex;align-items:center;gap:12px}.rowtop>label:first-child{flex:1;min-width:0}
+.mast{flex:none;gap:6px!important;align-items:center!important;color:var(--mut);font-size:13px;white-space:nowrap}
+.mast:has(input:checked){color:var(--ok)}
+.noimg{width:64px;height:64px;flex:none}
+</style>
+</head>
+<body>
+<nav><span class="brand">Orbiter</span><a href="#home" id="n_home">Home</a><a href="#tasks" id="n_tasks">Tasks</a>
+<div class="dd"><button type="button" id="d_collection" aria-haspopup="true" aria-expanded="false">Collection &#9662;</button><div class="menu"><a href="#frames" id="n_frames">Warframes</a><a href="#weapons" id="n_weapons">Weapons</a><a href="#companions" id="n_companions">Companions</a></div></div>
+<div class="dd"><button type="button" id="d_build" aria-haspopup="true" aria-expanded="false">Upgrades &#9662;</button><div class="menu"><a href="#mods" id="n_mods">Mods</a><a href="#arcanes" id="n_arcanes">Arcanes</a><a href="#helminth" id="n_helminth">Helminth</a></div></div><a href="#resources" id="n_resources">Resources</a>
+<div class="dd"><button type="button" id="d_guides" aria-haspopup="true" aria-expanded="false">Guides &#9662;</button><div class="menu"><a href="#nightwave" id="n_nightwave">Nightwave</a><a href="#factions" id="n_factions">Syndicate leveling</a><a href="#kahl" id="n_kahl">Kahl's Garrison</a><a href="#baro" id="n_baro">Baro Ki'Teer</a></div></div></nav>
+<main id="app"></main>
+<script src="frames.js"></script>
+<script src="weapons.js"></script>
+<script src="companions.js"></script>
+<script src="mods.js"></script>
+<script src="arcanes.js"></script>
+<script src="helminth.js"></script>
+<script src="resources.js"></script>
+<script src="nightwave.js"></script>
+<script src="baro_icons.js"></script>
+<script>
+// Daily resets 00:00 UTC, weekly Monday 00:00 UTC. Edit SECTIONS to taste.
+// Mirrors warframetools.com/Task-Checklist. Item: [id, name, description, subitems?, where/requirement?]
+const SECTIONS=[
+ {key:"daily",title:"Daily",reset:"d",items:[
+  ["login","Log in","Collect the daily login reward."],
+  ["forma","Crafting (Forma)","Start building a new Forma and collect finished ones.",0,"Foundry"],
+  ["craft","Crafting (other)","Craft daily resources or items from reusable blueprints (check the Foundry or companion app).",0,"Foundry"],
+  ["firstwin","Daily first win bonus","Your first mission of the day gives double base credits.",0,"Navigation"],
+  ["factions","Faction syndicates: gain standing","Fill the daily standing cap with your pledged syndicates by gaining affinity in any mission.",0,"Needs Mastery Rank 3"],
+  ["factionspend","Faction syndicates: spend maxed standing","If you are maxed on standing, spend it on Relic packs, Vosfor packs and similar.",0,"Any Relay, Syndicates"],
+  ["worldsyn","World syndicates: gain standing","Standing with each world syndicate is capped daily. Tick the ones you have unlocked and cleared.",[
+   ["s_simaris","Cephalon Simaris","Any Relay"],["s_ostron","Ostron","Cetus, Earth. Needs Saya's Vigil"],["s_quills","The Quills","Cetus, Earth. Needs The War Within"],
+   ["s_solaris","Solaris United","Fortuna, Venus. Needs Vox Solaris"],["s_vox","Vox Solaris","Fortuna, Venus. Needs The War Within"],["s_vent","Ventkids","Fortuna, Venus. Needs Vox Solaris"],
+   ["s_entrati","Entrati","Necralisk, Deimos. Needs Heart of Deimos"],["s_necraloid","Necraloid","Necralisk, Deimos. Needs The War Within"],
+   ["s_hold","The Holdfasts","Chrysalith, Zariman. Needs Angels of the Zariman"],["s_cavia","Cavia","Sanctum Anatomica, Deimos. Needs Whispers in the Walls"],["s_hex","The Hex","Höllvania Central Mall. Needs The Hex quest"]]],
+  ["bounties","Open-world bounties","Each hub's bounties give standing, mods, relics and resources. Tick the hubs you play.",[
+   ["b_cetus","Ostrons","Konzu in Cetus (Plains of Eidolon)"],["b_fortuna","Solaris United","Eudico in Fortuna (Orb Vallis)"],["b_deimos","Entrati","Mother in the Necralisk (Cambion Drift)"],
+   ["b_necraloid","Necraloid","No bounties of its own. Do Mother's Isolation Vault bounty for Orokin Matrices, then trade them to Loid"],
+   ["b_zariman","Holdfasts","Quinn in the Chrysalith (Zariman Ten Zero)"],["b_cavia","Cavia","Fibonacci in Sanctum Anatomica"],["b_hex","The Hex","Bounty board in Höllvania Central Mall (1999)"]]],
+  ["nwdaily","Nightwave","Complete the daily Nightwave acts."],
+  ["sortie","Sortie","Complete the 3 daily Sortie missions. It rotates at 16:00 UTC, so tick it once per day.",0,"Navigation. Needs The War Within"],
+  ["focus","Focus","Max out daily Focus gain, for example via Sanctuary Onslaught.",0,"Needs The Second Dream"],
+  ["incursions","Steel Path Incursions","Complete the daily Steel Path missions for Steel Essence.",0,"Needs Steel Path unlocked"],
+  ["kim","KIM: daily chats","Chat with your protoframes and other contacts each day.",[
+   ["k_hex","The Hex (6)","Broadsword (Arthur), Salem (Eleanor), Belladona (Lettie), H16h V0l7463 (Amir), xX GLIMMER Xx (Aoi), Soldja1Shot1kil (Quincy)"],
+   ["k_round","The Roundtable (3)","Liminus_Star (Flare, Rank 4 Hex), MomToxicated & PapaPolar (Minerva & Velimir, Rank 5 Hex), KOLTrial_5115 (Kaya, Rank 5 Hex)"],
+   ["k_old","The Old Peace (3)","Marie, Roathe, Lyon"],["k_fables","Fables & Frontiers","\"Close\" with Amir"]],"Base of Operations, POM-2 PC. Needs The Hex quest"]]},
+ {key:"dv",title:"Daily vendors",reset:"d",items:[
+  ["acrithisd","Acrithis: daily offering","Check the daily Arcane and Captura offering.",0,"Duviri/Dormizone. Needs Drifter Intrinsics Opportunity Rank 9 for Arcanes"],
+  ["ticker","Ticker: Railjack crew","Check the available Railjack crew to hire.",0,"Fortuna, Venus. Needs Rising Tide and Command Intrinsics 1"],
+  ["marie","Marie","Purchase Tektolyst mods, Arcanes and Perita/Descendia resources.",0,"La Cathédrale, Sanctum Anatomica. Needs The Old Peace"]]},
+ {key:"weekly",title:"Weekly",reset:"w",items:[
+  ["nwweekly","Nightwave: weekly acts","Complete the relevant weekly Nightwave acts."],
+  ["nwspend","Nightwave: spend credits","Spend Nightwave credits if needed (Aura mods, Catalysts/Reactors and so on)."],
+  ["maroo","Ayatan Treasure Hunt","Complete Maroo's weekly mission for an Ayatan Sculpture.",0,"Maroo's Bazaar, Mars"],
+  ["clem","Help Clem","Help Clem with his weekly survival, or he will die.",0,"Any Relay, Darvo. Needs A Man of Few Words"],
+  ["narmer","Break Narmer","Complete Kahl's weekly mission for Stock.",0,"Drifter's Camp, Earth. Needs Veilbreaker"],
+  ["archon","Archon Hunt","Complete the weekly Archon Hunt for a guaranteed Archon Shard.",0,"Navigation. Needs The New War"],
+  ["circuit","Duviri Circuit (normal)","Check the weekly Warframe options and run the Circuit if desired.",0,"Needs The Duviri Paradox"],
+  ["circuitsp","Duviri Circuit (Steel Path)","Check the weekly Incarnon Adapters and run the Circuit if desired.",0,"Needs Steel Path unlocked and The Duviri Paradox"],
+  ["pulses","Search Pulses","Use the 5 weekly search pulses on Netracells and the Archimedeas."],
+  ["netracells","Netracells","Complete up to 5 weekly Netracell missions for Archon Shard chances. Costs 1 Search Pulse per successful mission.",0,"Tagfer, Sanctum Anatomica. Needs Whispers in the Walls"],
+  ["eda","Elite Deep Archimedea","Weekly endgame mission set with high Archon Shard chances. Costs 2 Search Pulses to unlock for the week.",0,"Necraloid, Sanctum Anatomica. Needs Rank 5 Cavia"],
+  ["eta","Elite Temporal Archimedea","Weekly endgame mission set with high Archon Shard chances. Costs 2 Search Pulses to unlock for the week.",0,"Kaya Velasco, Höllvania. Needs Rank 5 The Hex"],
+  ["cryobells","Cryobells","Harvest 3 Cryobells from Yuvan Peak. You can hold up to 6.",0,"Needs Angels of the Zariman and Whispers in the Walls"],
+  ["icebind","The Icebind","Spend Cryobells (1 per player per successful mission) on six-player Icebind missions.",0,"Cephalon Melica, Yuvan Peak. Needs an unlocked EDA or ETA"],
+  ["calendar","1999 Calendar","Complete the weekly Calendar tasks.",0,"POM-2 PC. Needs The Hex"],
+  ["helminth","Helminth","Use your weekly Invigorations.",0,"Needs Rank 5 Entrati"],
+  ["descendia","The Descendia (normal)","Weekly tower game mode for various resources.",0,"Needs Dark Refractory"],
+  ["descendiasp","The Descendia (Steel Path)","Weekly tower game mode for various resources.",0,"Needs Dark Refractory"],
+  ["eximus","Oops! All Eximus!","Exterminate Surge Eximus units for a Surge Eximus Specter Blueprint.",0,"Amir (Höllvandeim), Höllvania. Needs all 6 days of Fables & Frontiers"],
+  ["clan","Clan weekly initiatives","Earn rewards by playing with clan members.",0,"Menu, Communication, Clan. Needs clan membership"]]},
+ {key:"wv",title:"Weekly vendors",reset:"w",items:[
+  ["palladino","Palladino","Trade Riven Slivers.",0,"Iron Wake, Earth. Needs The Chains of Harrow"],
+  ["yonta","Archimedean Yonta","Buy weekly Kuva with Voidplumes.",0,"Chrysalith, Zariman. Needs Angels of the Zariman"],
+  ["acrithisw","Acrithis: wares","Check wares and spend Pathos Clamps if desired (Catalysts/Reactors recommended). Buy Kuva with Scuttler Husks.",0,"Duviri/Dormizone. Needs The Duviri Paradox"],
+  ["teshin","Teshin (Steel Path)","Check Teshin's Steel Essence shop, especially the Umbra Forma rotation every 8 weeks.",0,"Any Relay. Needs Steel Path unlocked"],
+  ["bird3","Bird 3","Buy the weekly Archon Shard for 30k Cavia standing.",0,"Sanctum Anatomica. Needs Rank 5 Cavia"],
+  ["kaya","Kaya","Trade Pix Chips for Arcanes.",0,"Höllvania. Needs Elite Temporal Archimedea"],
+  ["nightcap","Nightcap","Trade Fergolyte for Kuva and an Ayatan Sculpture.",0,"Fortuna, Venus. Needs The New War"],
+  ["zorba","Aspirant Zorba","Trade Atramentum for Kuva.",0,"Any Relay. Needs The Chains of Harrow"],
+  ["hunhow","Hunhow","Trade Emerald and Crimson Talents for Kuva.",0,"Pontis Tower, Uranus. Needs Jade Shadows: Constellations"],
+  ["melica","Cephalon Melica","Trade Entropic Kuva for Kuva.",0,"Yuvan Peak, Earth. Needs Angels of the Zariman and Whispers in the Walls"]]},
+ {key:"other",title:"Other",reset:"w",items:[
+  ["baro","Baro Ki'Teer","Check Baro's inventory and buy items with Ducats (trade Prime parts for Ducats). See the timer above.",0,"Relay with symbol"],
+  ["family","Mend the Family","Purchase Family Tokens from Grandmother.",0,"Necralisk, Deimos. Needs Heart of Deimos"],
+  ["voidplumes","Trade for Voidplumes","Trade with Yonta for Voidplumes.",0,"Chrysalith, Zariman"],
+  ["voca","Trade for Voca","Trade with Loid for Voca.",0,"Sanctum Anatomica. Needs Whispers in the Walls"],
+  ["tenet","Tenet weapons","Check Ergo Glast's shop for good valence bonuses.",0,"Any Relay. Needs The Archwing and Mastery Rank 14"],
+  ["coda","Coda weapons","Check Eleanor's shop for good valence bonuses.",0,"Höllvania Central Mall. Needs The Hex quest"]]}
+];
+const ALL=SECTIONS.flatMap(s=>s.items);
+// "Mastered" is tracked separately from "collected": S.owned["M|"+id]. A mastered item you sold is still mastered.
+const mastered=id=>!!S.owned["M|"+id];
+const showOk=(s,o,m)=>s=="all"||(s=="missing"?!o:s=="have"?o:s=="unmastered"?!m:m);
+const SHOW=[["all","All"],["missing","Not collected"],["have","Collected"],["unmastered","Not mastered"],["mastered","Mastered"]];
+const mast=id=>`<label class="mast"><input type="checkbox" data-m="${esc(id)}" ${mastered(id)?'checked':''}> Mastered</label>`;
+const IMG=n=>"img/"+n+".webp"; // pictures are bundled by fetch_images.py
+const KEY="orbiter"; // older versions saved under "wfbuddy"
+const flags=o=>Object.fromEntries(Object.entries(o&&typeof o=="object"&&!Array.isArray(o)?o:{}).filter(([k,v])=>v&&!["__proto__","constructor","prototype"].includes(k)).map(([k])=>[k,true]));
+const mk=o=>({tasks:flags(o&&o.tasks),owned:flags(o&&o.owned),reset:{d:Number(o&&o.reset&&o.reset.d)||0,w:Number(o&&o.reset&&o.reset.w)||0}});
+const S=mk((()=>{try{return JSON.parse(localStorage[KEY]||localStorage.wfbuddy)}catch{return{}}})());
+const subs=t=>t[3]||[],isDone=t=>subs(t).length?subs(t).every(s=>S.tasks[s[0]]):!!S.tasks[t[0]];
+// Saved to localStorage right away and to the server (SQLite) shortly after; the page still works if the API is missing.
+let pushT,ready=false;const push=()=>fetch("/api/state",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(S)}).catch(()=>{});
+const save=()=>{try{localStorage[KEY]=JSON.stringify(S)}catch{}clearTimeout(pushT);if(ready)pushT=setTimeout(push,500)};
+const dayStart=t=>Math.floor(t/864e5)*864e5;
+// Monday 00:00 UTC: epoch (Thu) + 4 days
+const weekStart=t=>Math.floor((t-4*864e5)/6048e5)*6048e5+4*864e5;
+function rollover(){
+ const n=Date.now(),cut={d:dayStart(n),w:weekStart(n)};let changed=false;
+ for(const k of["d","w"])if(!(S.reset[k]>=cut[k])){changed=true;
+  SECTIONS.filter(s=>s.reset==k).forEach(s=>s.items.forEach(t=>[t,...subs(t)].forEach(x=>delete S.tasks[x[0]])));S.reset[k]=cut[k]}
+ if(changed)save();
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const left=ms=>{const d=Math.floor(ms/864e5),H=Math.floor(ms%864e5/36e5),m=Math.floor(ms%36e5/6e4);return d?`${d}d ${H}h`:`${H}h ${m}m`};
+let W=null; // whole worldstate (events, news, Prime Resurgence)
+let B=null; // Baro state from the warframestat API: null = loading, false = failed
+let lastBaro=0,retries=0;
+async function loadBaro(){
+ lastBaro=Date.now();
+ try{const r=await fetch("https://api.warframestat.us/pc?language=en",{signal:AbortSignal.timeout(30000)});if(!r.ok)throw 0;W=await r.json();B=W.voidTrader;retries=0}catch{if(!W){B=false;W=false}if(retries++<3)setTimeout(loadBaro,12e4)} // keep older data if a refresh fails; retry a few times, then wait for the hourly refresh
+ if(["tasks","home","nightwave","baro"].includes(page()))render();
+}
+function baroCard(noList){
+ if(B===null)return"Checking Baro Ki'Teer...";
+ if(!B||!B.activation)return"Baro Ki'Teer status unavailable right now (needs an internet connection).";
+ const n=Date.now(),a=Date.parse(B.activation),e=Date.parse(B.expiry),f=t=>new Date(t).toLocaleString([], {weekday:"short",hour:"2-digit",minute:"2-digit"});
+ if(n<a)return`<b>Baro Ki'Teer arrives in ${left(a-n)}</b> at ${esc(B.location)}<small>${f(a)} until ${f(e)} (your local time)</small>`;
+ if(n<e){const inv=(B.inventory||[]).map(i=>`<li>${esc(i.item)} <span class="tag">${i.ducats}d + ${i.credits}cr</span></li>`).join("");
+  return`<b>Baro Ki'Teer is here, leaves in ${left(e-n)}</b> at ${esc(B.location)}${inv&&!noList?`<details><summary>Inventory (${B.inventory.length})</summary><ul>${inv}</ul></details>`:""}`}
+ if(Date.now()-lastBaro>6e5)loadBaro();return"Baro Ki'Teer has left. Checking the next visit...";
+}
+function tasks(){
+ rollover();const n=Date.now();
+ const done=ALL.filter(isDone).length,resets={d:dayStart(n)+864e5,w:weekStart(n)+6048e5};
+ const sec=s=>{const d=s.items.filter(isDone).length;
+  return `<section><h2>${s.title}<small>${s.reset=="d"?"":"resets in "+left(resets.w-n)}</small></h2>
+  <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${s.items.length}" aria-valuenow="${d}"><i style="width:${d/s.items.length*100}%"></i></div><div class="tag">${d} / ${s.items.length} done</div>`+
+  s.items.map(t=>{const [id,name,desc,,meta]=t,dn=isDone(t);
+   return `<label class="task ${dn?'done':''}"><input type="checkbox" data-t="${id}" ${dn?'checked':''}><span><b>${esc(name)}</b><small>${esc(desc)}</small>${meta?`<small class="meta">${esc(meta)}</small>`:''}</span></label>`+
+   subs(t).map(([sid,sn,sd])=>`<label class="task sub ${S.tasks[sid]?'done':''}"><input type="checkbox" data-t="${sid}" ${S.tasks[sid]?'checked':''}><span><b>${esc(sn)}</b>${sd?`<small>${esc(sd)}</small>`:''}</span></label>`).join('')}).join('')+`</section>`};
+ app.innerHTML=`<div class="hero">${HERO}<div><h1>Tenno Orders</h1><p>${done} of ${ALL.length} tasks complete. Daily tasks reset at 00:00 UTC (in ${left(resets.d-n)}), weekly on Monday.</p></div></div><div class="baro">${baroCard()}</div>`+'<div class="grid g2">'+["daily","weekly","dv","wv"].map(k=>sec(SECTIONS.find(s=>s.key==k))).join('')+'</div>'+sec(SECTIONS.find(s=>s.key=='other'));
+}
+const HERO=`<svg viewBox="0 0 160 160" width="120" height="120" aria-hidden="true" fill="none" stroke-linecap="round">
+ <circle cx="80" cy="80" r="74" stroke="#c9a45c" stroke-width="1.5" stroke-dasharray="3 7"/>
+ <circle cx="80" cy="80" r="60" stroke="#4fd1e8" stroke-width="1" opacity=".5"/>
+ <path d="M80 14 L146 80 L80 146 L14 80 Z" stroke="#c9a45c" stroke-width="2"/>
+ <path d="M80 34 L126 80 L80 126 L34 80 Z" stroke="#4fd1e8" stroke-width="1.5"/>
+ <path d="M80 54 L106 80 L80 106 L54 80 Z" fill="#c9a45c" fill-opacity=".15" stroke="#c9a45c" stroke-width="2"/>
+ <circle cx="80" cy="80" r="7" fill="#4fd1e8"/>
+ <path d="M80 6v14M80 140v14M6 80h14M140 80h14" stroke="#c9a45c" stroke-width="2"/></svg>`;
+const TIERS={1:"Starter / instant",2:"Easy (~1-3h)",3:"Moderate (~3-10h)",4:"Grind (10h+)",5:"Long grind / quest chain",6:"Not obtainable by normal play"};
+const ROLES={tank:'Tank',damage:'Damage',support:'Support',control:'Crowd control',speed:'Speed',stealth:'Stealth',farming:'Farming'};
+const F={role:"all",q:"",show:"all",type:"all",sort:"easy"};
+function frames(){
+ const have=FRAMES.filter(f=>S.owned[f.name]).length,mas=FRAMES.filter(f=>mastered(f.name)).length;
+ let l=FRAMES.filter(f=>(showOk(F.show,S.owned[f.name],mastered(f.name)))&&
+  (F.type=="all"||(F.type=="prime")==f.prime)&&(F.role=="all"||f.roles.includes(F.role))&&f.name.toLowerCase().includes(F.q));
+ l.sort(F.sort=="easy"?(a,b)=>a.tier-b.tier||(a.hours??1e9)-(b.hours??1e9)||a.name.localeCompare(b.name):(a,b)=>a.name.localeCompare(b.name));
+ const opt=(v,o)=>o.map(([k,t])=>`<option value="${k}" ${v==k?'selected':''}>${t}</option>`).join('');
+ let last;
+ app.innerHTML=`<section><h2>Warframes<small>${have} / ${FRAMES.length} collected &middot; ${mas} mastered</small></h2><div class="bar">
+  <input type="search" id="q" placeholder="Search" value="${esc(F.q)}">
+  <select data-f="show">${opt(F.show,SHOW)}</select>
+  <select data-f="type">${opt(F.type,[["all","Prime + normal"],["base","Normal"],["prime","Prime"]])}</select>
+  <select data-f="role">${opt(F.role,[["all","All roles"],...Object.entries(ROLES)])}</select>
+  <select data-f="sort">${opt(F.sort,[["easy","Easiest first"],["name","Name"]])}</select></div>
+  <div class="tag">Farm times are rough estimates; drop locations come from warframestat.us. Check the wiki link before farming.</div>`+
+  l.map(f=>{let h='';if(F.sort=="easy"&&f.tier!==last){last=f.tier;h=`<h2 class="tier">${TIERS[f.tier]}</h2>`}
+   return h+`<div class="frame"><div class="rowtop"><label><input type="checkbox" data-o="${esc(f.name)}" ${S.owned[f.name]?'checked':''}>${f.img?`<img src="${esc(IMG(f.img))}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`:''}<span><b>${esc(f.name)}</b><span class="tag">${f.hours?'~'+f.hours+'h':''}</span>${f.roles.map(r=>`<span class="role r-${r}">${ROLES[r]}</span>`).join('')}</span></label>${mast(f.name)}</div>`+
+   (S.owned[f.name]?'':`<div class="how">${esc(f.how)}${f.wiki?` - <a href="${esc(f.wiki)}" target="_blank" rel="noopener">wiki</a>`:''}</div>`)+`</div>`}).join('')+(l.length?'':'<p class="tag">Nothing matches these filters.</p>')+`</section>`;
+ const q=document.getElementById('q');q.oninput=()=>{F.q=q.value.toLowerCase();const p=q.selectionStart;frames();const n=document.getElementById('q');n.focus();n.setSelectionRange(p,p)};
+}
+// Weapons and companions share one list page. Owned keys are prefixed so they never collide with warframe names.
+const CAT={weapons:{title:"Weapons",data:()=>WEAPONS,pre:"w:",mr:true,mastery:true},companions:{title:"Companions",data:()=>COMPANIONS,pre:"c:"},
+ mods:{title:"Mods",data:()=>MODS,pre:"m:",note:"Effects show the max-rank values. Drop chances come from warframestat.us and are per enemy or source."},
+ arcanes:{title:"Arcanes",data:()=>ARCANES,pre:"a:",note:"Arcane drop sources and chances come from warframestat.us."},
+ helminth:{title:"Helminth",data:()=>HELMINTH,pre:"h:",noun:"subsumed",note:"Ability descriptions come from warframestat.us; the frame list is from wiki.warframe.com.",nohow:true,intro:`<p>The Helminth lives on your Orbiter. Feed it resources to make Secretions, then <b>subsume</b> a Warframe: sacrifice a built, non-Prime, non-Umbra frame and after 23 hours you learn one of its abilities (each frame once, unlocked from Metamorphosis rank 1). You can then <b>infuse</b> a subsumed ability onto another frame in place of one of its own, paying Secretions each time. The number of abilities you can hold grows with Metamorphosis ranks. Below, each ability has a short explanation and the frame you subsume it from. Tick the ones you have.</p><p>Draining a mature Helminth Cyst while incubating a Kubrow breeds a Helminth Charger. Weekly Invigorations come from the Helminth too (they are on the Tasks page).</p>`}};
+const G=Object.fromEntries(Object.keys(CAT).map(k=>[k,{q:"",show:"all",group:"all",sort:"group"}]));
+function catalog(kind){
+ const C=CAT[kind],g=G[kind],all=C.data(),names={};all.forEach(f=>names[f.name]=(names[f.name]||0)+1);
+ const key=f=>C.pre+f.name+(names[f.name]>1?"|"+f.group:""),have=all.filter(f=>S.owned[key(f)]).length,mas=C.mastery?all.filter(f=>mastered(key(f))).length:0;
+ const groups=[...new Set(all.map(f=>f.group))];
+ const l=all.filter(f=>showOk(g.show,S.owned[key(f)],mastered(key(f)))&&(g.group=="all"||f.group==g.group)&&(f.name+" "+(f.sub||"")+" "+(f.frame||"")).toLowerCase().includes(g.q));
+ if(g.sort=="name")l.sort((a,b)=>a.name.localeCompare(b.name));else if(g.sort=="mr")l.sort((a,b)=>a.mr-b.mr||a.name.localeCompare(b.name));
+ const opt=(v,o)=>o.map(([k,t])=>`<option value="${esc(k)}" ${v==k?'selected':''}>${esc(t)}</option>`).join('');
+ let last;const cnt={};l.forEach(f=>cnt[f.group]=(cnt[f.group]||0)+1);
+ app.innerHTML=`<section><h2>${C.title}<small>${have} / ${all.length} ${C.noun||"collected"}${C.mastery?` &middot; ${mas} mastered`:""}</small></h2>${C.intro||""}<div class="bar">
+  <input type="search" id="q" placeholder="Search" aria-label="Search" value="${esc(g.q)}">
+  <select data-k="show">${opt(g.show,C.mastery?SHOW:SHOW.slice(0,3))}</select>
+  <select data-k="group">${opt(g.group,[["all","All types"],...groups.map(x=>[x,x])])}</select>
+  <select data-k="sort">${opt(g.sort,[["group","By type"],["name","Name"],...(C.mr?[["mr","Mastery rank"]]:[])])}</select></div>
+  <div class="tag">${C.note||'Acquisition text comes from warframestat.us drop tables and wiki.warframe.com. "See wiki" means the data had no source, so follow the link.'}</div>`+
+  l.map(f=>{let hd='';if(g.sort=="group"&&f.group!==last){last=f.group;hd=`<h2 class="tier">${esc(f.group)}<small>${cnt[f.group]}</small></h2>`}
+   const id=key(f);
+   return hd+`<div class="frame"><div class="rowtop"><label>${f.img?`<img src="${esc(IMG(f.img))}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`:'<i class="noimg"></i>'}<input type="checkbox" data-o="${esc(id)}" ${S.owned[id]?'checked':''}><span><b>${esc(f.name)}</b>${C.mr&&f.mr?`<span class="tag">MR ${f.mr}</span>`:''}${f.tag?`<span class="tag">${esc(f.tag)}</span>`:''}${f.sub?`<small class="fsub">${esc(f.sub)}</small>`:''}${f.frame?`<small class="fsub">Subsumed from <b>${esc(f.frame)}</b>${f.wiki?` - <a href="${esc(f.wiki)}" target="_blank" rel="noopener">wiki</a>`:''}</small>`:''}</span></label>${C.mastery?mast(id):''}</div>`+
+   (S.owned[id]||C.nohow?'':`<div class="how">${esc(f.how)}${f.wiki?` - <a href="${esc(f.wiki)}" target="_blank" rel="noopener">wiki</a>`:''}</div>`)+`</div>`}).join('')+(l.length?'':'<p class="tag">Nothing matches these filters.</p>')+`</section>`;
+ const q=document.getElementById('q');q.oninput=()=>{g.q=q.value.toLowerCase();const p=q.selectionStart;catalog(kind);const n=document.getElementById('q');n.focus();n.setSelectionRange(p,p)};
+}
+function pick(t){const p=t.closest("[data-p]"),r=t.closest("[data-r]");
+ if(p){R.planet=R.planet==p.dataset.p&&!R.res?null:p.dataset.p;R.res=null;resources()}
+ else if(r){R.res=R.res==r.dataset.r?null:r.dataset.r;R.planet=null;resources()}}
+app.addEventListener("click",e=>page()=="resources"&&pick(e.target));
+app.addEventListener("keydown",e=>{if((e.key=="Enter"||e.key==" ")&&e.target.dataset&&e.target.dataset.p){e.preventDefault();pick(e.target)}});
+app.addEventListener('change',e=>{
+ const t=e.target;
+ if(t.dataset.t){const p=ALL.find(x=>x[0]==t.dataset.t&&subs(x).length);
+  (p?subs(p).map(s=>s[0]):[t.dataset.t]).forEach(id=>S.tasks[id]=t.checked||undefined);save();render()}
+ else if(t.dataset.o){S.owned[t.dataset.o]=t.checked||undefined;save();render()}
+ else if(t.dataset.m){S.owned["M|"+t.dataset.m]=t.checked||undefined;save();render()}
+ else if(t.dataset.f){F[t.dataset.f]=t.value;frames()}
+ else if(t.dataset.k){G[page()][t.dataset.k]=t.value;catalog(page())}
+});
+const PAGES=[["tasks","Tasks","Daily and weekly checklist with reset timers, vendors to visit and a Baro Ki'Teer countdown."],
+ ["frames","Warframes","Every frame, prime and normal. Mark what you own, sort by how easy it is to get, and filter by role."],
+ ["weapons","Weapons","Every weapon grouped by type, with mastery rank and where to get it."],
+ ["companions","Companions","Sentinels, Kubrows, Kavats, MOAs, Hounds and more, with how to obtain each."],
+ ["mods","Mods","Max-rank effects and top drop sources for mods. Search by name or by what the mod does."],
+ ["arcanes","Arcanes","Arcane effects with their drop sources."],
+ ["helminth","Helminth","Each subsumable ability, what it does and which frame it comes from. Tick the ones you have."],
+ ["resources","Resources","A star chart of where to farm the common resources. Click a planet, or pick a resource to highlight its planets."],
+ ["nightwave","Nightwave","This season's acts with standing values, a tick list and tips on how to complete each one."],
+ ["factions","Syndicate leveling","The quickest ways to earn standing with every syndicate, from the daily cap to the best hand-ins."],
+ ["kahl","Kahl's Garrison","The three weekly Break Narmer missions step by step, the weekly challenges and what Stock buys."],
+ ["baro","Baro Ki'Teer","When he visits, his stock with a buy-first ranking, and how to spend your Ducats."]];
+// The API has no version field, so the version is read from the newest news post flagged as an update (e.g. "...: Hotfix 44.1.2 + 2.1").
+function gameVersion(){
+ if(!W||!W.news)return"";
+ const u=W.news.filter(x=>x.update).sort((a,b)=>Date.parse(b.date)-Date.parse(a.date))[0];
+ const v=u&&/\b(\d+\.\d+(?:\.\d+)*)\b/.exec(u.message);
+ const build=/^(\d{4})\.(\d{2})\.(\d{2})/.exec(W.buildLabel||"");
+ if(!v&&!build)return"";
+ const link=u&&/^https?:\/\//i.test(u.link)?` &middot; <a href="${esc(u.link)}" target="_blank" rel="noopener">${esc(u.message)}</a>`:"";
+ return `<p class="ver"><b>Game version ${v?esc(v[1]):"unknown"}</b>${build?` &middot; build ${build[1]}-${build[2]}-${build[3]}`:""}${link}</p>`;
+}
+function home(){
+ const n=Date.now(),ms=s=>Date.parse(s),when=a=>`${new Date(a).toLocaleDateString([], {month:"short",day:"numeric"})}`;
+ let now="",soon="",news="";
+ if(W===null)now=soon=news="<p class=\"tag\">Loading live data...</p>";
+ else if(!W)now=soon=news="<p class=\"tag\">Live data unavailable right now (needs an internet connection).</p>";
+ else{
+  const li=(t,s)=>`<li><b>${esc(t)}</b>${s?`<small>${esc(s)}</small>`:""}</li>`;
+  const ev=(W.events||[]).filter(e=>e.description);
+  now=ev.filter(e=>ms(e.activation)<=n&&n<ms(e.expiry)).map(e=>li(e.description,[e.node,e.tooltip,`ends in ${left(ms(e.expiry)-n)}`].filter(Boolean).join(" · "))).join("");
+  const v=W.vaultTrader;if(v&&ms(v.activation)<=n&&n<ms(v.expiry))now+=li("Prime Resurgence",`${v.character} at ${v.location} · ends in ${left(ms(v.expiry)-n)}`);
+  if(B&&ms(B.activation)<=n&&n<ms(B.expiry))now+=li("Baro Ki'Teer is here",`${B.location} · leaves in ${left(ms(B.expiry)-n)}`);
+  const nw=W.nightwave;if(nw&&ms(nw.expiry)>n)now+=li(`Nightwave season ${nw.season}`,`ends ${when(nw.expiry)}`);
+  soon=ev.filter(e=>ms(e.activation)>n).map(e=>li(e.description,`starts in ${left(ms(e.activation)-n)}`)).join("");
+  if(B&&ms(B.activation)>n)soon+=li("Baro Ki'Teer arrives",`${B.location} · in ${left(ms(B.activation)-n)}`);
+  if(v&&ms(v.activation)>n)soon+=li("Prime Resurgence rotation",`starts in ${left(ms(v.activation)-n)}`);
+  soon+=(W.news||[]).filter(x=>ms(x.date)>n).map(x=>li(x.message,`on ${when(x.date)}`)).join("");
+  news=(W.news||[]).filter(x=>/^https?:\/\//i.test(x.link)&&ms(x.date)>ms("2000-01-01")&&ms(x.date)<=n).sort((a,b)=>ms(b.date)-ms(a.date)).slice(0,6)
+   .map(x=>`<li><a href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.message)}</a><small>${when(x.date)}</small></li>`).join("");
+ }
+ const ul=(s,empty)=>s.startsWith("<p")?s:`<ul class="evs">${s||`<li><small>${empty}</small></li>`}</ul>`;
+ app.innerHTML=`<div class="hero">${HERO}<div><h1>Orbiter</h1><p>Your Tenno checklist, collection tracker and farming guide.</p>${gameVersion()}</div></div>
+ <div class="cards">${PAGES.map(([k,t,d])=>`<a class="card" href="#${k}"><h2>${t}</h2><p>${d}</p></a>`).join("")}</div>
+ <div class="grid g3"><section><h2>Happening now</h2>${ul(now,"No active events found.")}</section>
+ <section><h2>Coming up</h2>${ul(soon,"Nothing announced yet. Digital Extremes only posts upcoming events shortly before they start.")}</section>
+ <section><h2>Latest news</h2>${ul(news,"No news found.")}</section></div>`;
+}
+// Star chart: the backdrop is the in-game solar system picture (downloaded by the server on first start, from wiki.warframe.com). Hotspot positions were placed by eye on that picture;
+// moons and Deimos are not drawn there, so they sit next to their parent planet.
+const CHART_IMG="img/starchart.webp";
+const PLANETS={Void:[240,372,1],"Kuva Fortress":[446,374,1],Ceres:[432,540],Jupiter:[583,535],Europa:[515,640,1],Saturn:[694,799],Earth:[955,922],Lua:[1030,885,1],Venus:[1046,718],Mercury:[847,638],
+ Mars:[1159,365],Phobos:[1255,420,1],Deimos:[1085,295,1],Uranus:[1207,540],Neptune:[1392,840],Pluto:[1598,535],Eris:[1414,355],Sedna:[960,144]};
+const R={res:null,planet:null};
+function resources(){
+ const by={};RESOURCES.forEach(r=>r.spots.forEach(s=>(by[s.planet]??=[]).push([r,s])));
+ const sel=R.res&&RESOURCES.find(r=>r.name==R.res),lit=p=>sel?sel.spots.some(s=>s.planet==p):R.planet==p;
+ const svg=`<svg viewBox="0 0 1920 1080" class="chart" role="group" aria-label="Star chart">`+
+  Object.entries(PLANETS).map(([p,[x,y,moon]])=>{const n=(by[p]||[]).length,on=lit(p)||R.planet==p,dim=sel&&!lit(p),r=moon?30:44;
+   return `<g class="pl ${on?"on":""} ${dim?"dim":""} ${n?"has":""}" data-p="${esc(p)}" tabindex="0" role="button" aria-pressed="${R.planet==p}" aria-label="${esc(p)}, ${n} resources"><circle cx="${x}" cy="${y}" r="${r}"/>${n?`<text x="${x}" y="${y+10}" text-anchor="middle" class="cnt">${n}</text>`:""}<text x="${x}" y="${y+r+34}" text-anchor="middle" class="nm">${esc(p)}</text></g>`}).join("")+`</svg>`;
+ const chips=RESOURCES.map(r=>`<button type="button" class="chip ${R.res==r.name?"on":""}" data-r="${esc(r.name)}" aria-pressed="${R.res==r.name}">${r.img?`<img src="${esc(IMG(r.img))}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`:""}${esc(r.name)}</button>`).join("");
+ let detail='<p class="tag">Pick a planet on the chart or a resource below.</p>';
+ if(sel)detail=`<h2>${esc(sel.name)}</h2><ul class="evs">`+sel.spots.map(s=>`<li><b>${esc(s.planet=="*"?"Any planet":s.planet)}</b><small>${esc(s.node)}</small></li>`).join("")+`</ul>`;
+ else if(R.planet){const l=by[R.planet]||[];detail=`<h2>${esc(R.planet)}</h2>`+(l.length?`<ul class="evs">${l.map(([r,s])=>`<li><b>${esc(r.name)}</b><small>${esc(s.node)}</small></li>`).join("")}</ul>`:'<p class="tag">No recommended resource farming spots listed here.</p>')}
+ app.innerHTML=`<section><h2>Resources<small>${RESOURCES.length} resources</small></h2><p class="tag">Click a planet on the chart to list what to farm there, or choose a resource to highlight its planets. Spots are the wiki's recommended farming locations; "Void" means any Void Survival or Defense. Hotspots are placed by eye on the picture, so a few may sit slightly off.</p><div class="chartwrap"><img class="bg" src="${CHART_IMG}" alt="" referrerpolicy="no-referrer" onerror="this.style.display='none'">${svg}</div><div class="detail" aria-live="polite">${detail}</div><div class="chips">${chips}</div></section>`;
+}
+// Nightwave: live acts from the API, plus generic how-to tips matched on the act's wording (the API has no tips).
+const NW_TIPS=[
+ [/slid/i,"Sprint, then crouch to slide, and attack or shoot while you are sliding. Any easy mission works, and a fast frame helps."],
+ [/mercy/i,"Stun or knock down an enemy (slam, stun ability or a melee heavy hit), then press the melee button when the finisher prompt shows."],
+ [/only a melee/i,"Remove your primary and secondary in the Arsenal, then run a short low-level mission such as an Exterminate or Capture."],
+ [/complete (?:any )?\d+ missions/i,"Chain the shortest missions: Capture, Exterminate or Spy on early planets take a minute or two each."],
+ [/eximus/i,"Eximus units appear more often at higher enemy levels, so a Survival or Defense node gives them fastest. Use area damage to kill them quickly."],
+ [/kill \d+ enemies/i,"Run a Survival or Defense with an area-damage frame; the count is reached in one or two runs."],
+ [/nightmare/i,"Nightmare missions are special variants shown on the Navigation map and rotate over time. Check the map for the current nodes."],
+ [/rescue/i,"Pick a low-level Rescue node and rush it: free the hostage, then head to extraction. A speed frame helps."],
+ [/arbitration/i,"Open Navigation and choose the current Arbitration node (they rotate). Play a few rotations and extract safely, since dying ends the run."],
+ [/steel path|incursion/i,"Needs the Steel Path unlocked. Pick the missions flagged for it in Navigation."],
+ [/with (?:heat|cold|electricity|toxin|gas|viral|corrosive|radiation|blast|magnetic) damage/i,"Equip mods or a weapon of that damage type (for example the matching elemental mod) and farm kills in a Survival or Defense."],
+ [/(?:with|using) (?:a |an )?(?:primary|secondary|melee|archgun|necramech)/i,"Use that weapon type for the kills. A short Survival or Defense gives enemies quickly, so equip it and play there."],
+ [/only a (?:primary|secondary)/i,"Remove the other weapons in the Arsenal first, then run a short low-level mission."],
+ [/complete (?:\d+|a|an|any) .*(?:missions?|runs?)/i,"Pick quick nodes of that mission type on early planets and chain them."],
+ [/headshot/i,"Use a precise weapon (bow, sniper or a rifle with a scope) and aim for the head."],
+];
+const nwTip=c=>(NW_TIPS.find(([re])=>re.test(c.desc))||[0,"Pick the easiest mission type that fits the wording of the act. Low-level Survival and Defense are quick for kill counts."])[1];
+const nwOpen={w:true,e:true,d:false};let nwQ="";
+app.addEventListener("toggle",e=>{const k=e.target.dataset&&e.target.dataset.k;if(k)nwOpen[k]=e.target.open},true);
+function nightwave(){
+ const nw=W&&W.nightwave,n=Date.now();let live;
+ const row=(id,title,desc,tag,dn,extra="")=>`<label class="task ${dn?"done":""}"><input type="checkbox" data-t="${esc(id)}" ${dn?"checked":""}><span><b>${esc(title)}</b> <span class="tag">${tag}</span>${extra}<small>${esc(desc)}</small><small class="meta">How: ${esc(nwTip({desc}))}</small></span></label>`;
+ const active=new Set();
+ if(W===null)live='<section><h2>Nightwave</h2><p class="tag">Loading live data...</p></section>';
+ else if(!nw||!nw.activeChallenges)live='<section><h2>Nightwave</h2><p class="tag">Live Nightwave data is unavailable right now (needs an internet connection). The full list of acts is below.</p></section>';
+ else{
+  const acts=nw.activeChallenges.filter(c=>Date.parse(c.expiry)>n),ids=new Set(acts.map(c=>"nw:"+c.id));acts.forEach(c=>active.add(c.title.replace(/ X$/,"")));
+  let changed=false;for(const k of Object.keys(S.tasks))if(k.startsWith("nw:")&&!ids.has(k)){delete S.tasks[k];changed=true}
+  // a new season clears the recoverable-pool ticks
+  const sk="nwseason:"+nw.season;if(!S.tasks[sk]){for(const k of Object.keys(S.tasks))if(k.startsWith("nwa:")||k.startsWith("nwseason:"))delete S.tasks[k];S.tasks[sk]=true;changed=true}
+  if(changed)save();
+  const groups=[["Daily acts",c=>c.isDaily],["Weekly acts",c=>!c.isDaily&&!c.isElite],["Elite weekly acts",c=>c.isElite]];
+  const open=acts.filter(c=>!S.tasks["nw:"+c.id]).reduce((a,c)=>a+c.reputation,0),total=acts.reduce((a,c)=>a+c.reputation,0);
+  live=`<section><h2>Nightwave<small>season ${esc(nw.season)}, ends ${new Date(nw.expiry).toLocaleDateString([], {month:"short",day:"numeric"})}</small></h2>
+  <p class="tag">${esc(open.toLocaleString())} of ${esc(total.toLocaleString())} standing still open in this week's acts below. Acts rotate on their own, so ticks for expired acts are cleared. Tips are general advice matched to each act's wording.</p></section>`+
+  '<div class="grid g3">'+groups.map(([t,f])=>{const l=acts.filter(f);return l.length?`<section><h2>${t}<small>${l.filter(c=>S.tasks["nw:"+c.id]).length} / ${l.length} done</small></h2>`+l.map(c=>row("nw:"+c.id,c.title,c.desc.startsWith("[PH]")?"Description not published yet by the game.":c.desc,`+${esc(c.reputation.toLocaleString())} standing &middot; ${left(Date.parse(c.expiry)-n)} left`,!!S.tasks["nw:"+c.id])).join("")+`</section>`:""}).join("")+'</div>';
+ }
+ const kinds=[["w","Weekly acts",4500],["e","Elite weekly acts",7000],["d","Daily acts",1000]];
+ const pool=`<section><h2>All acts you can recover</h2><p class="tag">Every act in the game's pool, not just this week's. Missed weekly and elite weekly acts go into reserve, and when fewer than 3 current weekly acts are left they come back as "Recovered", three at a time. The wiki does not say daily acts can be recovered, so they are listed for reference. Tick the ones you have finished; ticks clear when a new season starts. Acts shown this week are marked.</p><div class="bar"><input type="search" id="nwq" placeholder="Search all acts by name or description" aria-label="Search all acts" value="${esc(nwQ)}"></div></section>`+
+  '<div class="grid g3">'+kinds.map(([k,t,pts])=>{const all=NW_ALL.filter(a=>a.kind==k),l=all.filter(a=>(a.name+" "+a.desc).toLowerCase().includes(nwQ)),d=all.filter(a=>S.tasks["nwa:"+k+":"+a.name]).length;
+   if(nwQ&&!l.length)return "";
+   return `<section><details data-k="${k}"${nwOpen[k]||nwQ?" open":""}><summary><h2 style="display:inline">${t}<small>${d} / ${all.length} done${nwQ?` &middot; ${l.length} shown`:""} &middot; +${pts.toLocaleString()} standing each</small></h2></summary>`+
+   l.map(a=>row("nwa:"+k+":"+a.name,a.name,a.desc,active.has(a.name)?'<span class="role r-support">This week</span>':"",!!S.tasks["nwa:"+k+":"+a.name])).join("")+`</details></section>`}).join("")+'</div>';
+ app.innerHTML=live+pool+(nwQ&&!NW_ALL.some(a=>(a.name+" "+a.desc).toLowerCase().includes(nwQ))?'<section><p class="tag">No act matches that search.</p></section>':"");
+ const q=document.getElementById("nwq");q.oninput=()=>{nwQ=q.value.trim().toLowerCase();const p=q.selectionStart;nightwave();const n=document.getElementById("nwq");n.focus();n.setSelectionRange(p,p)};
+}
+// Syndicate leveling: methods summarised from wiki.warframe.com/w/Standing.
+const FACTION_GUIDE=[
+ ["Faction syndicates","Steel Meridian, Arbiters of Hexis, Cephalon Suda, The Perrin Sequence, Red Veil, New Loka",[
+  "Do the three daily Syndicate Alerts first. Each alert pays medallions, worth roughly 3,000 standing per mission on average and about 10,000 with the rare one (the wiki's odds, my arithmetic). Medallions do not count against the daily cap and can be redeemed even when you are capped.",
+  "Then pledge to one syndicate in your Orbiter: 15% of the affinity you earn becomes standing. Use an Affinity Booster to double it, and farm somewhere that gives lots of affinity.",
+  "The daily cap is 16,000 + 500 per Mastery Rank. Stop pledge farming once you hit it.",
+  "Allied factions gain half of what you earn, opposed ones lose half and enemies lose all of it, so check relations before you pledge."]],
+ ["Cephalon Simaris","Any Relay",[
+  "Scan with the Synthesis Scanner. Value scales with enemy level and is tripled on a successful stealth scan, so scan high-level targets without being seen.",
+  "Synthesis Targets give big bonuses. Make finishing the daily target your first scan."]],
+ ["Ostron","Cetus, Plains of Eidolon",[
+  "Run Konzu's bounties; higher tiers pay more. Chain them while the world cycle is up.",
+  "Hand in fish and raw gems, and do Conservation captures. Max-ranked Zaws (Hok) are a large one-off hand-in."]],
+ ["The Quills","Cetus",[
+  "Trade Sentient Cores from Sentient enemies on Lua and the Plains of Eidolon, or fully built Amps."]],
+ ["Solaris United","Fortuna, Orb Vallis",[
+  "Run Eudico's bounties, hand in fish and gems, and do Conservation.",
+  "Give Debt-Bonds to Ticker, free captured Solaris in Corpus ship tilesets, and hand in max-ranked Kitguns (Rude Zuud) or MOAs and Hounds (Legs)."]],
+ ["Vox Solaris","Fortuna",[
+  "Collect Toroids from Orb Vallis enemies, caves, and Profit-Taker or Exploiter Orb rewards, or hand in fully built Amps."]],
+ ["Ventkids","Fortuna",[
+  "Do K-Drive tricks and races in the Orb Vallis."]],
+ ["Entrati","Necralisk, Cambion Drift",[
+  "Run Mother's bounties, hand in fish and gems, and do Conservation.",
+  "Give Family Tokens to Grandmother, and hand in max-ranked Kitguns (Father)."]],
+ ["Necraloid","Necralisk",[
+  "Trade Orokin Matrices to Loid. They come from Mother's Isolation Vault bounty or from enemy Necramechs.",
+  "Narmer Isoplasts from Narmer Bounties are worth 2,000 standing each and can be traded to the Quills or Vox Solaris too."]],
+ ["The Holdfasts","Chrysalith, Zariman",[
+  "Collect Voidplumes on the Zariman, from Quinn's bounties or from Void Angel drops, and trade them to Archimedean Yonta. Down, Vanes and Crests count as medallions."]],
+ ["Cavia","Sanctum Anatomica, Deimos",[
+  "Collect Voca in Albrecht's Laboratories and trade it to Loid, and run Fibonacci's bounties."]],
+ ["The Hex","Höllvania Central Mall",[
+  "Find Hex Treasures around Höllvania and trade them to Leticia, and run the bounties from the billboard by the Garage Pom-2 PC."]],
+ ["Conclave","Any Relay",[
+  "Play Conclave modes for standing based on wins and losses, and finish the three weekly Conclave missions for a large bonus."]],
+ ["Kahl's Garrison and Nightcap","Drifter's Camp, Earth and Fortuna",[
+  "These do not use standing. Kahl's Garrison ranks up from the weekly Break Narmer mission, and Nightcap from fully researched mushrooms."]],
+];
+const SYND_IMG={"Faction syndicates":["steel-meridian","arbiters","suda","perrin","red-veil","new-loka"],"Cephalon Simaris":["simaris"],"Ostron":["ostron"],"The Quills":["quills"],"Solaris United":["solaris"],"Vox Solaris":["vox"],"Ventkids":["ventkids"],"Entrati":["entrati"],"Necraloid":["necraloid"],"The Holdfasts":["holdfasts"],"Cavia":["cavia"],"The Hex":["hex"],"Conclave":["conclave"],"Kahl's Garrison and Nightcap":["garrison"]}; // flags from the wiki, bundled in img/synd
+const flagImgs=(l,c="")=>l.map(s=>`<img class="flag ${c}" src="img/synd/${s}.webp" alt="" loading="lazy" width="71" height="108">`).join("");
+function factions(){
+ app.innerHTML=`<div class="hero synhero"><div class="flagrow">${flagImgs(Object.values(SYND_IMG).flat(),"sm")}</div><div><h1>Syndicate leveling</h1><p>The quickest known ways to earn standing with every syndicate.</p></div></div>
+  <section><p class="tag">Taken from the wiki's Standing page. "Fastest" here is my pick of the listed methods, since the wiki does not rank them. A Universal Syndicate Medallion from Disruption missions is worth 1,000 standing with any syndicate.</p>
+  <div class="tip"><b>Quick routine:</b> medallions first (they ignore the daily cap), then bounties and hand-ins for your world syndicates, then a boosted pledge farm for the faction syndicates until you hit the cap.</div></section>
+  <div class="grid g2">`+
+ FACTION_GUIDE.map(([n,where,tips])=>`<section class="synd"><div class="flags">${flagImgs(SYND_IMG[n]||[],SYND_IMG[n]&&SYND_IMG[n].length>1?"sm":"")}</div><div class="syndbody"><h2>${esc(n)}<small>${esc(where)}</small></h2><ul class="evs">${tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div></section>`).join("")+`</div>`;
+}
+// Kahl's Garrison guide. Content: wiki.warframe.com/w/Break_Narmer and /Kahl%27s_Garrison. Add a map link to KAHL_LINKS when you find one.
+const KAHL_VIDEOS={ // by QuadLyStop on YouTube; these walk through the objective locations of each mission
+ "Sneaky Sabotage":["https://www.youtube.com/watch?v=6uz1sI0owaI","K-Drive parts, Chipper's tools, Genestamps: Sneaky Sabotage objective locations (the video is marked OUTDATED by its author)"],
+ "Junk Run":["https://www.youtube.com/watch?v=2R5VuGEf3Zg","Genestamps, prisoners and veils: Junk Run objective locations"],
+ "Prison Break":["https://www.youtube.com/watch?v=IuF9x-Hha54","Prison Break 100%: Genestamps, Kahl's Floof, passwords, Immunodes and veils"],
+};
+const KAHL_LINKS=[
+ ...Object.entries(KAHL_VIDEOS).map(([m,[u,t]])=>[`Video: ${m}`,u,t]),
+ ["Break Narmer on the wiki (tips and collectible locations)","https://wiki.warframe.com/w/Break_Narmer","No map of the missions yet. The wiki's Tips sections list where the collectibles are for each one."],
+ ["Kahl's Garrison on the wiki","https://wiki.warframe.com/w/Kahl%27s_Garrison","Ranks, members and Chipper's shop."],
+];
+const KAHL_IMG={"Sneaky Sabotage":"factory","Junk Run":"forest","Prison Break":"murex"}; // Veilbreak Captura scenes from the wiki
+const KAHL_MISSIONS=[
+ ["Sneaky Sabotage","Week 1 of the rotation","Sabotage Narmer Veil production at the Orb Vallis spaceport. Kahl can only use Slaytra here, with no guns and no Hellion jetpack.",[
+  "Use the Pazuul propaganda cameras to reveal and disable the four magna locks in the main room.",
+  "Reboot the veil production machine by cycling four camera symbols to match. Each symbol's trail leads to the right one, sometimes after clearing obstructions.",
+  "Make noise so the Narmer think they were raided. An Exergis cabinet opens and MOAs and Ospreys flood in.",
+  "Use the Plasma Torch's Target Marker to enter Command Mode and call orbital strikes (10 second cooldown).",
+  "Escape past the Scyto Raknoid boss. Its arena door closes behind you, so finish bonus objectives first. Freeze it with LN2 barrels and hit it from range."],
+  "Deacons cannot be killed but can be stunned with Veilbreaker, and their suspicion gauge fills while you stay in their sight. Dying only sends you back to a checkpoint."],
+ ["Junk Run","Week 2 of the rotation","Collect extra Tusk Thumper parts for Chipper in the Grineer Forest, then defeat the Tusk Thumper.",[
+  "Use security cameras to switch on propaganda drones that lure Deacons into shock mines or past force fields.",
+  "Pick up the Hellion jetpack and the salvaged Kuva Ayanga, and deal with Battalysts, Brachiolysts and veiled Grineer. Veilbreaker can turn veiled Grineer into allies.",
+  "Enter the Thumper arena. The door stays shut until the Thumper is dead.",
+  "After you destroy one of its legs the Thumper turns invulnerable. Fire the Rampart to remove that, and repeat as needed.",
+  "Optional: fight Sprag. Shock mines make her drones vulnerable, and use Veilbreaker once she is down to two health bars."],
+  "This is the mission where the Narmer Veil challenge and the password cache come up most."],
+ ["Prison Break","Week 3 of the rotation","Rescue captives aboard the prison Murex above Deimos and escape on the Railjack.",[
+  "Fight the Sentient forces and stand in dissipation fields to free your brothers. Order them to destroy debris and Immunodes.",
+  "Free the Tusk Bolkor, crash-land it to get the Grattler, and continue to the Railjack evacuation point.",
+  "In the hangar, fight the Wolf of Saturn Six, who is under Narmer control. Keep moving and use hover to avoid attacks.",
+  "Board the Railjack to escape.",
+  "Optional: Ven'kra Tel is a sniper boss in the Bolkor detour. Pick up the Avex Sniper to trigger her, use dissipation fields to expose her drones, then Veilbreaker once she is down to two health bars."],
+  "Genestamps (the five-collectible challenge) are found on Grineer corpses around the map."],
+];
+function kahl(){
+ const li=t=>`<li>${esc(t)}</li>`;
+ app.innerHTML=`<div class="hero kahlhero"><img src="img/kahl/garrison.webp" alt="" width="120" height="120"><div><h1>Kahl's Garrison</h1><p>Weekly Break Narmer missions, bonus challenges and Chipper's shop.</p></div></div><section><h2>How it works</h2><p class="tag">Unlocked by finishing the Veilbreaker quest. Kahl gives one Break Narmer mission a week, rotating Sneaky Sabotage, Junk Run and Prison Break, and the rotation moves on only when you finish the current one (the wiki gives the reset as Monday 00:00 UTC). They are solo missions where you play Kahl-175. Each finished mission raises your Garrison rank once (about four weeks to the top), and the Garrison has no standing. Stock is the currency for Chipper's shop in the Drifter's Camp.</p></section>
+ <section><h2>Guides and maps</h2><ul class="evs">${KAHL_LINKS.map(([t,u,d])=>`<li><b><a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a></b><small>${esc(d)}</small></li>`).join("")}</ul></section>
+ <div class="grid g3">${KAHL_MISSIONS.map(([n,wk,obj,steps,note])=>`<section class="mission"><div class="banner"><img src="img/kahl/${KAHL_IMG[n]}.webp" alt="" loading="lazy"><span>${esc(wk)}</span></div><h2>${esc(n)}</h2><p class="tag">${esc(obj)}</p><ol class="steps">${steps.map(li).join("")}</ol><p class="tag">${esc(note)}</p>${KAHL_VIDEOS[n]?`<p><a href="${esc(KAHL_VIDEOS[n][0])}" target="_blank" rel="noopener">Watch: ${esc(n)} objective locations</a></p>`:""}</section>`).join("")}</div>
+ <div class="grid g2"><section><h2><img class="ico" src="img/kahl/stock.webp" alt="" width="28" height="28"> Weekly challenges and Stock</h2><ul class="evs">
+  <li><b>Up to six bonus challenges per mission</b><small>Drawn from a rotating pool, and progress carries over between runs. Deathless is always one of them.</small></li>
+  <li><b>Deathless: 30 Stock. Every other challenge: 15 Stock</b><small>All six together pay 105 Stock, once per week.</small></li>
+  <li><b>Stock boxes: 2 Stock each</b><small>8 to 12 blue crates per mission, and you must reach extraction to keep them. Collecting up to 5 gives 10 bonus Stock.</small></li>
+  <li><b>Common challenges</b><small>Break 5 Narmer Veils, collect 5 Genestamps, finish in under 15 minutes (Kahl Go Fast), 5 kills in 5 seconds (Kahl Kill Quick), unlock the cache with passwords, 20 kills (Made for This), 10 grenade kills (Blow Up Good), 10 Hellion kills.</small></li>
+  <li><b>Collectibles</b><small>Narmer Veils (remove with Veilbreaker, tap or hold E), Genestamps, K-Drive parts, Chipper's Tools, passwords, Pazuul Axums, Ostrons, Drahks, Immunodes and the Lost Floof. Exact spots are in the wiki's Tips sections.</small></li></ul></section>
+ <section><h2><img class="ico" src="img/synd/garrison.webp" alt="" width="20" height="30"> Ranks and Chipper's shop</h2><ul class="evs">
+  <li><b>Rank 1 Shelter</b><small>Styanax Systems Blueprint (60 Stock) is always on sale.</small></li>
+  <li><b>Rank 2 Encampment</b><small>Chipper joins. Slaytra Blueprint (30 Stock).</small></li>
+  <li><b>Rank 3 Fort</b><small>Styanax Neuroptics (60) and several Archon mods (40 each).</small></li>
+  <li><b>Rank 4 Settlement</b><small>You can start Archon Hunts here. Styanax Chassis (60), Aegrit Blueprint (30).</small></li>
+  <li><b>Rank 5 Home</b><small>Styanax Blueprint (90), Skaut Landing Craft (120), Afentis Blueprint (60), ephemeras and Captura scenes (45 each).</small></li></ul></section></div>`;
+}
+// Baro Ki'Teer guide. The ranking is general community advice matched on item names, not data from the game.
+const BARO_TIERS=[
+ [/^primed /i,1,"Buy first","Primed mods are sold only by Baro and are some of the best mods in the game."],
+ [/^prisma /i,2,"Good value","Prisma weapons are Baro-only upgrades with a built-in bonus slot and they count for mastery."],
+ [/wraith|vandal/i,2,"Good value","Wraith and Vandal weapons are Baro-only variants with better stats."],
+ [/relic|void surplus|booster|fireworks|syandana|helmet|skin|armor|sigil|glyph|ephemera|captura/i,3,"If you want it","Cosmetics, boosters and relics are nice to have but rarely worth Ducats before the items above."],
+];
+const baroTier=n=>(BARO_TIERS.find(([re])=>re.test(n))||[0,4,"Check the wiki","Not matched by the ranking, so look the item up before spending Ducats."]).slice(1);
+// Icons: Baro's own list first (fetch_baro_icons.py), then mod/weapon pictures by name, then the Ducat icon.
+let NAME_IMG;
+const baroIcon=n=>{NAME_IMG??=(m=>{[...MODS,...WEAPONS,...ARCANES].forEach(x=>{if(x.img&&!m.has(x.name))m.set(x.name,x.img)});return m})(new Map());
+ return IMG(BARO_ICONS[n]||NAME_IMG.get(n)||"Ducat.png")};
+function baroPage(){
+ const n=Date.now();let inv="";
+ const act=B&&B.activation?B.activation.slice(0,10):null,pre="baro:"+act+":";
+ if(B&&B.inventory&&B.inventory.length&&Date.parse(B.expiry)>n){
+  let pr=false;for(const k of Object.keys(S.tasks))if(k.startsWith("baro:")&&!k.startsWith(pre)){delete S.tasks[k];pr=true}if(pr)save();
+  const items=B.inventory.map(i=>({...i,t:baroTier(i.item)})).sort((a,b)=>a.t[0]-b.t[0]||(a.ducats||0)-(b.ducats||0));
+  const first=items.filter(i=>i.t[0]==1),firstCost=first.filter(i=>!S.tasks[pre+i.item]).reduce((a,i)=>a+(i.ducats||0),0);
+  inv=`<section><h2>This visit's stock<small>${items.length} items</small></h2><p class="tag">Sorted by priority, cheapest first. Tick what you have bought; ticks clear when Baro leaves. ${first.length?`Still to buy in "Buy first": ${firstCost.toLocaleString()} Ducats.`:""}</p>`+
+   items.map(i=>`<label class="task ${S.tasks[pre+i.item]?"done":""}"><input type="checkbox" data-t="${esc(pre+i.item)}" ${S.tasks[pre+i.item]?"checked":""}><img class="bico" src="${esc(baroIcon(i.item))}" alt="" loading="lazy" width="48" height="48" onerror="this.style.visibility='hidden'"><span><b>${esc(i.item)}</b> <span class="role r-${i.t[0]==1?"support":i.t[0]==2?"stealth":""}">${esc(i.t[1])}</span> <span class="tag">${esc((i.ducats||0).toLocaleString())} Ducats + ${esc((i.credits||0).toLocaleString())} credits</span><small>${esc(i.t[2])}</small></span></label>`).join("")+`</section>`;
+ }else inv=`<section><h2>This visit's stock</h2><p class="tag">${B===null?"Loading live data...":B===false?"Live data is unavailable right now (needs an internet connection).":"Baro's stock is listed here while he is at the relay. It shows up once he arrives, so check back then."}</p></section>`;
+ app.innerHTML=`<div class="hero"><div><h1>Baro Ki'Teer</h1><p>The Void Trader. He visits for 48 hours every two weeks and sells things you cannot get anywhere else.</p></div></div>
+ <div class="baro">${baroCard(true)}</div>${inv}
+ <div class="grid g2"><section><h2>What to buy first</h2><ol class="steps">
+  <li><b>Primed mods you do not own.</b> They are sold only by Baro, rotate in and out, and are among the best mods for most builds. Prioritise the ones your frames and weapons actually use.</li>
+  <li><b>Prisma and Wraith or Vandal weapons you will use.</b> They are upgrades of weapons you may already like, and each one adds mastery.</li>
+  <li><b>Boosters or relics only if you are rich.</b> Spend leftover Ducats on these last, and never at the cost of a Primed mod you want.</li>
+  <li><b>Cosmetics last.</b> Pure style, so only when everything else is covered.</li></ol>
+  <p class="tag">This ranking is general community advice, not data from the game or the wiki. Prices and the stock change every visit.</p></section>
+ <section><h2>How Baro works</h2><ul class="evs">
+  <li><b>Schedule</b><small>Baro arrives at a different Tenno Relay every two weeks and stays up to 48 hours. The timer above shows the next arrival, and your Inbox tells you when he lands.</small></li>
+  <li><b>Currencies</b><small>Almost everything costs both Ducats and credits, so bring plenty of credits as well as Ducats.</small></li>
+  <li><b>Getting Ducats</b><small>Trade spare Prime parts at a Ducat Kiosk in any Relay (this is from game knowledge, the wiki page I read did not cover it). Doubles and parts you will never use are the usual source.</small></li>
+  <li><b>Save, do not rush</b><small>Many items return in later visits, so only buy what you need now and keep Ducats for the Primed mods you want.</small></li>
+  <li><b>More detail</b><small><a href="https://wiki.warframe.com/w/Baro_Ki%27Teer" target="_blank" rel="noopener">Baro Ki'Teer on the wiki</a></small></li></ul></section></div>`;
+}
+const page=()=>({"#baro":"baro","#kahl":"kahl","#nightwave":"nightwave","#factions":"factions","#resources":"resources","#mods":"mods","#arcanes":"arcanes","#helminth":"helminth","#tasks":"tasks","#frames":"frames","#weapons":"weapons","#companions":"companions"})[location.hash]||"home";
+function render(){const p=page();p=="home"?home():p=="resources"?resources():p=="nightwave"?nightwave():p=="factions"?factions():p=="kahl"?kahl():p=="baro"?baroPage():p=="tasks"?tasks():p=="frames"?frames():catalog(p)}
+function closeMenus(except){document.querySelectorAll(".dd").forEach(d=>{if(d!==except){d.classList.remove("open");d.firstElementChild.setAttribute("aria-expanded","false")}})}
+document.querySelectorAll(".dd>button").forEach(b=>b.addEventListener("click",e=>{
+ e.stopPropagation();const d=b.parentElement,o=!d.classList.contains("open");closeMenus(d);d.classList.toggle("open",o);b.setAttribute("aria-expanded",o);
+ const m=d.querySelector(".menu");m.style.left="";if(o){const over=m.getBoundingClientRect().right-(document.documentElement.clientWidth-8);if(over>0)m.style.left=-over+"px"} // keep the menu on screen
+}));
+addEventListener("resize",()=>closeMenus());
+addEventListener("click",()=>closeMenus());
+addEventListener("keydown",e=>{if(e.key=="Escape"){const o=document.querySelector(".dd.open>button");closeMenus();o&&o.focus()}});
+function route(){
+ const p=page();
+ for(const k of["home","tasks","frames","weapons","companions","mods","arcanes","helminth","resources","nightwave","factions","kahl","baro"])document.getElementById("n_"+k).className=p==k?"on":"";
+ const grp={frames:"collection",weapons:"collection",companions:"collection",mods:"build",arcanes:"build",helminth:"build",nightwave:"guides",factions:"guides",kahl:"guides",baro:"guides"};
+ for(const g of["collection","build","guides"])document.getElementById("d_"+g).className=grp[p]==g?"on":"";
+ closeMenus();
+ document.querySelector('main').classList.toggle('wide',['home','tasks','nightwave','kahl','factions','baro'].includes(p));
+ render();
+}
+addEventListener("hashchange",route);route();
+// Server state wins when it has data; otherwise the browser's saved progress is uploaded once. Nothing is pushed before this finishes.
+fetch("/api/state").then(r=>r.ok?r.json():null).then(srv=>{
+ if(!srv||typeof srv!="object")return;
+ ready=true;const s=mk(srv);
+ if(Object.keys(s.tasks).length||Object.keys(s.owned).length){Object.assign(S,s);try{localStorage[KEY]=JSON.stringify(S)}catch{}render()}
+ else if(Object.keys(S.tasks).length||Object.keys(S.owned).length)push();
+}).catch(()=>{});
+// First start: the server downloads the pictures in the background. Show progress, then redraw so they appear.
+(function imgNote(){
+ fetch("/api/images").then(r=>r.ok?r.json():null).then(s=>{
+  let n=document.getElementById("imgnote");
+  if(s&&s.running){
+   if(!n){n=document.createElement("div");n.id="imgnote";n.className="imgnote";document.querySelector("nav").after(n)}
+   n.textContent=`Downloading pictures for the first time: ${s.done + s.failed} of ${s.total}. They appear as soon as they are ready.`;setTimeout(imgNote,3000);
+  }else if(n){n.remove();render()}
+ }).catch(()=>{});
+})();
+loadBaro();setInterval(loadBaro,36e5);setInterval(()=>["tasks","home","nightwave","baro"].includes(page())&&render(),6e4);
+</script>
+</body>
+</html>

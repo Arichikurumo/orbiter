@@ -1,0 +1,10 @@
+{
+  "name": "orbiter",
+  "version": "1.0.0",
+  "description": "Self-hosted Warframe companion: task checklist, collection tracker and farming guides",
+  "private": true,
+  "license": "MIT",
+  "engines": { "node": ">=24" },
+  "scripts": { "start": "node server.js", "test": "node --test test.js", "images": "node fetch-images.js" },
+  "dependencies": { "sharp": "^0.34.0" }
+}

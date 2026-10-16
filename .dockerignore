@@ -1,0 +1,8 @@
+.git
+node_modules
+site/img
+*.py
+test.js
+meleeclass.json
+*.md
+compose*.yaml

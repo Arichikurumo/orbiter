@@ -1,0 +1,11 @@
+# Build and run from a clone of this repository: docker compose up -d --build
+name: orbiter
+services:
+  orbiter:
+    build: .
+    ports: ["${ORBITER_PORT:-8080}:8080"]
+    volumes:
+      - orbiter-data:/data # SQLite database and downloaded pictures
+    restart: unless-stopped
+volumes:
+  orbiter-data:

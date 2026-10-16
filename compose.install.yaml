@@ -1,0 +1,14 @@
+# One-file install, no clone needed:
+#   curl -fsSLO https://raw.githubusercontent.com/Arichikurumo/orbiter/main/compose.install.yaml
+#   docker compose -f compose.install.yaml up -d
+# The image is built straight from GitHub and the pictures are downloaded on first start.
+name: orbiter
+services:
+  orbiter:
+    build: https://github.com/Arichikurumo/orbiter.git#main
+    ports: ["${ORBITER_PORT:-8080}:8080"]
+    volumes:
+      - orbiter-data:/data # SQLite database and downloaded pictures
+    restart: unless-stopped
+volumes:
+  orbiter-data:
