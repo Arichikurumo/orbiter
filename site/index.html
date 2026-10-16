@@ -109,6 +109,12 @@ main.wide{max-width:1280px}
 .bar{display:inline-block;height:8px;margin-right:8px;vertical-align:middle;border-radius:2px}.bar.c{background:#b07a45}.bar.u{background:#c3ccd6}.bar.r{background:#e8c25a;box-shadow:0 0 6px #e8c25a}
 .pct{color:var(--cyan)!important}
 @media(max-width:620px){.rr{grid-template-columns:1fr 1fr;font-size:13px}.rr.rh{display:none}.bar{display:none}}
+.calcform{display:flex;flex-direction:column;gap:12px}.fld{display:flex;flex-direction:column;gap:4px;padding:0}.fld span{color:var(--gold);font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.fld input{background:#0a0e14;color:var(--fg);border:1px solid var(--line);padding:8px 12px;font:inherit;min-height:36px}
+.bignum{font-size:48px;font-weight:700;color:var(--cyan);line-height:1.1;text-shadow:0 0 18px rgba(79,209,232,.35)}
+.meter{height:10px;background:#0a0e14;border:1px solid var(--line);margin:8px 0 12px}.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--cyan));transition:width .3s}
+.rr.c2{grid-template-columns:1fr 2fr}.rr.c4{grid-template-columns:1.2fr 1fr 1.3fr 1.4fr}.rr.cur{background:rgba(79,209,232,.08)}
+@media(max-width:620px){.rr.c2,.rr.c4{grid-template-columns:repeat(2,1fr)}.rr.rh.c2,.rr.rh.c4{display:none}}
 .relic.vaulted{opacity:.8}
 .rar{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none}
 .rar-C{background:#b07a45}.rar-U{background:#c3ccd6}.rar-R{background:#e8c25a;box-shadow:0 0 6px #e8c25a}
@@ -138,7 +144,7 @@ main.wide{max-width:1280px}
 <body>
 <nav><span class="brand">Orbiter</span><a href="#home" id="n_home">Home</a><a href="#tasks" id="n_tasks">Tasks</a>
 <div class="dd"><button type="button" id="d_collection" aria-haspopup="true" aria-expanded="false">Collection &#9662;</button><div class="menu"><a href="#frames" id="n_frames">Warframes</a><a href="#weapons" id="n_weapons">Weapons</a><a href="#companions" id="n_companions">Companions</a></div></div>
-<div class="dd"><button type="button" id="d_build" aria-haspopup="true" aria-expanded="false">Upgrades &#9662;</button><div class="menu"><a href="#mods" id="n_mods">Mods</a><a href="#arcanes" id="n_arcanes">Arcanes</a><a href="#helminth" id="n_helminth">Helminth</a></div></div><a href="#relics" id="n_relics">Relics</a><a href="#resources" id="n_resources">Resources</a>
+<div class="dd"><button type="button" id="d_build" aria-haspopup="true" aria-expanded="false">Upgrades &#9662;</button><div class="menu"><a href="#mods" id="n_mods">Mods</a><a href="#arcanes" id="n_arcanes">Arcanes</a><a href="#helminth" id="n_helminth">Helminth</a></div></div><div class="dd"><button type="button" id="d_relics" aria-haspopup="true" aria-expanded="false">Relics &#9662;</button><div class="menu"><a href="#relics" id="n_relics">Relic list</a><a href="#relcalc" id="n_relcalc">Calculator</a></div></div><a href="#resources" id="n_resources">Resources</a>
 <div class="dd"><button type="button" id="d_guides" aria-haspopup="true" aria-expanded="false">Guides &#9662;</button><div class="menu"><a href="#nightwave" id="n_nightwave">Nightwave</a><a href="#factions" id="n_factions">Syndicate leveling</a><a href="#kahl" id="n_kahl">Kahl's Garrison</a><a href="#baro" id="n_baro">Baro Ki'Teer</a></div></div></nav>
 <main id="app"></main>
 <script src="frames.js"></script>
@@ -343,6 +349,7 @@ app.addEventListener('change',e=>{
  else if(t.dataset.f){F[t.dataset.f]=t.value;frames()}
  else if(t.dataset.k){G[page()][t.dataset.k]=t.value;catalog(page())}
  else if(t.dataset.rl){RL[t.dataset.rl]=t.value;relicsPage()}
+ else if(t.dataset.rc){RC[t.dataset.rc]=t.value;if(t.dataset.rc=='part')RC.relic='';relicCalc()}
 });
 const PAGES=[["tasks","Tasks","Daily and weekly checklist with reset timers, vendors to visit and a Baro Ki'Teer countdown."],
  ["frames","Warframes","Every frame, prime and normal. Mark what you own, sort by how easy it is to get, and filter by role."],
@@ -352,6 +359,7 @@ const PAGES=[["tasks","Tasks","Daily and weekly checklist with reset timers, ven
  ["arcanes","Arcanes","Arcane effects with their drop sources."],
  ["helminth","Helminth","Each subsumable ability, what it does and which frame it comes from. Tick the ones you have."],
  ["relics","Relics","Which Prime items you can get from relics right now, this month's Prime Resurgence, and every relic with its rewards."],
+ ["relcalc","Relic calculator","How many relics you need to open to be sure of a drop, for every refinement level."],
  ["resources","Resources","A star chart of where to farm the common resources. Click a planet, or pick a resource to highlight its planets."],
  ["nightwave","Nightwave","This season's acts with standing values, a tick list and tips on how to complete each one."],
  ["factions","Syndicate leveling","The quickest ways to earn standing with every syndicate, from the daily cap to the best hand-ins."],
@@ -643,8 +651,47 @@ function relicsPage(){
   <div class="relgrid cols">${rows||'<p class="tag">No relic matches these filters.</p>'}</div></section>`;
  const q2=document.getElementById("rq");q2.oninput=()=>{RL.q=q2.value.trim().toLowerCase();const p=q2.selectionStart;relicsPage();const e=document.getElementById("rq");e.focus();e.setSelectionRange(p,p)};
 }
-const page=()=>({"#relics":"relics","#baro":"baro","#kahl":"kahl","#nightwave":"nightwave","#factions":"factions","#resources":"resources","#mods":"mods","#arcanes":"arcanes","#helminth":"helminth","#tasks":"tasks","#frames":"frames","#weapons":"weapons","#companions":"companions"})[location.hash]||"home";
-function render(){const p=page();p=="home"?home():p=="resources"?resources():p=="nightwave"?nightwave():p=="factions"?factions():p=="kahl"?kahl():p=="baro"?baroPage():p=="relics"?relicsPage():p=="tasks"?tasks():p=="frames"?frames():catalog(p)}
+// Relic calculator: chance of at least one hit in n openings = 1-(1-p)^n, with p from the refinement table above.
+const RC={n:10,stage:"Radiant",mode:"rarity",rarity:"R",part:"",relic:""};
+const pct=x=>x>=0.9999?">99.99%":x<0.0001?"<0.01%":(x*100).toFixed(x<0.1?2:1)+"%";
+const need=(p,c)=>p>=1?1:Math.ceil(Math.log(1-c)/Math.log(1-p));
+function relicCalc(){
+ // parts that can be farmed right now: part -> [{relic, rarity}]
+ const parts=new Map();
+ RELICS.filter(r=>!r.v).forEach(r=>r.r.forEach(([name,rar])=>{if(!primeBase(name))return;(parts.get(name)||parts.set(name,[]).get(name)).push({relic:r.n,rar})}));
+ const names=[...parts.keys()].sort((a,b)=>a.localeCompare(b));
+ if(RC.mode=="part"){if(!parts.has(RC.part))RC.part=names[0];const o=parts.get(RC.part);if(!o.some(x=>x.relic==RC.relic))RC.relic=o[0].relic}
+ const rar=RC.mode=="part"?parts.get(RC.part).find(x=>x.relic==RC.relic).rar:RC.rarity;
+ const n=Math.max(1,Math.min(100000,Math.floor(Number(RC.n))||1)),p=RATE[RC.stage][rar]/100,at1=1-Math.pow(1-p,n);
+ const opt=(v,o)=>o.map(([k,t])=>`<option value="${esc(k)}" ${v==k?"selected":""}>${esc(t)}</option>`).join("");
+ const levels=[0.5,0.75,0.9,0.95,0.99];
+ const cost=STAGES.find(s=>s[0]==RC.stage)[1];
+ const meter=`<div class="meter" role="img" aria-label="Chance of at least one drop: ${pct(at1)}"><i style="width:${Math.min(100,at1*100)}%"></i></div>`;
+ app.innerHTML=`<div class="hero"><div><h1>Relic calculator</h1><p>How sure can you be of a drop? Pick what you want, how many relics you will open and how far you refine them.</p></div></div>
+ <div class="grid g2"><section><h2>Your relics</h2><div class="calcform">
+  <label class="fld"><span>Relics to open</span><input type="text" inputmode="numeric" pattern="[0-9]*" id="rcn" maxlength="6" value="${esc(String(RC.n))}"></label>
+  <label class="fld"><span>Refinement</span><select data-rc="stage">${opt(RC.stage,STAGES.map(([s,c])=>[s,s+(c?` (${c} Void Traces each)`:" (free)")]))}</select></label>
+  <label class="fld"><span>Target</span><select data-rc="mode">${opt(RC.mode,[["rarity","Any reward of a rarity"],["part","A specific Prime part"]])}</select></label>
+  ${RC.mode=="rarity"?`<label class="fld"><span>Rarity</span><select data-rc="rarity">${opt(RC.rarity,[["R","Rare (1 per relic)"],["U","Uncommon (2 per relic)"],["C","Common (3 per relic)"]])}</select></label>
+   <p class="tag">This is the chance for <b>one particular</b> reward of that rarity, for example the rare one.</p>`:
+  `<label class="fld"><span>Prime part</span><select data-rc="part">${opt(RC.part,names.map(x=>[x,x]))}</select></label>
+   <label class="fld"><span>In relic</span><select data-rc="relic">${opt(RC.relic,parts.get(RC.part).map(x=>[x.relic,`${x.relic} (${RAR[x.rar][0]})`]))}</select></label>
+   <p class="tag">Only parts from relics that are not vaulted are listed. Every opening is assumed to be of the relic you pick.</p>`}
+ </div></section>
+ <section><h2>Result<small>${RAR[rar][0]} reward, ${RC.stage}</small></h2>
+  <div class="bignum">${pct(at1)}</div><p class="tag">chance to get <b>at least one</b> in ${n.toLocaleString()} relic${n>1?"s":""}</p>${meter}
+  <ul class="evs"><li><b>${(p*100).toFixed(2)}%</b><small>chance per relic opened</small></li>
+   <li><b>${(n*p).toFixed(2)}</b><small>drops you can expect on average</small></li>
+   <li><b>${pct(Math.pow(1-p,n))}</b><small>chance of getting none at all</small></li>
+   ${cost?`<li><b>${(cost*n).toLocaleString()} Void Traces</b><small>to refine ${n.toLocaleString()} relics to ${RC.stage}</small></li>`:""}</ul></section></div>
+ <div class="grid g2"><section><h2>How many relics for how much certainty</h2><div class="ratetable"><div class="rr rh c2"><span>Certainty</span><span>Relics needed (${RC.stage})</span></div>${levels.map(c=>`<div class="rr c2"><b>${c*100}%</b><span>${need(p,c).toLocaleString()}</span></div>`).join("")}</div>
+  <p class="tag">"Needed" means the smallest number of relics for which the chance of at least one drop reaches that level.</p></section>
+ <section><h2>Is refining worth it?<small>same target, ${n.toLocaleString()} relic${n>1?"s":""}</small></h2><div class="ratetable"><div class="rr rh c4"><span>Stage</span><span>Per relic</span><span>At least one</span><span>Void Traces</span></div>${STAGES.map(([s,c,r])=>{const q=r[rar]/100;return `<div class="rr c4 ${s==RC.stage?"cur":""}"><b>${s}</b><span>${r[rar]}%</span><span>${pct(1-Math.pow(1-q,n))}</span><span>${(c*n).toLocaleString()}</span></div>`}).join("")}</div>
+  <p class="tag">Refining costs Void Traces, which come from opening relics, so a higher stage trades traces for a better chance. Squad rolls are not modelled: each opening here is one reward roll.</p></section></div>`;
+ const e=document.getElementById("rcn");e.oninput=()=>{RC.n=e.value;const p=e.selectionStart;relicCalc();const f=document.getElementById("rcn");f.focus();f.setSelectionRange(p,p)};
+}
+const page=()=>({"#relcalc":"relcalc","#relics":"relics","#baro":"baro","#kahl":"kahl","#nightwave":"nightwave","#factions":"factions","#resources":"resources","#mods":"mods","#arcanes":"arcanes","#helminth":"helminth","#tasks":"tasks","#frames":"frames","#weapons":"weapons","#companions":"companions"})[location.hash]||"home";
+function render(){const p=page();p=="home"?home():p=="resources"?resources():p=="nightwave"?nightwave():p=="factions"?factions():p=="kahl"?kahl():p=="baro"?baroPage():p=="relics"?relicsPage():p=="relcalc"?relicCalc():p=="tasks"?tasks():p=="frames"?frames():catalog(p)}
 function closeMenus(except){document.querySelectorAll(".dd").forEach(d=>{if(d!==except){d.classList.remove("open");d.firstElementChild.setAttribute("aria-expanded","false")}})}
 document.querySelectorAll(".dd>button").forEach(b=>b.addEventListener("click",e=>{
  e.stopPropagation();const d=b.parentElement,o=!d.classList.contains("open");closeMenus(d);d.classList.toggle("open",o);b.setAttribute("aria-expanded",o);
@@ -655,11 +702,11 @@ addEventListener("click",()=>closeMenus());
 addEventListener("keydown",e=>{if(e.key=="Escape"){const o=document.querySelector(".dd.open>button");closeMenus();o&&o.focus()}});
 function route(){
  const p=page();
- for(const k of["home","tasks","frames","weapons","companions","mods","arcanes","helminth","resources","nightwave","factions","kahl","baro","relics"])document.getElementById("n_"+k).className=p==k?"on":"";
- const grp={frames:"collection",weapons:"collection",companions:"collection",mods:"build",arcanes:"build",helminth:"build",nightwave:"guides",factions:"guides",kahl:"guides",baro:"guides"};
- for(const g of["collection","build","guides"])document.getElementById("d_"+g).className=grp[p]==g?"on":"";
+ for(const k of["home","tasks","frames","weapons","companions","mods","arcanes","helminth","resources","nightwave","factions","kahl","baro","relics","relcalc"])document.getElementById("n_"+k).className=p==k?"on":"";
+ const grp={frames:"collection",weapons:"collection",companions:"collection",mods:"build",arcanes:"build",helminth:"build",nightwave:"guides",factions:"guides",kahl:"guides",baro:"guides",relics:"relics",relcalc:"relics"};
+ for(const g of["collection","build","guides","relics"])document.getElementById("d_"+g).className=grp[p]==g?"on":"";
  closeMenus();
- document.querySelector('main').classList.toggle('wide',['home','tasks','nightwave','kahl','factions','baro','relics'].includes(p));
+ document.querySelector('main').classList.toggle('wide',['home','tasks','nightwave','kahl','factions','baro','relics','relcalc'].includes(p));
  render();
 }
 addEventListener("hashchange",route);route();
