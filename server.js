@@ -45,6 +45,7 @@ function sameOrigin(req) {
 function handle(req, res) {
   let url;
   try { url = new URL(req.url, 'http://x'); } catch { return send(res, 400, 'bad url'); }
+  if (url.pathname === '/favicon.ico') { res.writeHead(302, { location: '/favicon-32.png' }); return res.end(); } // browsers ask for this by default
   if (url.pathname === '/healthz') return send(res, 200, 'ok');
   if (url.pathname === '/api/images') return send(res, 200, JSON.stringify(images.status), { 'content-type': 'application/json', 'cache-control': 'no-store' });
   if (url.pathname === '/api/state') {
