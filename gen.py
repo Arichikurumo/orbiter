@@ -178,3 +178,16 @@ if len(sys.argv) > 3:
     RES = [dict(name=n, img=imgn.get(n), spots=[dict(planet=s.split('/')[0], node=s.split('/', 1)[1]) for s in v.split(', ')]) for n, v in sorted(SPOTS.items())]
     open('site/resources.js', 'w').write('const RESOURCES=' + json.dumps(RES) + ';')
     print('resources', len(RES), [r['name'] for r in RES if not r['img']])
+
+# ---- relics: one entry per relic (Intact refinement), with rewards by rarity ----
+if len(sys.argv) > 3:
+    R = {}
+    for x in ITEMS:
+        if x.get('category') != 'Relics' or not x['name'].endswith(' Intact'): continue
+        n = x['name'][:-len(' Intact')]
+        R[n] = dict(n=n, t=n.split()[0], v=bool(x.get('vaulted')),
+                    r=[[r['item']['name'], 'C' if r['chance'] > 20 else 'U' if r['chance'] > 5 else 'R'] for r in x.get('rewards') or []])  # the API's rarity field is wrong; Intact odds are 25.33 / 11 / 2 percent
+    TIER = {'Lith': 0, 'Meso': 1, 'Neo': 2, 'Axi': 3, 'Requiem': 4}
+    RL = sorted(R.values(), key=lambda r: (TIER.get(r['t'], 9), int(re.sub(r'\D', '', r['n'].split()[1]) or 0), r['n']))
+    open('site/relics.js', 'w').write('const RELICS=' + json.dumps(RL, separators=(',', ':')) + ';')
+    print('relics', len(RL), 'unvaulted', sum(1 for r in RL if not r['v']))

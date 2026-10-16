@@ -96,6 +96,16 @@ main.wide{max-width:1280px}
 .bico{width:48px;height:48px;object-fit:contain;flex:none;filter:drop-shadow(0 0 6px rgba(79,209,232,.25))}
 .task:has(.bico){align-items:center}
 .imgnote{background:rgba(201,164,92,.12);border-bottom:1px solid var(--gold);padding:6px 16px;font-size:13px;text-align:center;color:var(--gold)}
+.relgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:10px}
+.relcard,.relic{border:1px solid var(--line);background:rgba(10,14,20,.6);padding:10px 12px}
+.relcard{display:flex;gap:12px;align-items:flex-start}.relcard>img{flex:none;object-fit:contain}
+.relcard ul,.relic ul{list-style:none;margin:6px 0 0;padding:0;font-size:13px}.relcard li,.relic li{padding:2px 0;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.relcard small{color:var(--mut)}
+.rhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.relic>small{display:block;margin-top:2px}
+.relic.vaulted{opacity:.8}
+.rar{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none}
+.rar-C{background:#b07a45}.rar-U{background:#c3ccd6}.rar-R{background:#e8c25a;box-shadow:0 0 6px #e8c25a}
 .ver{margin:6px 0 0;font-size:13px}.ver b{color:var(--cyan)}
 .kahlhero img{flex:none;filter:drop-shadow(0 0 14px rgba(201,164,92,.35))}
 .mission{padding-top:0!important;overflow:hidden}
@@ -122,7 +132,7 @@ main.wide{max-width:1280px}
 <body>
 <nav><span class="brand">Orbiter</span><a href="#home" id="n_home">Home</a><a href="#tasks" id="n_tasks">Tasks</a>
 <div class="dd"><button type="button" id="d_collection" aria-haspopup="true" aria-expanded="false">Collection &#9662;</button><div class="menu"><a href="#frames" id="n_frames">Warframes</a><a href="#weapons" id="n_weapons">Weapons</a><a href="#companions" id="n_companions">Companions</a></div></div>
-<div class="dd"><button type="button" id="d_build" aria-haspopup="true" aria-expanded="false">Upgrades &#9662;</button><div class="menu"><a href="#mods" id="n_mods">Mods</a><a href="#arcanes" id="n_arcanes">Arcanes</a><a href="#helminth" id="n_helminth">Helminth</a></div></div><a href="#resources" id="n_resources">Resources</a>
+<div class="dd"><button type="button" id="d_build" aria-haspopup="true" aria-expanded="false">Upgrades &#9662;</button><div class="menu"><a href="#mods" id="n_mods">Mods</a><a href="#arcanes" id="n_arcanes">Arcanes</a><a href="#helminth" id="n_helminth">Helminth</a></div></div><a href="#relics" id="n_relics">Relics</a><a href="#resources" id="n_resources">Resources</a>
 <div class="dd"><button type="button" id="d_guides" aria-haspopup="true" aria-expanded="false">Guides &#9662;</button><div class="menu"><a href="#nightwave" id="n_nightwave">Nightwave</a><a href="#factions" id="n_factions">Syndicate leveling</a><a href="#kahl" id="n_kahl">Kahl's Garrison</a><a href="#baro" id="n_baro">Baro Ki'Teer</a></div></div></nav>
 <main id="app"></main>
 <script src="frames.js"></script>
@@ -132,6 +142,7 @@ main.wide{max-width:1280px}
 <script src="arcanes.js"></script>
 <script src="helminth.js"></script>
 <script src="resources.js"></script>
+<script src="relics.js"></script>
 <script src="nightwave.js"></script>
 <script src="baro_icons.js"></script>
 <script>
@@ -238,7 +249,7 @@ let lastBaro=0,retries=0;
 async function loadBaro(){
  lastBaro=Date.now();
  try{const r=await fetch("https://api.warframestat.us/pc?language=en",{signal:AbortSignal.timeout(30000)});if(!r.ok)throw 0;W=await r.json();B=W.voidTrader;retries=0}catch{if(!W){B=false;W=false}if(retries++<3)setTimeout(loadBaro,12e4)} // keep older data if a refresh fails; retry a few times, then wait for the hourly refresh
- if(["tasks","home","nightwave","baro"].includes(page()))render();
+ if(["tasks","home","nightwave","baro","relics"].includes(page()))render();
 }
 function baroCard(noList){
  if(B===null)return"Checking Baro Ki'Teer...";
@@ -329,6 +340,7 @@ app.addEventListener('change',e=>{
  else if(t.dataset.m){S.owned["M|"+t.dataset.m]=t.checked||undefined;save();render()}
  else if(t.dataset.f){F[t.dataset.f]=t.value;frames()}
  else if(t.dataset.k){G[page()][t.dataset.k]=t.value;catalog(page())}
+ else if(t.dataset.rl){RL[t.dataset.rl]=t.value;relicsPage()}
 });
 const PAGES=[["tasks","Tasks","Daily and weekly checklist with reset timers, vendors to visit and a Baro Ki'Teer countdown."],
  ["frames","Warframes","Every frame, prime and normal. Mark what you own, sort by how easy it is to get, and filter by role."],
@@ -337,6 +349,7 @@ const PAGES=[["tasks","Tasks","Daily and weekly checklist with reset timers, ven
  ["mods","Mods","Max-rank effects and top drop sources for mods. Search by name or by what the mod does."],
  ["arcanes","Arcanes","Arcane effects with their drop sources."],
  ["helminth","Helminth","Each subsumable ability, what it does and which frame it comes from. Tick the ones you have."],
+ ["relics","Relics","Which Prime items you can get from relics right now, this month's Prime Resurgence, and every relic with its rewards."],
  ["resources","Resources","A star chart of where to farm the common resources. Click a planet, or pick a resource to highlight its planets."],
  ["nightwave","Nightwave","This season's acts with standing values, a tick list and tips on how to complete each one."],
  ["factions","Syndicate leveling","The quickest ways to earn standing with every syndicate, from the daily cap to the best hand-ins."],
@@ -582,8 +595,47 @@ function baroPage(){
   <li><b>Save, do not rush</b><small>Many items return in later visits, so only buy what you need now and keep Ducats for the Primed mods you want.</small></li>
   <li><b>More detail</b><small><a href="https://wiki.warframe.com/w/Baro_Ki%27Teer" target="_blank" rel="noopener">Baro Ki'Teer on the wiki</a></small></li></ul></section></div>`;
 }
-const page=()=>({"#baro":"baro","#kahl":"kahl","#nightwave":"nightwave","#factions":"factions","#resources":"resources","#mods":"mods","#arcanes":"arcanes","#helminth":"helminth","#tasks":"tasks","#frames":"frames","#weapons":"weapons","#companions":"companions"})[location.hash]||"home";
-function render(){const p=page();p=="home"?home():p=="resources"?resources():p=="nightwave"?nightwave():p=="factions"?factions():p=="kahl"?kahl():p=="baro"?baroPage():p=="tasks"?tasks():p=="frames"?frames():catalog(p)}
+// Relics. RELICS comes from gen.py (798 relics, Intact odds). A relic is "available" when it is not vaulted.
+const RL={q:"",tier:"all",avail:"all"};
+const RAR={C:["Common","25.3%"],U:["Uncommon","11%"],R:["Rare","2%"]};
+const primeBase=n=>(/^(.*? Prime)\b/.exec(n)||[])[1];
+const primeImg=(()=>{let m;return n=>{m??=(x=>{[...FRAMES,...WEAPONS,...COMPANIONS].forEach(i=>{if(i.img&&!x.has(i.name))x.set(i.name,i.img)});return x})(new Map());return m.get(n)}})();
+const TIER_NAME=["","Lith","Meso","Neo","Axi"];
+const cleanPack=s=>s.replace(/^T(\d) Void Projection (.*) Vault ([AB]) (\w+)$/,(m,t,names,v,c)=>`${TIER_NAME[t]||"?"} relic pack (${c}): ${names} vault ${v}`).replace(/^M P V /,"").replace(/ Prime (Single|Dual) Pack$/," Prime ($1 pack)").replace(/ Prime Dual Pack$/," Prime");
+function relicsPage(){
+ const n=Date.now(),ms=s=>Date.parse(s);
+ // 1) prime items obtainable from relics right now
+ const items=new Map();
+ RELICS.filter(r=>!r.v).forEach(r=>r.r.forEach(([name,rar])=>{const b=primeBase(name);if(!b)return;
+  const it=items.get(b)||items.set(b,{parts:new Map()}).get(b);const p=name.slice(b.length+1)||"Blueprint";
+  const e=it.parts.get(p)||it.parts.set(p,{rar,relics:[]}).get(p);e.relics.push(r.n)}));
+ const cards=[...items.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([b,it])=>{const img=primeImg(b);
+  return `<div class="relcard">${img?`<img src="${esc(IMG(img))}" alt="" loading="lazy" width="56" height="56" onerror="this.style.visibility='hidden'">`:'<i class="noimg" style="width:56px;height:56px"></i>'}<div><b>${esc(b)}</b><ul>${[...it.parts.entries()].map(([p,e])=>`<li><span class="rar rar-${e.rar}" title="${RAR[e.rar][0]}"></span>${esc(p)} <small>${esc(e.relics.join(", "))}</small></li>`).join("")}</ul></div></div>`}).join("");
+ // 2) Prime Resurgence, live
+ let res='<p class="tag">Loading live data...</p>';
+ if(W===false||(W&&!W.vaultTrader))res='<p class="tag">Live Prime Resurgence data is unavailable right now (needs an internet connection).</p>';
+ else if(W){const v=W.vaultTrader,act=ms(v.activation)<=n&&n<ms(v.expiry);
+  const sched=(v.schedule||[]).filter(s=>ms(s.expiry)>n).slice(0,4);
+  res=`<p class="tag">${act?`<b>${esc(v.character)}</b> at ${esc(v.location)}: this rotation ends in ${left(ms(v.expiry)-n)}.`:"Prime Resurgence is not active right now."} Items cost Aya (the API calls the price "ducats").</p>`+
+   (act?`<div class="relgrid">${(v.inventory||[]).map(i=>`<div class="relic"><b>${esc(cleanPack(i.item))}</b><small class="tag">${esc(i.ducats??"?")} Aya</small></div>`).join("")}</div>`:"")+
+   (sched.length>1?`<p class="tag">Coming up: ${sched.slice(1).map(s=>`${esc(cleanPack(s.item))} (from ${new Date(ms(sched[sched.indexOf(s)-1].expiry)).toLocaleDateString([], {month:"short",day:"numeric"})})`).join(", ")}</p>`:"")}
+ // 3) all relics
+ const tiers=["Lith","Meso","Neo","Axi","Requiem"],q=RL.q;
+ const list=RELICS.filter(r=>(RL.tier=="all"||r.t==RL.tier)&&(RL.avail=="all"||!r.v)&&(!q||(r.n+" "+r.r.map(x=>x[0]).join(" ")).toLowerCase().includes(q)));
+ const opt=(v,o)=>o.map(([k,t])=>`<option value="${esc(k)}" ${v==k?"selected":""}>${esc(t)}</option>`).join("");
+ const rows=list.slice(0,300).map(r=>`<div class="relic ${r.v?"vaulted":""}"><div class="rhead"><b>${esc(r.n)}</b><span class="role r-${r.v?"":"support"}">${r.v?"Vaulted":"Available"}</span></div><ul>${r.r.map(([name,rar])=>`<li><span class="rar rar-${rar}" title="${RAR[rar][0]} (${RAR[rar][1]})"></span>${esc(name)}</li>`).join("")}</ul></div>`).join("");
+ app.innerHTML=`<div class="hero"><div><h1>Relics</h1><p>${items.size} Prime items can be farmed from relics right now. The other ${RELICS.filter(r=>r.v).length} relics are vaulted.</p></div></div>
+ <section><h2>Available now<small>${items.size} items from ${RELICS.filter(r=>!r.v).length} relics</small></h2><p class="tag">Prime parts you can still get by opening relics (any mission with a Void Fissure). Dots show rarity: <span class="rar rar-C"></span> common, <span class="rar rar-U"></span> uncommon, <span class="rar rar-R"></span> rare. Relic names after each part tell you which relics to look for.</p><div class="relgrid">${cards}</div></section>
+ <section><h2>Prime Resurgence<small>vaulted items, bought with Aya</small></h2>${res}</section>
+ <section><h2>All relics<small>${Math.min(300,list.length)} of ${list.length}</small></h2><div class="bar"><input type="search" id="rq" placeholder="Search relics or rewards" aria-label="Search relics" value="${esc(RL.q)}">
+  <select data-rl="tier">${opt(RL.tier,[["all","All eras"],...tiers.map(t=>[t,t])])}</select>
+  <select data-rl="avail">${opt(RL.avail,[["all","All relics"],["now","Available now only"]])}</select></div>
+  <p class="tag">Rewards shown for an Intact relic: 3 common, 2 uncommon and 1 rare. Refining a relic raises the chance of the rarer ones.${list.length>300?" Showing the first 300, so use the search to narrow it down.":""}</p>
+  <div class="relgrid cols">${rows||'<p class="tag">No relic matches these filters.</p>'}</div></section>`;
+ const q2=document.getElementById("rq");q2.oninput=()=>{RL.q=q2.value.trim().toLowerCase();const p=q2.selectionStart;relicsPage();const e=document.getElementById("rq");e.focus();e.setSelectionRange(p,p)};
+}
+const page=()=>({"#relics":"relics","#baro":"baro","#kahl":"kahl","#nightwave":"nightwave","#factions":"factions","#resources":"resources","#mods":"mods","#arcanes":"arcanes","#helminth":"helminth","#tasks":"tasks","#frames":"frames","#weapons":"weapons","#companions":"companions"})[location.hash]||"home";
+function render(){const p=page();p=="home"?home():p=="resources"?resources():p=="nightwave"?nightwave():p=="factions"?factions():p=="kahl"?kahl():p=="baro"?baroPage():p=="relics"?relicsPage():p=="tasks"?tasks():p=="frames"?frames():catalog(p)}
 function closeMenus(except){document.querySelectorAll(".dd").forEach(d=>{if(d!==except){d.classList.remove("open");d.firstElementChild.setAttribute("aria-expanded","false")}})}
 document.querySelectorAll(".dd>button").forEach(b=>b.addEventListener("click",e=>{
  e.stopPropagation();const d=b.parentElement,o=!d.classList.contains("open");closeMenus(d);d.classList.toggle("open",o);b.setAttribute("aria-expanded",o);
@@ -594,11 +646,11 @@ addEventListener("click",()=>closeMenus());
 addEventListener("keydown",e=>{if(e.key=="Escape"){const o=document.querySelector(".dd.open>button");closeMenus();o&&o.focus()}});
 function route(){
  const p=page();
- for(const k of["home","tasks","frames","weapons","companions","mods","arcanes","helminth","resources","nightwave","factions","kahl","baro"])document.getElementById("n_"+k).className=p==k?"on":"";
+ for(const k of["home","tasks","frames","weapons","companions","mods","arcanes","helminth","resources","nightwave","factions","kahl","baro","relics"])document.getElementById("n_"+k).className=p==k?"on":"";
  const grp={frames:"collection",weapons:"collection",companions:"collection",mods:"build",arcanes:"build",helminth:"build",nightwave:"guides",factions:"guides",kahl:"guides",baro:"guides"};
  for(const g of["collection","build","guides"])document.getElementById("d_"+g).className=grp[p]==g?"on":"";
  closeMenus();
- document.querySelector('main').classList.toggle('wide',['home','tasks','nightwave','kahl','factions','baro'].includes(p));
+ document.querySelector('main').classList.toggle('wide',['home','tasks','nightwave','kahl','factions','baro','relics'].includes(p));
  render();
 }
 addEventListener("hashchange",route);route();
