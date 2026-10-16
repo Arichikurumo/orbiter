@@ -103,6 +103,12 @@ main.wide{max-width:1280px}
 .relcard small{color:var(--mut)}
 .rhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .relic>small{display:block;margin-top:2px}
+.ratetable{margin:10px 0;border:1px solid var(--line)}
+.rr{display:grid;grid-template-columns:1.1fr 1.2fr 1.6fr 1.6fr 1.4fr;gap:8px;padding:8px 12px;border-top:1px solid var(--line);align-items:center;font-size:14px}
+.rr:first-child{border-top:0}.rr.rh{color:var(--gold);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.bar{display:inline-block;height:8px;margin-right:8px;vertical-align:middle;border-radius:2px}.bar.c{background:#b07a45}.bar.u{background:#c3ccd6}.bar.r{background:#e8c25a;box-shadow:0 0 6px #e8c25a}
+.pct{color:var(--cyan)!important}
+@media(max-width:620px){.rr{grid-template-columns:1fr 1fr;font-size:13px}.rr.rh{display:none}.bar{display:none}}
 .relic.vaulted{opacity:.8}
 .rar{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none}
 .rar-C{background:#b07a45}.rar-U{background:#c3ccd6}.rar-R{background:#e8c25a;box-shadow:0 0 6px #e8c25a}
@@ -592,7 +598,10 @@ function baroPage(){
   <li><b>More detail</b><small><a href="https://wiki.warframe.com/w/Baro_Ki%27Teer" target="_blank" rel="noopener">Baro Ki'Teer on the wiki</a></small></li></ul></section></div>`;
 }
 // Relics. RELICS comes from gen.py (798 relics, Intact odds). A relic is "available" when it is not vaulted.
-const RL={q:"",tier:"all",avail:"all"};
+const RL={q:"",tier:"all",avail:"all",stage:"Intact"};
+// Drop chances per reward, identical for all relics (checked against the API data); Void Trace costs are from game knowledge.
+const STAGES=[["Intact",0,{C:25.33,U:11,R:2}],["Exceptional",25,{C:23.33,U:13,R:4}],["Flawless",50,{C:20,U:17,R:6}],["Radiant",100,{C:16.67,U:20,R:10}]];
+const RATE=Object.fromEntries(STAGES.map(([n,,r])=>[n,r]));
 const RAR={C:["Common","25.3%"],U:["Uncommon","11%"],R:["Rare","2%"]};
 const primeBase=n=>(/^(.*? Prime)\b/.exec(n)||[])[1];
 const primeImg=(()=>{let m;return n=>{m??=(x=>{[...FRAMES,...WEAPONS,...COMPANIONS].forEach(i=>{if(i.img&&!x.has(i.name))x.set(i.name,i.img)});return x})(new Map());return m.get(n)}})();
@@ -619,14 +628,18 @@ function relicsPage(){
  const tiers=["Lith","Meso","Neo","Axi","Requiem"],q=RL.q;
  const list=RELICS.filter(r=>(RL.tier=="all"||r.t==RL.tier)&&(RL.avail=="all"||!r.v)&&(!q||(r.n+" "+r.r.map(x=>x[0]).join(" ")).toLowerCase().includes(q)));
  const opt=(v,o)=>o.map(([k,t])=>`<option value="${esc(k)}" ${v==k?"selected":""}>${esc(t)}</option>`).join("");
- const rows=list.slice(0,300).map(r=>`<div class="relic ${r.v?"vaulted":""}"><div class="rhead"><b>${esc(r.n)}</b><span class="role r-${r.v?"":"support"}">${r.v?"Vaulted":"Available"}</span></div><ul>${r.r.map(([name,rar])=>`<li><span class="rar rar-${rar}" title="${RAR[rar][0]} (${RAR[rar][1]})"></span>${esc(name)}</li>`).join("")}</ul></div>`).join("");
+ const rows=list.slice(0,300).map(r=>`<div class="relic ${r.v?"vaulted":""}"><div class="rhead"><b>${esc(r.n)}</b><span class="role r-${r.v?"":"support"}">${r.v?"Vaulted":"Available"}</span></div><ul>${r.r.map(([name,rar])=>`<li><span class="rar rar-${rar}" title="${RAR[rar][0]}"></span>${esc(name)} <small class="pct">${RATE[RL.stage][rar]}%</small></li>`).join("")}</ul></div>`).join("");
  app.innerHTML=`<div class="hero"><div><h1>Relics</h1><p>${items.size} Prime items can be farmed from relics right now. The other ${RELICS.filter(r=>r.v).length} relics are vaulted.</p></div></div>
  <section><h2>Available now<small>${items.size} items from ${RELICS.filter(r=>!r.v).length} relics</small></h2><p class="tag">Prime parts you can still get by opening relics (any mission with a Void Fissure). Dots show rarity: <span class="rar rar-C"></span> common, <span class="rar rar-U"></span> uncommon, <span class="rar rar-R"></span> rare. Relic names after each part tell you which relics to look for.</p><div class="relgrid">${cards}</div></section>
  <section><h2>Prime Resurgence<small>vaulted items, bought with Aya</small></h2>${res}</section>
+ <section><h2>Drop rates by refinement<small>the same for every relic</small></h2><p class="tag">Every relic holds 3 common, 2 uncommon and 1 rare reward. Refining it with Void Traces moves chance from the common rewards to the rarer ones. The numbers are the chance <b>per reward</b>; the rare chance is for the single rare reward.</p>
+  <div class="ratetable" role="table"><div class="rr rh" role="row"><span>Stage</span><span>Cost</span><span>Each common (x3)</span><span>Each uncommon (x2)</span><span>Rare (x1)</span></div>${STAGES.map(([n,cost,r])=>`<div class="rr" role="row"><b>${n}</b><span>${cost?cost+" Void Traces":"free"}</span><span><i class="bar c" style="width:${r.C*2}px"></i>${r.C}%</span><span><i class="bar u" style="width:${r.U*2}px"></i>${r.U}%</span><span><i class="bar r" style="width:${r.R*2}px"></i>${r.R}%</span></div>`).join("")}</div>
+  <p class="tag">Radiant makes a rare reward ${RATE.Radiant.R/RATE.Intact.R} times as likely as an unrefined relic, but you spend ${STAGES[3][1]} Void Traces for it. Opening a relic in a squad where everyone uses a Radiant gives the best chance at a rare.</p></section>
  <section><h2>All relics<small>${Math.min(300,list.length)} of ${list.length}</small></h2><div class="bar"><input type="search" id="rq" placeholder="Search relics or rewards" aria-label="Search relics" value="${esc(RL.q)}">
   <select data-rl="tier">${opt(RL.tier,[["all","All eras"],...tiers.map(t=>[t,t])])}</select>
-  <select data-rl="avail">${opt(RL.avail,[["all","All relics"],["now","Available now only"]])}</select></div>
-  <p class="tag">Rewards shown for an Intact relic: 3 common, 2 uncommon and 1 rare. Refining a relic raises the chance of the rarer ones.${list.length>300?" Showing the first 300, so use the search to narrow it down.":""}</p>
+  <select data-rl="avail">${opt(RL.avail,[["all","All relics"],["now","Available now only"]])}</select>
+  <select data-rl="stage" aria-label="Refinement stage">${opt(RL.stage,STAGES.map(([n])=>[n,"Show rates: "+n]))}</select></div>
+  <p class="tag">Each relic has 3 common, 2 uncommon and 1 rare reward. Percentages are for the stage you pick above (${RL.stage}).${list.length>300?" Showing the first 300, so use the search to narrow it down.":""}</p>
   <div class="relgrid cols">${rows||'<p class="tag">No relic matches these filters.</p>'}</div></section>`;
  const q2=document.getElementById("rq");q2.oninput=()=>{RL.q=q2.value.trim().toLowerCase();const p=q2.selectionStart;relicsPage();const e=document.getElementById("rq");e.focus();e.setSelectionRange(p,p)};
 }
