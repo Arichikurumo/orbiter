@@ -258,3 +258,44 @@ if len(sys.argv) > 3:
     cw.sort(key=lambda c: (order.get(c['slot'], 9), -c['dmg']))
     open('site/coda.js', 'w').write('const CODA=' + json.dumps(cw) + ';')
     print('coda', len(cw), sorted(set(CODA) - {c['name'] for c in cw}))
+
+# ---- Kuva weapons: stats from the API, my pick and note per weapon (notes are drawn from those numbers) ----
+if len(sys.argv) > 3:
+    KUVA = {  # name: (pick, note)
+     'Kuva Bramma': ('Top pick', 'Highest damage per shot of any Kuva weapon (mostly Blast) with 35% crit. Slow fire rate.'),
+     'Kuva Chakkhurr': ('Top pick', 'Highest crit of the Kuva primaries (50%, x2.3), mostly Impact damage.'),
+     'Kuva Nukor': ('Top pick', 'Radiation-only damage with a x5 crit multiplier (7% crit), 50% status and 77 rounds at 10 a second.'),
+     'Kuva Zarr': ('Top pick', 'Five-round launcher with big Blast hits and a x2.5 crit multiplier.'),
+     'Kuva Tonkor': ('Good', 'Big hits with 30% crit and x2.5, fires 3 a second but holds a single round.'),
+     'Kuva Ogris': ('Good', 'Status launcher: 47% status but only 9% crit, so build it for status.'),
+     'Kuva Ayanga': ('Good', 'Arch-gun with 35% crit and 33 rounds, mostly Blast.'),
+     'Kuva Grattler': ('Good', 'Fast arch-gun with a 60-round magazine, mostly Blast.'),
+     'Kuva Shildeg': ('Good', 'Best crit of the Kuva melee weapons (31%, x2.7), mostly Puncture.'),
+     'Kuva Ghoulsaw': ('Good', 'Slash-heavy melee with 32% status.'),
+     'Kuva Seer': ('Good', '200 damage per shot including 69 Corrosive, with 33% status.'),
+     'Kuva Kraken': ('Good', 'Fast pistol (6.8 a second), mostly Impact.'),
+     'Kuva Karak': ('Good', 'Fast rifle (11.7 a second) with 70 rounds and 31% status.'),
+     'Kuva Hind': ('Good', 'Fast rifle (9 a second) with a 90-round magazine and 33% status.'),
+     'Kuva Quartakk': ('Good', '88 rounds and 33% status; the highest damage per hit of the Kuva rifles.'),
+     'Kuva Hek': ('Good', 'Puncture-heavy shotgun with 23% crit.'),
+     'Kuva Sobek': ('Good', 'Shotgun with 20 rounds and 21% status, mostly Impact.'),
+     'Kuva Drakgoon': ('Situational', 'Slash-heavy shotgun, but only 9% status.'),
+     'Kuva Kohm': ('Situational', '209-round magazine, but low damage per pellet and 10% status.'),
+     'Kuva Twin Stubbas': ('Situational', '10 shots a second with 114 rounds, but only 27 damage per shot.'),
+     'Kuva Brakk': ('Skip', 'The weakest numbers of the Kuva weapons: 15 damage per shot and 11% status.'),
+    }
+    kw = []
+    for x in json.load(open(sys.argv[2])):
+        if x['name'] not in KUVA or not x.get('masterable'): continue
+        pick, note = KUVA[x['name']]
+        slot = {'Arch-Gun': 'Arch-gun', 'Melee': 'Melee'}.get(x['category']) or f"{x['category']} {x['type'].lower()}"
+        mult = x.get('multishot') or 1
+        scale = mult if x['type'] == 'Shotgun' and mult > 1 else 1  # the API lists shotgun damage per pellet
+        shot = round(x['totalDamage'] * scale)
+        types = sorted(((k, round(v * scale)) for k, v in (x.get('damage') or {}).items() if k != 'total' and v and round(v * scale) > 0), key=lambda kv: -kv[1])
+        kw.append(dict(name=x['name'], slot=slot, pick=pick, note=note, types=types, dmg=shot, crit=round(x['criticalChance'] * 100), cm=round(x['criticalMultiplier'], 1),
+                       status=round(x['procChance'] * 100), rate=round(x['fireRate'] or 0, 2), mag=x.get('magazineSize'), reload=round(x['reloadTime'], 1) if x.get('reloadTime') else None, wiki=x.get('wikiaUrl')))
+    order = ['Primary rifle', 'Primary shotgun', 'Primary launcher', 'Primary bow', 'Secondary pistol', 'Secondary dual pistols', 'Melee', 'Arch-gun']
+    kw.sort(key=lambda c: (order.index(c['slot']) if c['slot'] in order else 9, -c['dmg']))
+    open('site/kuva.js', 'w').write('const KUVA=' + json.dumps(kw) + ';')
+    print('kuva', len(kw), sorted(set(KUVA) - {c['name'] for c in kw}))

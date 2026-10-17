@@ -76,6 +76,7 @@ a{color:var(--cyan)}
 .flagrow.strip{max-width:none;margin:0 0 16px;padding:0 4px}
 .emblem{float:right;margin:0 0 8px 16px;filter:drop-shadow(0 0 14px rgba(201,164,92,.35))}
 .card:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.cardico{display:block;margin-bottom:10px;color:var(--gold)}.cardico .a{stroke:var(--cyan)}.card:hover .cardico{color:var(--cyan)}.card:hover .cardico .a{stroke:var(--gold)}
 .card h3{margin:0 0 6px;font-size:15px;color:var(--gold);text-transform:uppercase;letter-spacing:.14em}.card p{margin:0;color:var(--mut);font-size:14px}
 .evs{list-style:none;margin:0;padding:0}.evs li{padding:6px 0;border-top:1px solid rgba(42,51,64,.6)}.evs li:first-child{border-top:0}.evs small{display:block;color:var(--mut)}
 @media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
@@ -191,6 +192,7 @@ main.wide{max-width:1280px}
 <script src="relics.js"></script>
 <script src="nightwave.js"></script>
 <script src="coda.js"></script>
+<script src="kuva.js"></script>
 <script src="baro_icons.js"></script>
 <script>
 // Daily resets 00:00 UTC, weekly Monday 00:00 UTC. Edit SECTIONS to taste.
@@ -434,6 +436,7 @@ const SITE=[
  {id:"factions",group:"guides",title:"Syndicate leveling",short:"Fastest standing methods",desc:"The quickest ways to earn standing with every syndicate, from the daily cap to the best hand-ins.",wide:1,fn:()=>factions()},
  {id:"kahl",group:"guides",title:"Kahl's Garrison",short:"Weekly Break Narmer missions",desc:"The three weekly Break Narmer missions step by step, the weekly challenges and what Stock buys.",wide:1,fn:()=>kahl()},
  {id:"coda",group:"guides",title:"Coda weapons",short:"Compare and what to buy",desc:"How Eleanor's Coda weapons work, what is in the shop now, how the 14 compare and which ones to buy.",wide:1,fn:()=>codaPage()},
+ {id:"kuva",group:"guides",title:"Kuva weapons",short:"Get them from a Lich, compare",desc:"How to get a Kuva weapon from a Kuva Lich, how the 21 compare with their damage types, and which ones to hunt first.",wide:1,fn:()=>kuvaPage()},
  {id:"baro",group:"guides",title:"Baro Ki'Teer",short:"Stock and what to buy first",desc:"When he visits, his stock with a buy-first ranking, and how to spend your Ducats.",wide:1,fn:()=>baroPage()},
  {id:"backup",group:"more",title:"Backup & restore",desc:"Download your whole collection as a file and load it back in later, on this or another install.",fn:()=>backupPage()},
 ];
@@ -441,7 +444,7 @@ const curr=()=>SITE.find(p=>"#"+p.id==location.hash)||SITE[0];
 function buildNav(){
  const top=p=>`<a href="#${p.id}" id="n_${p.id}">${esc(p.title)}</a>`;
  document.getElementById("nav").innerHTML=`<a class="brand" href="#home" aria-label="Orbiter, go to the home page"><img src="favicon.svg" alt="" width="26" height="26">Orbiter</a>`+top(SITE[0])+top(SITE[1])+
-  GROUPS.filter(g=>g.nav!==false).map(g=>`<div class="dd"><button type="button" id="d_${g.id}" aria-haspopup="true" aria-expanded="false" aria-controls="m_${g.id}">${g.title} &#9662;</button><div class="menu" id="m_${g.id}">${SITE.filter(p=>p.group==g.id).map(p=>`<a href="#${p.id}" id="n_${p.id}"><b>${esc(p.title)}</b><small>${esc(p.short)}</small></a>`).join("")}</div></div>`).join("");
+  GROUPS.filter(g=>g.nav!==false).map(g=>`<div class="dd"><button type="button" id="d_${g.id}" aria-haspopup="true" aria-expanded="false" aria-controls="m_${g.id}">${g.title} &#9662;</button><div class="menu" id="m_${g.id}">${SITE.filter(p=>p.group==g.id).sort((a,b)=>a.title.localeCompare(b.title)).map(p=>`<a href="#${p.id}" id="n_${p.id}"><b>${esc(p.title)}</b><small>${esc(p.short)}</small></a>`).join("")}</div></div>`).join("");
 }
 buildNav();
 // The API has no version field, so the version is read from the newest news post flagged as an update (e.g. "...: Hotfix 44.1.2 + 2.1").
@@ -454,7 +457,9 @@ function gameVersion(){
  const link=u&&/^https?:\/\//i.test(u.link)?` &middot; <a href="${esc(u.link)}" target="_blank" rel="noopener">${esc(u.message)}</a>`:"";
  return `<p class="ver"><b>Game version ${v?esc(v[1]):"unknown"}</b>${build?` &middot; build ${build[1]}-${build[2]}-${build[3]}`:""}${link}</p>`;
 }
-const card=p=>`<a class="card" href="#${p.id}"><h3>${esc(p.title)}</h3><p>${esc(p.desc)}</p></a>`;
+const ICONS={"tasks": "<rect x=\"6\" y=\"4\" width=\"20\" height=\"24\" rx=\"2\"/><path class=\"a\" d=\"M10 11l2 2 3-4M10 19l2 2 3-4\"/><path d=\"M17 12h6M17 20h6\"/>", "frames": "<path d=\"M7 21V14a9 9 0 0 1 18 0v7l-3 5h-4l-2-3-2 3h-4z\"/><path class=\"a\" d=\"M10 15h12l-2 4h-8z\"/>", "weapons": "<path d=\"M27 5L13 19\"/><path d=\"M27 5v6l-6-6z\"/><path class=\"a\" d=\"M10 16l6 6\"/><path d=\"M13 20l-7 7\"/>", "companions": "<path d=\"M16 28c-5 0-9-3-9-6 0-3 3-5 5-7 2-2 6-2 8 0 2 2 5 4 5 7 0 3-4 6-9 6z\"/><g class=\"a\"><circle cx=\"8\" cy=\"12\" r=\"2.2\"/><circle cx=\"13\" cy=\"7\" r=\"2.2\"/><circle cx=\"20\" cy=\"7\" r=\"2.2\"/><circle cx=\"25\" cy=\"12\" r=\"2.2\"/></g>", "mods": "<rect x=\"5\" y=\"4\" width=\"22\" height=\"24\" rx=\"3\"/><path d=\"M5 20h22M10 24h12\"/><circle class=\"a\" cx=\"16\" cy=\"12\" r=\"4\"/>", "arcanes": "<path d=\"M16 3l11 6.5v13L16 29 5 22.5v-13z\"/><path class=\"a\" d=\"M16 9l2 5 5 .5-4 3.5 1.5 5-4.5-3-4.5 3 1.5-5-4-3.5 5-.5z\"/>", "helminth": "<path d=\"M10 3c0 7 12 7 12 13s-12 6-12 13\"/><path class=\"a\" d=\"M22 3c0 7-12 7-12 13s12 6 12 13\"/><path d=\"M12 8h8M11 16h10M12 24h8\"/>", "relics": "<path d=\"M16 3l10 10-10 16L6 13z\"/><path class=\"a\" d=\"M6 13h20M16 3l-4 10 4 16 4-16z\"/>", "relicfinder": "<circle cx=\"14\" cy=\"14\" r=\"8\"/><path class=\"a\" d=\"M20 20l8 8\"/><path d=\"M14 9l3 5-3 5-3-5z\"/>", "relcalc": "<rect x=\"6\" y=\"4\" width=\"20\" height=\"24\" rx=\"2\"/><rect class=\"a\" x=\"10\" y=\"8\" width=\"12\" height=\"5\"/><path d=\"M10 18h2M15 18h2M20 18h2M10 23h2M15 23h2M20 23h2\"/>", "resources": "<circle cx=\"16\" cy=\"16\" r=\"7\"/><ellipse class=\"a\" cx=\"16\" cy=\"16\" rx=\"14\" ry=\"4.5\" transform=\"rotate(-20 16 16)\"/>", "nightwave": "<circle class=\"a\" cx=\"16\" cy=\"18\" r=\"2\"/><path d=\"M11 13a7 7 0 0 0 0 10M21 13a7 7 0 0 1 0 10M7 9a13 13 0 0 0 0 18M25 9a13 13 0 0 1 0 18\"/>", "factions": "<path d=\"M16 3l11 4v8c0 7-5 11-11 14C10 26 5 22 5 15V7z\"/><path class=\"a\" d=\"M11 14l5 4 5-4M11 19l5 4 5-4\"/>", "kahl": "<path d=\"M3 27L16 5l13 22z\"/><path class=\"a\" d=\"M16 5v22\"/><path d=\"M16 27l-5-8M16 27l5-8\"/>", "coda": "<path d=\"M16 28S4 20 4 12a6 6 0 0 1 12-2 6 6 0 0 1 12 2c0 8-12 16-12 16z\"/><path class=\"a\" d=\"M8 16h4l2-4 3 7 2-3h5\"/>", "kuva": "<path d=\"M7 17a9 9 0 1 1 18 0c0 3-1 4-2 5v4h-3v-2h-2v2h-2v-2h-2v2h-3v-4c-1-1-4-2-4-5z\"/><circle class=\"a\" cx=\"12\" cy=\"16\" r=\"2\"/><circle class=\"a\" cx=\"20\" cy=\"16\" r=\"2\"/>", "baro": "<circle cx=\"16\" cy=\"16\" r=\"12\"/><path class=\"a\" d=\"M16 10l1.8 4 4.2.4-3.2 2.8 1 4.2-3.8-2.2-3.8 2.2 1-4.2L10 14.4l4.2-.4z\"/>", "backup": "<path d=\"M5 20v6h22v-6\"/><path class=\"a\" d=\"M16 5v15M10 14l6 6 6-6\"/>"};
+const ico=id=>ICONS[id]?`<svg class="cardico" viewBox="0 0 32 32" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[id]}</svg>`:"";
+const card=p=>`<a class="card" href="#${p.id}">${ico(p.id)}<h3>${esc(p.title)}</h3><p>${esc(p.desc)}</p></a>`;
 function home(){
  const n=Date.now(),ms=s=>Date.parse(s),when=a=>`${new Date(a).toLocaleDateString([], {month:"short",day:"numeric"})}`;
  let now="",soon="",news="";
@@ -830,18 +835,20 @@ function backupPage(){
 const CODA_REF=Date.UTC(2025,2,18),CODA_LEN=4*864e5; // wiki: batch A started 2025-03-18 00:00 UTC and the shop changes every 4 days (this matched warframetools.com on 2026-10-16)
 const codaSlot=n=>Math.floor((n-CODA_REF)/CODA_LEN),codaBatch=n=>codaSlot(n)%2?"B":"A",codaNext=n=>CODA_REF+(codaSlot(n)+1)*CODA_LEN;
 const PICK_CLASS={"Top pick":"support","Good":"stealth","Situational":"","Skip":"damage"};
-function codaPage(){
- const n=Date.now(),b=codaBatch(n),swap=codaNext(n);
- const pic=name=>{const w=WEAPONS.find(x=>x.name==name);return w&&w.img?`<img src="${esc(IMG(w.img))}" alt="" width="48" height="48" loading="lazy" onerror="this.style.visibility='hidden'">`:'<i class="noimg" style="width:48px;height:48px"></i>'};
- const badge=c=>`<span class="role r-${PICK_CLASS[c.pick]}">${esc(c.pick)}</span>`;
- const shop=CODA.filter(c=>c.batch==b),tops=CODA.filter(c=>c.pick=="Top pick");
- const stat=c=>`<div class="cstats"><span>${c.dmg} damage</span><span>${c.crit}% crit, x${c.cm}</span><span>${c.status}% status</span><span>${c.rate}/s</span>${c.mag?`<span>${c.mag} rounds, ${c.reload}s reload</span>`:""}</div>`;
- const DT={impact:["Impact","#8aa0b6"],puncture:["Puncture","#c3ccd6"],slash:["Slash","#e06060"],heat:["Heat","#e08a3c"],cold:["Cold","#7fd0ff"],electricity:["Electricity","#b48cff"],toxin:["Toxin","#5be3a0"],blast:["Blast","#d6a15a"],radiation:["Radiation","#e8d44a"],magnetic:["Magnetic","#6a8cff"],viral:["Viral","#e070c0"],corrosive:["Corrosive","#a8b83a"],gas:["Gas","#4fc7b0"]};
- const dtName=k=>(DT[k]||[k])[0],dtColor=k=>(DT[k]||[0,"#7d8896"])[1],PHYS=["impact","puncture","slash"];
- const dmgTypes=c=>{const tot=c.types.reduce((a,t)=>a+t[1],0)||1,el=c.types.filter(t=>!PHYS.includes(t[0]));
+// Shared by the Coda and Kuva pages
+const pic=name=>{const w=WEAPONS.find(x=>x.name==name);return w&&w.img?`<img src="${esc(IMG(w.img))}" alt="" width="48" height="48" loading="lazy" onerror="this.style.visibility='hidden'">`:'<i class="noimg" style="width:48px;height:48px"></i>'};
+const badge=c=>`<span class="role r-${PICK_CLASS[c.pick]}">${esc(c.pick)}</span>`;
+const stat=c=>`<div class="cstats"><span>${c.dmg} damage</span><span>${c.crit}% crit, x${c.cm}</span><span>${c.status}% status</span><span>${c.rate}/s</span>${c.mag?`<span>${c.mag} rounds, ${c.reload}s reload</span>`:""}</div>`;
+const DT={impact:["Impact","#8aa0b6"],puncture:["Puncture","#c3ccd6"],slash:["Slash","#e06060"],heat:["Heat","#e08a3c"],cold:["Cold","#7fd0ff"],electricity:["Electricity","#b48cff"],toxin:["Toxin","#5be3a0"],blast:["Blast","#d6a15a"],radiation:["Radiation","#e8d44a"],magnetic:["Magnetic","#6a8cff"],viral:["Viral","#e070c0"],corrosive:["Corrosive","#a8b83a"],gas:["Gas","#4fc7b0"]};
+const dtName=k=>(DT[k]||[k])[0],dtColor=k=>(DT[k]||[0,"#7d8896"])[1],PHYS=["impact","puncture","slash"];
+const dmgTypes=c=>{const tot=c.types.reduce((a,t)=>a+t[1],0)||1,el=c.types.filter(t=>!PHYS.includes(t[0]));
   return `<p class="tag" style="margin:6px 0 4px">Native element: <b style="color:var(--fg)">${el.length?el.map(t=>dtName(t[0])).join(" and "):"none (physical only)"}</b></p>
   <div class="dmgbar" role="img" aria-label="${esc(c.types.map(t=>`${dtName(t[0])} ${Math.round(t[1]/tot*100)}%`).join(", "))}">${c.types.map(t=>`<i style="width:${t[1]/tot*100}%;background:${dtColor(t[0])}"></i>`).join("")}</div>
   <div class="dmglegend">${c.types.map(t=>`<span><i style="background:${dtColor(t[0])}"></i>${dtName(t[0])} ${t[1]} <small>${Math.round(t[1]/tot*100)}%</small></span>`).join("")}</div>`};
+
+function codaPage(){
+ const n=Date.now(),b=codaBatch(n),swap=codaNext(n);
+ const shop=CODA.filter(c=>c.batch==b),tops=CODA.filter(c=>c.pick=="Top pick");
  const slots=[...new Set(CODA.map(c=>c.slot))];
  app.innerHTML=`<div class="grid g2"><section><h2>In Eleanor's shop now<small>Batch ${b}, switches in ${left(swap-n)}</small></h2>
   <p class="tag">Eleanor (Höllvania, needs The Hex quest) sells two batches of seven Coda weapons and switches between them every 4 days at 00:00 UTC. The batch shown is worked out from that rotation, so check it against the in-game shop.</p>
@@ -870,6 +877,30 @@ function codaPage(){
   <p class="tag">These picks come from base stats (before mods) and the wiki's description of each weapon's unique effect. I have not tested them in the game, and the bonus element you roll can change which one is best for you.</p></section>
  <section><h2>Reading the damage types</h2><p class="tag">Each card shows the weapon's own damage split into physical types (impact, puncture, slash) and native elements. On top of that, every Coda weapon you buy rolls one extra bonus element worth 25 to 60% of its base damage, so the element you end up with is the native one plus whatever the shop rolled.</p></section>
  ${slots.map(s=>`<section><h2>${esc(s)}<small>${CODA.filter(c=>c.slot==s).length==1?"1 weapon":CODA.filter(c=>c.slot==s).length+" weapons"}</small></h2><div class="relgrid">${CODA.filter(c=>c.slot==s).map(c=>`<div class="relic"><div class="rhead"><span style="display:flex;gap:8px;align-items:center">${pic(c.name)}<b>${esc(c.name)}</b></span>${badge(c)}</div>${stat(c)}${dmgTypes(c)}<p class="tag" style="margin:8px 0 4px">${esc(c.note)}</p><small class="tag">Batch ${c.batch}${c.batch==b?", in the shop now":""}${c.wiki?` &middot; <a href="${esc(c.wiki)}" target="_blank" rel="noopener">wiki</a>`:""}</small></div>`).join("")}</div></section>`).join("")}`;
+}
+function kuvaPage(){
+ const tops=KUVA.filter(c=>c.pick=="Top pick"),slots=[...new Set(KUVA.map(c=>c.slot))];
+ app.innerHTML=`<div class="grid g2"><section><h2>How to get a Kuva weapon<small>from a Kuva Lich</small></h2><ol class="steps">
+  <li><b>Unlock Liches.</b> Finish The War Within, reach Mastery Rank 5 and own a Railjack. You cannot start one while you have a Lich, a Sister of Parvos or a Technocyte Coda.</li>
+  <li><b>Find a Kuva Larvling.</b> It can appear in normal Grineer missions of level 20 or higher (not Sorties, Void Fissures, Invasions, quests or Dark Sectors; Steel Path counts, Uranus does not). When the lights flicker yellow, kill 15 enemies in about 30 seconds and it spawns.</li>
+  <li><b>Check its weapon first.</b> The weapon shown on the downed Larvling is random. If it is not the one you want, leave it and try another mission. Weapons you skip only come back after all the others have been shown.</li>
+  <li><b>Finish it with a Parazon Mercy kill</b> to create your Lich. Only the last player to damage it can do this, and it despawns after 30 seconds.</li>
+  <li><b>Find the Requiem order.</b> Kill Thralls in your Lich's nodes for Murmurs, which reveal Requiem mods. Put three of the 8 Requiem mods on your Parazon in the right order (336 possible orders). Testing an order gives about 10 Murmurs, and each mod has 3 charges.</li>
+  <li><b>Fail the Mercy to level it up.</b> A failed Mercy moves the Lich on: Earth, Mars, Ceres, Sedna, then the Kuva Fortress. Clearing all of its nodes also levels it up.</li>
+  <li><b>Vanquish it.</b> With the right order the Lich flees to Saturn Proxima (this needs rank 5 in a Railjack Intrinsic). Choose <b>Vanquish</b> and its Kuva weapon arrives by Ordis message, ready to claim in the Foundry. <b>Convert</b> gives no weapon.</li></ol></section>
+ <section><h2>Good to know</h2><ul class="evs">
+  <li><b>The element comes from the Lich</b><small>The Lich's Progenitor Warframe sets the bonus damage element of the weapon. The wiki page I read does not give the size of the bonus, so check it in the game.</small></li>
+  <li><b>100 Kuva per Larvling mission</b><small>Your squad gets 100 Kuva at the end of the mission, even without a Mercy kill.</small></li>
+  <li><b>The Lich takes a cut</b><small>It steals roughly 0.7% of rewards per node it controls. You get everything back once it is defeated.</small></li>
+  <li><b>Ephemera</b><small>A defeated Lich has a 20% chance to drop an Ephemera in its Progenitor's element, and you keep it whether you vanquish or convert. Your first defeat also gives the Old Blood Emblem.</small></li>
+  <li><b>More detail</b><small><a href="https://wiki.warframe.com/w/Kuva_Lich" target="_blank" rel="noopener">Kuva Lich on the wiki</a></small></li></ul></section></div>
+ <section><h2>What to hunt first<small>my picks, from the numbers below</small></h2>
+  <ol class="steps">${tops.map(c=>`<li><b>${esc(c.name)}</b> <small class="tag">top pick, ${esc(c.slot.toLowerCase())}</small><br>${esc(c.note)}</li>`).join("")}
+   <li><b>Decide before you roll.</b> You choose the weapon by retrying Larvlings until yours shows up, so pick one first. The element is the Progenitor's, so you cannot choose it that way.</li>
+   <li><b>Skip Kuva Brakk</b> unless you want it for the codex; its numbers are the lowest of the Kuva weapons.</li></ol>
+  <p class="tag">These picks come from base stats (before mods). I have not tested them in the game, and they are only compared fairly within the same weapon type. Shotgun damage is the full spread of pellets.</p></section>
+ <section><h2>Reading the damage types</h2><p class="tag">Each card shows the weapon's own damage split into physical types (impact, puncture, slash) and native elements. On top of that, a Kuva weapon gets a bonus element from the Lich that dropped it.</p></section>
+ ${slots.map(s=>`<section><h2>${esc(s)}<small>${KUVA.filter(c=>c.slot==s).length==1?"1 weapon":KUVA.filter(c=>c.slot==s).length+" weapons"}</small></h2><div class="relgrid">${KUVA.filter(c=>c.slot==s).map(c=>`<div class="relic"><div class="rhead"><span style="display:flex;gap:8px;align-items:center">${pic(c.name)}<b>${esc(c.name)}</b></span>${badge(c)}</div>${stat(c)}${dmgTypes(c)}<p class="tag" style="margin:8px 0 4px">${esc(c.note)}</p><small class="tag">${c.wiki?`<a href="${esc(c.wiki)}" target="_blank" rel="noopener">wiki</a>`:""}</small></div>`).join("")}</div></section>`).join("")}`;
 }
 const page=()=>curr().id;
 function render(){const p=curr();p.fn();decorate(p)}
