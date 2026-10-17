@@ -63,6 +63,20 @@ a{color:var(--cyan)}
 .hero p{margin:4px 0 0;color:var(--mut)}
 .prog{height:6px;background:#0a0e14;border:1px solid var(--line);margin:4px 0 4px}
 .prog i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--cyan));transition:width .3s}
+.tsum{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.3fr) auto;gap:18px;align-items:center;margin-bottom:20px;padding:14px 18px;border:1px solid var(--line);border-top:2px solid var(--gold);background:var(--card)}
+.tsum .baro{margin:0;clip-path:none}.tbig{font-size:34px;font-weight:600;color:var(--cyan);line-height:1.1}.tbig small{font-size:14px;color:var(--mut);font-weight:400}
+.tctl{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.tcols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}.tcols>div{display:grid;gap:20px;min-width:0}.tsec{margin:0}
+.thead{margin:0}.thead button{display:flex;width:100%;align-items:center;gap:10px;background:none;border:0;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;text-align:left;padding:0}
+.thead small{text-transform:none;letter-spacing:0;color:var(--mut);font-weight:400}.tcount{color:var(--cyan);font-size:13px;letter-spacing:0;font-weight:400}.thead .chev{margin-left:auto;color:var(--mut)}
+.trow{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;padding:1px 0;border-top:1px solid rgba(42,51,64,.45)}.trow:first-of-type{border-top:0}
+.tchk{display:flex;gap:10px;align-items:center;flex:1;min-width:0;padding:7px 2px;cursor:pointer}.tchk span{overflow-wrap:anywhere}
+.trow.done .tchk span{text-decoration:line-through;color:var(--mut)}
+.tinfo,.tbtn{background:none;border:1px solid var(--line);color:var(--mut);font:inherit;font-size:12px;cursor:pointer;min-width:26px;height:26px;padding:0 7px}
+.tinfo:hover,.tbtn:hover{border-color:var(--cyan);color:var(--cyan)}.tinfo[aria-expanded=true],.tbtn[aria-expanded=true]{color:var(--cyan);border-color:var(--cyan)}
+.tdesc{flex:1 0 100%;margin:0 0 6px 30px;font-size:13px;color:var(--mut);line-height:1.5}.tdesc .meta{display:block;margin-top:2px}
+.tsub{flex:1 0 100%;margin:0 0 6px 30px;border-left:1px solid var(--line);padding-left:12px}.tsub label{display:flex;gap:10px;align-items:flex-start;padding:5px 0;font-size:14px;cursor:pointer}.tsub small{display:block;color:var(--mut);font-size:12px}
+@media(max-width:900px){.tsum{grid-template-columns:minmax(0,1fr)}.tcols{grid-template-columns:minmax(0,1fr)}}
 .task.sub{margin-left:34px;padding-top:2px;padding-bottom:2px;border-left:1px solid var(--line);padding-left:12px}
 .task.sub b{font-weight:400;font-size:14px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
@@ -319,16 +333,34 @@ function baroCard(noList){
   return`<b>Baro Ki'Teer is here, leaves in ${left(e-n)}</b> at ${esc(B.location)}${inv&&!noList?`<details><summary>Inventory (${B.inventory.length})</summary><ul>${inv}</ul></details>`:""}`}
  if(Date.now()-lastBaro>6e5)loadBaro();return"Baro Ki'Teer has left. Checking the next visit...";
 }
+// Tasks page. UI choices (hide done, open details, collapsed sections) are per-browser conveniences and are not part of the saved progress.
+const UI=(()=>{try{return JSON.parse(localStorage.orbiterUi)}catch{return{}}})();UI.open??={};UI.shut??={};
+const saveUI=()=>{try{localStorage.orbiterUi=JSON.stringify(UI)}catch{}};
+function uiAction(a){
+ const [k,...r]=a.split(":"),id=r.join(":");
+ if(k=="all")UI.all=!UI.all;else if(k=="shut")UI.shut[id]=!UI.shut[id];else if(k=="info"||k=="sub")UI.open[a]=!(UI.open[a]??UI.all);
+ saveUI();tasks();
+}
 function tasks(){
  rollover();const n=Date.now();
  const done=ALL.filter(isDone).length,resets={d:dayStart(n)+864e5,w:weekStart(n)+6048e5};
- const sec=s=>{const d=s.items.filter(isDone).length;
-  return `<section><h2>${s.title}<small title="${s.reset=='d'?'Daily reset at 00:00 UTC':'Weekly reset on Monday at 00:00 UTC'}">resets in ${left(resets[s.reset]-n)}</small></h2>
-  <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${s.items.length}" aria-valuenow="${d}"><i style="width:${d/s.items.length*100}%"></i></div><div class="tag">${d} / ${s.items.length} done</div>`+
-  s.items.map(t=>{const [id,name,desc,,meta]=t,dn=isDone(t);
-   return `<label class="task ${dn?'done':''}"><input type="checkbox" data-t="${id}" ${dn?'checked':''}><span><b>${esc(name)}</b><small>${esc(desc)}</small>${meta?`<small class="meta">${esc(meta)}</small>`:''}</span></label>`+
-   subs(t).map(([sid,sn,sd])=>`<label class="task sub ${S.tasks[sid]?'done':''}"><input type="checkbox" data-t="${sid}" ${S.tasks[sid]?'checked':''}><span><b>${esc(sn)}</b>${sd?`<small>${esc(sd)}</small>`:''}</span></label>`).join('')}).join('')+`</section>`};
- app.innerHTML=`<div class="hero">${HERO}<div><h1>Tenno Orders</h1><p data-lead>${done} of ${ALL.length} tasks complete. Daily tasks reset at 00:00 UTC (in ${left(resets.d-n)}), weekly on Monday.</p></div></div><div class="baro">${baroCard()}</div>`+'<div class="grid g2">'+["daily","weekly","dv","wv"].map(k=>sec(SECTIONS.find(s=>s.key==k))).join('')+'</div>'+sec(SECTIONS.find(s=>s.key=='other'));
+ const row=t=>{const [id,name,desc,,meta]=t,dn=isDone(t),sb=subs(t),sd=sb.filter(s=>S.tasks[s[0]]).length;
+  const info=UI.open["info:"+id]??UI.all,sub=UI.open["sub:"+id]??UI.all;
+  return `<div class="trow ${dn?"done":""}"><label class="tchk"><input type="checkbox" data-t="${esc(id)}" ${dn?"checked":""}><span>${esc(name)}</span></label>
+   ${sb.length?`<button type="button" class="tbtn" data-ui="sub:${esc(id)}" aria-expanded="${!!sub}" aria-label="${esc(name)}: show the ${sb.length} parts">${sd}/${sb.length} ${sub?"&#9652;":"&#9662;"}</button>`:""}
+   <button type="button" class="tinfo" data-ui="info:${esc(id)}" aria-expanded="${!!info}" aria-label="Details for ${esc(name)}">i</button>
+   ${info?`<div class="tdesc">${esc(desc)}${meta?`<span class="meta">${esc(meta)}</span>`:""}</div>`:""}
+   ${sb.length&&sub?`<div class="tsub">${sb.map(([sid,sn,sdsc])=>`<label><input type="checkbox" data-t="${esc(sid)}" ${S.tasks[sid]?"checked":""}><span>${esc(sn)}${sdsc?`<small>${esc(sdsc)}</small>`:""}</span></label>`).join("")}</div>`:""}</div>`};
+ const sec=s=>{const d=s.items.filter(isDone).length,shut=UI.shut[s.key],list=UI.hide?s.items.filter(t=>!isDone(t)):s.items;
+  return `<section class="tsec"><h2 class="thead"><button type="button" data-ui="shut:${s.key}" aria-expanded="${!shut}"><span>${s.title}</span><span class="tcount">${d}/${s.items.length}</span><small title="${s.reset=="d"?"Daily reset at 00:00 UTC":"Weekly reset on Monday at 00:00 UTC"}">resets in ${left(resets[s.reset]-n)}</small><span class="chev">${shut?"&#9662;":"&#9652;"}</span></button></h2>
+  <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${s.items.length}" aria-valuenow="${d}"><i style="width:${d/s.items.length*100}%"></i></div>
+  ${shut?"":list.map(row).join("")||'<p class="tag">All done here.</p>'}</section>`};
+ const by=k=>sec(SECTIONS.find(s=>s.key==k));
+ app.innerHTML=`<div class="tsum"><div><div class="tbig">${done}<small> / ${ALL.length} done</small></div><div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${ALL.length}" aria-valuenow="${done}"><i style="width:${done/ALL.length*100}%"></i></div>
+   <div class="tag">Daily resets in ${left(resets.d-n)} &middot; weekly resets in ${left(resets.w-n)} (00:00 UTC)</div></div>
+  <div class="baro">${baroCard(true)}</div>
+  <div class="tctl"><label class="chk"><input type="checkbox" data-ui="hide" ${UI.hide?"checked":""}> Hide done</label><button type="button" class="btn quiet" data-ui="all">${UI.all?"Hide details":"Show all details"}</button></div></div>
+  <div class="tcols"><div>${by("daily")}${by("dv")}${by("other")}</div><div>${by("weekly")}${by("wv")}</div></div>`;
 }
 const HERO=`<svg viewBox="0 0 160 160" width="120" height="120" aria-hidden="true" fill="none" stroke-linecap="round">
  <circle cx="80" cy="80" r="74" stroke="#c9a45c" stroke-width="1.5" stroke-dasharray="3 7"/>
@@ -408,6 +440,7 @@ function pick(t){const p=t.closest("[data-p]"),r=t.closest("[data-r]");
  else if(r){R.res=R.res==r.dataset.r?null:r.dataset.r;R.planet=null;resources()}}
 app.addEventListener("click",e=>{
  if(page()=="resources")pick(e.target);
+ const u=e.target.closest&&e.target.closest("button[data-ui]");if(u){uiAction(u.dataset.ui);return}
  const b=e.target.closest&&e.target.closest("[data-bk]");if(!b)return;
  const a=b.dataset.bk;
  if(a=="export")exportBackup();else if(a=="cancel"){IMP=null;BKMSG="";backupPage()}else if(a=="replace"||a=="merge")applyImport(a=="merge");
@@ -418,6 +451,7 @@ app.addEventListener('change',e=>{
  if(t.dataset.t){const p=ALL.find(x=>x[0]==t.dataset.t&&subs(x).length);
   (p?subs(p).map(s=>s[0]):[t.dataset.t]).forEach(id=>S.tasks[id]=t.checked||undefined);save();render()}
  else if(t.dataset.o){S.owned[t.dataset.o]=t.checked||undefined;save();render()}
+ else if(t.dataset.ui=="hide"){UI.hide=t.checked;saveUI();tasks()}
  else if(t.dataset.m){S.owned["M|"+t.dataset.m]=t.checked||undefined;save();render()}
  else if(t.dataset.f){F[t.dataset.f]=t.value;frames()}
  else if(t.dataset.k){G[page()][t.dataset.k]=t.value;catalog(page())}
