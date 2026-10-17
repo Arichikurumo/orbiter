@@ -76,6 +76,19 @@ a{color:var(--cyan)}
 .flagrow.strip{max-width:none;margin:0 0 16px;padding:0 4px}
 .emblem{float:right;margin:0 0 8px 16px;filter:drop-shadow(0 0 14px rgba(201,164,92,.35))}
 .card:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.livehead{margin:22px 0 10px;padding:0 2px}.livehead small,.hgroup h2 small{margin-left:10px}
+.live{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}.livecol{display:grid;gap:20px;min-width:0}.live section{margin:0}
+.live section>h2 small{color:var(--mut)}
+.evl,.nwl{list-style:none;margin:0;padding:0}
+.ev{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;align-items:center;padding:10px 0;border-top:1px solid rgba(42,51,64,.6)}.ev:first-child{border-top:0;padding-top:2px}
+.evk{font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:2px 7px;border:1px solid;width:68px;box-sizing:border-box;text-align:center}
+.k-event{color:var(--cyan)}.k-shop{color:var(--gold)}.k-trader{color:var(--ok)}.k-season{color:#b48cff}
+.evb{min-width:0}.evb b{display:block;font-weight:500}.evb small{display:block;color:var(--mut);font-size:12px;overflow-wrap:anywhere}
+.evt{font-size:13px;color:var(--cyan);white-space:nowrap}
+.evbar{grid-column:1/-1;height:3px;background:#0a0e14;margin-top:6px}.evbar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--cyan))}
+.nw{display:flex;gap:12px;align-items:baseline;padding:8px 0;border-top:1px solid rgba(42,51,64,.6)}.nw:first-child{border-top:0;padding-top:0}
+.nwd{flex:none;width:46px;font-size:12px;color:var(--cyan)}.nw a{color:var(--fg);text-decoration:none}.nw a:hover{color:var(--cyan);text-decoration:underline}
+@media(max-width:900px){.live{grid-template-columns:minmax(0,1fr)}}
 .cardico{display:block;margin-bottom:10px;color:var(--gold)}.cardico .a{stroke:var(--cyan)}.card:hover .cardico{color:var(--cyan)}.card:hover .cardico .a{stroke:var(--gold)}
 .card h3{margin:0 0 6px;font-size:15px;color:var(--gold);text-transform:uppercase;letter-spacing:.14em}.card p{margin:0;color:var(--mut);font-size:14px}
 .evs{list-style:none;margin:0;padding:0}.evs li{padding:6px 0;border-top:1px solid rgba(42,51,64,.6)}.evs li:first-child{border-top:0}.evs small{display:block;color:var(--mut)}
@@ -463,29 +476,35 @@ const card=p=>`<a class="card" href="#${p.id}">${ico(p.id)}<h3>${esc(p.title)}</
 function home(){
  const n=Date.now(),ms=s=>Date.parse(s),when=a=>`${new Date(a).toLocaleDateString([], {month:"short",day:"numeric"})}`;
  let now="",soon="",news="";
+ const clean=s=>(s||"").replace(/ Event Name$/i,""),metaOk=s=>s&&!/Event Desc/i.test(s); // the game ships some placeholder strings
+ const kinds={event:"Event",shop:"Shop",trader:"Trader",season:"Season"};
+ const row=(kind,title,meta,end,start,mode)=>{const pct=start&&end?Math.max(0,Math.min(100,(n-start)/(end-start)*100)):0,t=mode=="soon"?`in ${left(start-n)}`:`${left(end-n)} left`;
+  return `<li class="ev"><span class="evk k-${kind}">${kinds[kind]}</span><div class="evb"><b>${esc(clean(title))}</b>${meta?`<small>${esc(meta)}</small>`:""}</div><span class="evt">${t}</span>${mode=="soon"?"":`<div class="evbar" role="presentation"><i style="width:${pct}%"></i></div>`}</li>`};
  if(W===null)now=soon=news="<p class=\"tag\">Loading live data...</p>";
  else if(!W)now=soon=news="<p class=\"tag\">Live data unavailable right now (needs an internet connection).</p>";
  else{
-  const li=(t,s)=>`<li><b>${esc(t)}</b>${s?`<small>${esc(s)}</small>`:""}</li>`;
-  const ev=(W.events||[]).filter(e=>e.description);
-  now=ev.filter(e=>ms(e.activation)<=n&&n<ms(e.expiry)).map(e=>li(e.description,[e.node,e.tooltip,`ends in ${left(ms(e.expiry)-n)}`].filter(Boolean).join(" · "))).join("");
-  const v=W.vaultTrader;if(v&&ms(v.activation)<=n&&n<ms(v.expiry))now+=li("Prime Resurgence",`${v.character} at ${v.location} · ends in ${left(ms(v.expiry)-n)}`);
-  if(B&&ms(B.activation)<=n&&n<ms(B.expiry))now+=li("Baro Ki'Teer is here",`${B.location} · leaves in ${left(ms(B.expiry)-n)}`);
-  const nw=W.nightwave;if(nw&&ms(nw.expiry)>n)now+=li(`Nightwave season ${nw.season}`,`ends ${when(nw.expiry)}`);
-  soon=ev.filter(e=>ms(e.activation)>n).map(e=>li(e.description,`starts in ${left(ms(e.activation)-n)}`)).join("");
-  if(B&&ms(B.activation)>n)soon+=li("Baro Ki'Teer arrives",`${B.location} · in ${left(ms(B.activation)-n)}`);
-  if(v&&ms(v.activation)>n)soon+=li("Prime Resurgence rotation",`starts in ${left(ms(v.activation)-n)}`);
-  soon+=(W.news||[]).filter(x=>ms(x.date)>n).map(x=>li(x.message,`on ${when(x.date)}`)).join("");
+  const ev=(W.events||[]).filter(e=>e.description),act=[];
+  ev.filter(e=>ms(e.activation)<=n&&n<ms(e.expiry)).forEach(e=>act.push([ms(e.expiry),row("event",e.description,[e.node,metaOk(e.tooltip)?e.tooltip:""].filter(Boolean).join(" · "),ms(e.expiry),ms(e.activation))]));
+  const v=W.vaultTrader;if(v&&ms(v.activation)<=n&&n<ms(v.expiry))act.push([ms(v.expiry),row("shop","Prime Resurgence",`${v.character}, ${v.location}`,ms(v.expiry),ms(v.activation))]);
+  if(B&&ms(B.activation)<=n&&n<ms(B.expiry))act.push([ms(B.expiry),row("trader","Baro Ki'Teer is here",B.location,ms(B.expiry),ms(B.activation))]);
+  const nw=W.nightwave;if(nw&&ms(nw.expiry)>n)act.push([ms(nw.expiry),row("season",`Nightwave season ${nw.season}`,`ends ${when(nw.expiry)}`,ms(nw.expiry),ms(nw.activation))]);
+  now=act.sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join("");  // soonest to end first
+  const up=[];
+  ev.filter(e=>ms(e.activation)>n).forEach(e=>up.push([ms(e.activation),row("event",e.description,metaOk(e.tooltip)?e.tooltip:"",0,ms(e.activation),"soon")]));
+  if(B&&ms(B.activation)>n)up.push([ms(B.activation),row("trader","Baro Ki'Teer arrives",B.location,0,ms(B.activation),"soon")]);
+  if(v&&ms(v.activation)>n)up.push([ms(v.activation),row("shop","Prime Resurgence rotation","",0,ms(v.activation),"soon")]);
+  soon=up.sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join("");
   news=(W.news||[]).filter(x=>/^https?:\/\//i.test(x.link)&&ms(x.date)>ms("2000-01-01")&&ms(x.date)<=n).sort((a,b)=>ms(b.date)-ms(a.date)).slice(0,6)
-   .map(x=>`<li><a href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.message)}</a><small>${when(x.date)}</small></li>`).join("");
+   .map(x=>`<li class="nw"><span class="nwd">${when(x.date)}</span><a href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.message)}</a></li>`).join("");
  }
- const ul=(s,empty)=>s.startsWith("<p")?s:`<ul class="evs">${s||`<li><small>${empty}</small></li>`}</ul>`;
+ const list=(s,empty,cls)=>s.startsWith("<p")?s:s?`<ul class="${cls}">${s}</ul>`:`<p class="tag">${empty}</p>`;
  app.innerHTML=`<div class="hero">${HERO}<div><h1>Orbiter</h1><p>Your Tenno checklist, collection tracker and farming guide.</p>${gameVersion()}</div></div>
  <div class="cards cards1">${card(SITE[1])}</div>
  ${GROUPS.filter(g=>g.id!="more").map(g=>`<div class="hgroup"><h2>${g.title}<small>${g.blurb}</small></h2><div class="cards">${SITE.filter(p=>p.group==g.id).map(card).join("")}</div></div>`).join("")}
- <div class="grid g3"><section><h2>Happening now</h2>${ul(now,"No active events found.")}</section>
- <section><h2>Coming up</h2>${ul(soon,"Nothing announced yet. Digital Extremes only posts upcoming events shortly before they start.")}</section>
- <section><h2>Latest news</h2>${ul(news,"No news found.")}</section></div>`;
+ <h2 class="livehead">Live<small>from the game's world state, refreshed hourly</small></h2>
+ <div class="live"><section><h2>Happening now<small>soonest to end first</small></h2>${list(now,"No active events found.","evl")}</section>
+ <div class="livecol"><section><h2>Coming up</h2>${list(soon,"Nothing announced yet. Digital Extremes only posts upcoming events shortly before they start.","evl")}</section>
+ <section><h2>Latest news</h2>${list(news,"No news found.","nwl")}</section></div></div>`;
 }
 // Star chart: the backdrop is the in-game solar system picture (downloaded by the server on first start, from wiki.warframe.com). Hotspot positions were placed by eye on that picture;
 // moons and Deimos are not drawn there, so they sit next to their parent planet.
