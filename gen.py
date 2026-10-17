@@ -33,6 +33,22 @@ def how(x):
     out = '; '.join(parts) or 'Parts: see wiki'
     pr = price(x, 'frame')
     return out + (f" | {pr}" if pr else '')
+PART_NAMES = ('Blueprint', 'Neuroptics', 'Chassis', 'Systems', 'Day Aspect', 'Night Aspect')
+def frame_parts(x, prime):
+    # one entry per part: n = name, i = the game's own icon, s = where to get it (primes: filled in by the page from the relic data)
+    out, seen = [], set()
+    for c in x.get('components') or []:
+        if c['name'] not in PART_NAMES or c['name'] in seen: continue
+        seen.add(c['name'])
+        src = []
+        if not prime:
+            by = {}
+            for r in c.get('drops', []):
+                by[short(r['location'])] = max(by.get(short(r['location']), 0), r.get('chance') or 0)
+            src = [loc if ch >= 100 else f"{loc} ({ch:g}%)" for loc, ch in sorted(by.items(), key=lambda kv: -kv[1])[:3]]
+            if c['name'] == 'Blueprint' and x.get('bpCost'): src.append(f"Market: {x['bpCost']:,} credits")
+        out.append(dict(n=c['name'], i=c.get('imageName'), s='; '.join(src)))
+    return sorted(out, key=lambda p: PART_NAMES.index(p['n']))
 out = []
 for x in d:
     n = x['name']
@@ -44,7 +60,7 @@ for x in d:
     else:
         h = EST.get(n, 8); tier = 1 if h <= 1 else 2 if h <= 3 else 3 if h <= 8 else 4 if h <= 20 else 5
         t = how(x)
-    out.append(dict(name=n, prime=prime, tier=tier, hours=h, how=t, wiki=x.get('wikiaUrl'), img=x.get('imageName'), roles=R.get(n.removesuffix(' Prime'), [])))
+    out.append(dict(name=n, prime=prime, tier=tier, hours=h, how=t, wiki=x.get('wikiaUrl'), img=x.get('imageName'), roles=R.get(n.removesuffix(' Prime'), []), parts=frame_parts(x, prime), plat=None if prime else x.get('marketCost')))
 open('site/frames.js', 'w').write('const FRAMES=' + json.dumps(out) + ';')
 print(len(out))
 

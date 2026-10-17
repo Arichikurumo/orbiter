@@ -122,6 +122,19 @@ main.wide{max-width:1280px}
 .btn:hover{background:rgba(79,209,232,.25)}.btn.quiet{color:var(--mut);border-color:var(--line);background:none}.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 .chk{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:14px}.bkmsg{color:var(--gold)}
 #foot{max-width:920px;margin:0 auto;padding:8px 16px 28px;text-align:center;font-size:12px;color:var(--mut)}#foot a{color:var(--mut)}#foot a:hover{color:var(--cyan)}
+.fp-parts{display:flex;align-items:center;gap:8px;margin:8px 0 4px 98px;flex-wrap:wrap}
+.fp-pt{position:relative;width:44px;height:44px;border:1px solid var(--line);background:#2a3647;display:flex;align-items:center;justify-content:center;cursor:help;outline:none}
+.fp-pt img{width:34px;height:34px;object-fit:contain}
+.fp-pt:hover,.fp-pt:focus{border-color:var(--cyan)}
+.fp-tip{display:none;position:absolute;top:50px;left:0;z-index:6;width:230px;max-width:80vw;background:#07090d;border:1px solid var(--gold);padding:8px 10px;font-size:12px;line-height:1.5;color:var(--fg);text-align:left;white-space:normal;cursor:default}
+.fp-tip b{display:block;color:var(--gold);font-weight:600;margin-bottom:2px}
+.fp-pt:hover .fp-tip,.fp-pt:focus .fp-tip,.fp-price:hover .fp-tip,.fp-price:focus .fp-tip{display:block}
+.fp-pt:nth-child(n+3) .fp-tip{left:auto;right:0}
+.fp-sp{flex:1}
+.fp-price{position:relative;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--cyan);color:var(--cyan);font-size:13px;cursor:help;outline:none}
+.fp-price .fp-tip{left:auto;right:0;top:38px;width:210px}
+.fp-wiki{font-size:13px;margin-left:4px}
+@media(max-width:620px){.fp-parts{margin-left:0}}
 .relic.vaulted{opacity:.8}
 .rar{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none}
 .rar-C{background:#b07a45}.rar-U{background:#c3ccd6}.rar-R{background:#e8c25a;box-shadow:0 0 6px #e8c25a}
@@ -300,6 +313,23 @@ const HERO=`<svg viewBox="0 0 160 160" width="120" height="120" aria-hidden="tru
 const TIERS={1:"Starter / instant",2:"Easy (~1-3h)",3:"Moderate (~3-10h)",4:"Grind (10h+)",5:"Long grind / quest chain",6:"Not obtainable by normal play"};
 const ROLES={tank:'Tank',damage:'Damage',support:'Support',control:'Crowd control',speed:'Speed',stealth:'Stealth',farming:'Farming'};
 const F={role:"all",q:"",show:"all",type:"all",sort:"easy"};
+// Warframe parts: the game's own part icons with a hover box. Sources come from the data; prime parts are looked up in the relic data.
+let PRIME_SRC;
+function primeSource(f,p){
+ PRIME_SRC??=(m=>{RELICS.forEach(r=>r.r.forEach(([name])=>(m.get(name)||m.set(name,[]).get(name)).push(r)));return m})(new Map());
+ const rl=PRIME_SRC.get(p.n=="Blueprint"?`${f.name} Blueprint`:`${f.name} ${p.n} Blueprint`)||[];
+ if(!rl.length)return f.name=="Excalibur Prime"?"Not obtainable: Founders or Prime Access only":"No relic drops it right now";
+ const live=rl.filter(r=>!r.v),pool=live.length?live:rl;
+ return(live.length?"Relics: ":"Vaulted. Trade for it or wait for Prime Resurgence: ")+pool.slice(0,6).map(r=>r.n).join(", ")+(pool.length>6?` +${pool.length-6} more`:"");
+}
+const partSrc=(f,p)=>f.prime?primeSource(f,p):(p.s||"No drop source in the data. See the wiki link.");
+const COIN='<svg class="coin" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.5v7M5.5 6.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+function partsRow(f){
+ const parts=f.parts.length?f.parts.map(p=>{const src=partSrc(f,p);
+  return `<span class="fp-pt" tabindex="0" aria-label="${esc(p.n+": "+src)}"><img src="${esc(IMG(p.i))}" alt="" width="34" height="34" loading="lazy" onerror="this.style.visibility='hidden'"><span class="fp-tip" aria-hidden="true"><b>${esc(p.n)}</b>${src.split("; ").map(esc).join("<br>")}</span></span>`}).join(""):`<span class="tag">${esc(f.how||"No part data. See the wiki link.")}</span>`;
+ const price=f.plat?`<span class="fp-price" tabindex="0" aria-label="${f.plat} platinum: skip the farm and buy the finished Warframe in the Market">${COIN}${f.plat} plat<span class="fp-tip" aria-hidden="true"><b>Skip the farm</b>Buy the finished Warframe in the Market for ${f.plat} platinum.</span></span>`:"";
+ return `<div class="fp-parts">${parts}<span class="fp-sp"></span>${price}${f.wiki?`<a class="fp-wiki" href="${esc(f.wiki)}" target="_blank" rel="noopener">wiki</a>`:""}</div>`;
+}
 function frames(){
  const have=FRAMES.filter(f=>S.owned[f.name]).length,mas=FRAMES.filter(f=>mastered(f.name)).length;
  let l=FRAMES.filter(f=>(showOk(F.show,S.owned[f.name],mastered(f.name)))&&
@@ -316,7 +346,7 @@ function frames(){
   <div class="tag">Farm times are rough estimates; drop locations come from warframestat.us. Check the wiki link before farming.</div>`+
   l.map(f=>{let h='';if(F.sort=="easy"&&f.tier!==last){last=f.tier;h=`<h2 class="tier">${TIERS[f.tier]}</h2>`}
    return h+`<div class="frame"><div class="rowtop"><label><input type="checkbox" data-o="${esc(f.name)}" ${S.owned[f.name]?'checked':''}>${f.img?`<img src="${esc(IMG(f.img))}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`:''}<span><b>${esc(f.name)}</b><span class="tag">${f.hours?'~'+f.hours+'h':''}</span>${f.roles.map(r=>`<span class="role r-${r}">${ROLES[r]}</span>`).join('')}</span></label>${mast(f.name)}</div>`+
-   (S.owned[f.name]?'':`<div class="how">${esc(f.how)}${f.wiki?` - <a href="${esc(f.wiki)}" target="_blank" rel="noopener">wiki</a>`:''}</div>`)+`</div>`}).join('')+(l.length?'':'<p class="tag">Nothing matches these filters.</p>')+`</section>`;
+   (S.owned[f.name]?'':partsRow(f))+`</div>`}).join('')+(l.length?'':'<p class="tag">Nothing matches these filters.</p>')+`</section>`;
  const q=document.getElementById('q');q.oninput=()=>{F.q=q.value.toLowerCase();const p=q.selectionStart;frames();const n=document.getElementById('q');n.focus();n.setSelectionRange(p,p)};
 }
 // Weapons and companions share one list page. Owned keys are prefixed so they never collide with warframe names.

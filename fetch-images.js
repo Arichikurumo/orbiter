@@ -11,7 +11,7 @@ const load = (siteDir, file, name) => vm.runInNewContext(fs.readFileSync(path.jo
 function jobs(siteDir, dir) {
   const names = new Set(['Ducat.png']);
   for (const [f, v] of [['frames', 'FRAMES'], ['weapons', 'WEAPONS'], ['companions', 'COMPANIONS'], ['helminth', 'HELMINTH'], ['resources', 'RESOURCES'], ['mods', 'MODS'], ['arcanes', 'ARCANES']]) {
-    for (const x of load(siteDir, f + '.js', v)) if (x.img) names.add(x.img);
+    for (const x of load(siteDir, f + '.js', v)) { if (x.img) names.add(x.img); for (const p of x.parts || []) if (p.i) names.add(p.i); } // Warframe part icons
   }
   try { Object.values(load(siteDir, 'baro_icons.js', 'BARO_ICONS')).forEach(n => names.add(n)); } catch {}
   const out = [...names].map(n => ({ url: SRC + encodeURIComponent(n), out: path.join(dir, n + '.webp'), w: 128 }));
