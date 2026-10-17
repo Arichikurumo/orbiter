@@ -166,7 +166,7 @@ main.wide{max-width:1280px}
 <body>
 <nav><a class="brand" href="#home" aria-label="Orbiter, go to the home page"><img src="favicon.svg" alt="" width="26" height="26">Orbiter</a><a href="#home" id="n_home">Home</a><a href="#tasks" id="n_tasks">Tasks</a>
 <div class="dd"><button type="button" id="d_collection" aria-haspopup="true" aria-expanded="false">Collection &#9662;</button><div class="menu"><a href="#frames" id="n_frames">Warframes</a><a href="#weapons" id="n_weapons">Weapons</a><a href="#companions" id="n_companions">Companions</a></div></div>
-<div class="dd"><button type="button" id="d_build" aria-haspopup="true" aria-expanded="false">Upgrades &#9662;</button><div class="menu"><a href="#mods" id="n_mods">Mods</a><a href="#arcanes" id="n_arcanes">Arcanes</a><a href="#helminth" id="n_helminth">Helminth</a></div></div><div class="dd"><button type="button" id="d_relics" aria-haspopup="true" aria-expanded="false">Relics &#9662;</button><div class="menu"><a href="#relics" id="n_relics">Relic list</a><a href="#relcalc" id="n_relcalc">Calculator</a></div></div><a href="#resources" id="n_resources">Resources</a>
+<div class="dd"><button type="button" id="d_build" aria-haspopup="true" aria-expanded="false">Upgrades &#9662;</button><div class="menu"><a href="#mods" id="n_mods">Mods</a><a href="#arcanes" id="n_arcanes">Arcanes</a><a href="#helminth" id="n_helminth">Helminth</a></div></div><div class="dd"><button type="button" id="d_relics" aria-haspopup="true" aria-expanded="false">Relics &#9662;</button><div class="menu"><a href="#relics" id="n_relics">Overview</a><a href="#relicfinder" id="n_relicfinder">Relic finder</a><a href="#relcalc" id="n_relcalc">Calculator</a></div></div><a href="#resources" id="n_resources">Resources</a>
 <div class="dd"><button type="button" id="d_guides" aria-haspopup="true" aria-expanded="false">Guides &#9662;</button><div class="menu"><a href="#nightwave" id="n_nightwave">Nightwave</a><a href="#factions" id="n_factions">Syndicate leveling</a><a href="#kahl" id="n_kahl">Kahl's Garrison</a><a href="#baro" id="n_baro">Baro Ki'Teer</a></div></div></nav>
 <main id="app"></main>
 <footer id="foot"><a href="#backup">Backup &amp; restore</a> &middot; <a href="https://github.com/Arichikurumo/orbiter" target="_blank" rel="noopener">GitHub</a> &middot; unofficial fan project</footer>
@@ -393,7 +393,7 @@ app.addEventListener('change',e=>{
  else if(t.dataset.m){S.owned["M|"+t.dataset.m]=t.checked||undefined;save();render()}
  else if(t.dataset.f){F[t.dataset.f]=t.value;frames()}
  else if(t.dataset.k){G[page()][t.dataset.k]=t.value;catalog(page())}
- else if(t.dataset.rl){RL[t.dataset.rl]=t.value;relicsPage()}
+ else if(t.dataset.rl){RL[t.dataset.rl]=t.value;render()}
  else if(t.dataset.rc){RC[t.dataset.rc]=t.value;if(t.dataset.rc=='part')RC.relic='';relicCalc()}
 });
 const PAGES=[["tasks","Tasks","Daily and weekly checklist with reset timers, vendors to visit and a Baro Ki'Teer countdown."],
@@ -404,6 +404,7 @@ const PAGES=[["tasks","Tasks","Daily and weekly checklist with reset timers, ven
  ["arcanes","Arcanes","Arcane effects with their drop sources."],
  ["helminth","Helminth","Each subsumable ability, what it does and which frame it comes from. Tick the ones you have."],
  ["relics","Relics","Which Prime items you can get from relics right now, this month's Prime Resurgence, and every relic with its rewards."],
+ ["relicfinder","Relic finder","Search all 798 relics by name or reward, with the drop rate for any refinement stage."],
  ["relcalc","Relic calculator","How many relics you need to open to be sure of a drop, for every refinement level."],
  ["backup","Backup & restore","Download your whole collection as a file and load it back in later, on this or another install."],
  ["resources","Resources","A star chart of where to farm the common resources. Click a planet, or pick a resource to highlight its planets."],
@@ -484,7 +485,7 @@ const NW_TIPS=[
  [/headshot/i,"Use a precise weapon (bow, sniper or a rifle with a scope) and aim for the head."],
 ];
 const nwTip=c=>(NW_TIPS.find(([re])=>re.test(c.desc))||[0,"Pick the easiest mission type that fits the wording of the act. Low-level Survival and Defense are quick for kill counts."])[1];
-const nwOpen={w:true,e:true,d:false};let nwQ="";
+const nwOpen={w:true,e:true,d:false};let nwQ="",nwRaw="";
 app.addEventListener("toggle",e=>{const k=e.target.dataset&&e.target.dataset.k;if(k)nwOpen[k]=e.target.open},true);
 function nightwave(){
  const nw=W&&W.nightwave,n=Date.now();let live;
@@ -505,13 +506,13 @@ function nightwave(){
   '<div class="grid g3">'+groups.map(([t,f])=>{const l=acts.filter(f);return l.length?`<section><h2>${t}<small>${l.filter(c=>S.tasks["nw:"+c.id]).length} / ${l.length} done</small></h2>`+l.map(c=>row("nw:"+c.id,c.title,c.desc.startsWith("[PH]")?"Description not published yet by the game.":c.desc,`+${esc(c.reputation.toLocaleString())} standing &middot; ${left(Date.parse(c.expiry)-n)} left`,!!S.tasks["nw:"+c.id])).join("")+`</section>`:""}).join("")+'</div>';
  }
  const kinds=[["w","Weekly acts",4500],["e","Elite weekly acts",7000],["d","Daily acts",1000]];
- const pool=`<section><h2>All acts you can recover</h2><p class="tag">Every act in the game's pool, not just this week's. Missed weekly and elite weekly acts go into reserve, and when fewer than 3 current weekly acts are left they come back as "Recovered", three at a time. The wiki does not say daily acts can be recovered, so they are listed for reference. Tick the ones you have finished; ticks clear when a new season starts. Acts shown this week are marked.</p><div class="bar"><input type="search" id="nwq" placeholder="Search all acts by name or description" aria-label="Search all acts" value="${esc(nwQ)}"></div></section>`+
+ const pool=`<section><h2>All acts you can recover</h2><p class="tag">Every act in the game's pool, not just this week's. Missed weekly and elite weekly acts go into reserve, and when fewer than 3 current weekly acts are left they come back as "Recovered", three at a time. The wiki does not say daily acts can be recovered, so they are listed for reference. Tick the ones you have finished; ticks clear when a new season starts. Acts shown this week are marked.</p><div class="bar"><input type="search" id="nwq" placeholder="Search all acts by name or description" aria-label="Search all acts" value="${esc(nwRaw)}"></div></section>`+
   '<div class="grid g3">'+kinds.map(([k,t,pts])=>{const all=NW_ALL.filter(a=>a.kind==k),l=all.filter(a=>(a.name+" "+a.desc).toLowerCase().includes(nwQ)),d=all.filter(a=>S.tasks["nwa:"+k+":"+a.name]).length;
    if(nwQ&&!l.length)return "";
    return `<section><details data-k="${k}"${nwOpen[k]||nwQ?" open":""}><summary><h2 style="display:inline">${t}<small>${d} / ${all.length} done${nwQ?` &middot; ${l.length} shown`:""} &middot; +${pts.toLocaleString()} standing each</small></h2></summary>`+
    l.map(a=>row("nwa:"+k+":"+a.name,a.name,a.desc,active.has(a.name)?'<span class="role r-support">This week</span>':"",!!S.tasks["nwa:"+k+":"+a.name])).join("")+`</details></section>`}).join("")+'</div>';
  app.innerHTML=live+pool+(nwQ&&!NW_ALL.some(a=>(a.name+" "+a.desc).toLowerCase().includes(nwQ))?'<section><p class="tag">No act matches that search.</p></section>':"");
- const q=document.getElementById("nwq");q.oninput=()=>{nwQ=q.value.trim().toLowerCase();const p=q.selectionStart;nightwave();const n=document.getElementById("nwq");n.focus();n.setSelectionRange(p,p)};
+ const q=document.getElementById("nwq");q.oninput=()=>{nwRaw=q.value;nwQ=q.value.trim().toLowerCase();const p=q.selectionStart;nightwave();const n=document.getElementById("nwq");n.focus();n.setSelectionRange(p,p)};
 }
 // Syndicate leveling: methods summarised from wiki.warframe.com/w/Standing.
 const FACTION_GUIDE=[
@@ -661,6 +662,20 @@ const primeBase=n=>(/^(.*? Prime)\b/.exec(n)||[])[1];
 const primeImg=(()=>{let m;return n=>{m??=(x=>{[...FRAMES,...WEAPONS,...COMPANIONS].forEach(i=>{if(i.img&&!x.has(i.name))x.set(i.name,i.img)});return x})(new Map());return m.get(n)}})();
 const TIER_NAME=["","Lith","Meso","Neo","Axi"];
 const cleanPack=s=>s.replace(/^T(\d) Void Projection (.*) Vault ([AB]) (\w+)$/,(m,t,names,v,c)=>`${TIER_NAME[t]||"?"} relic pack (${c}): ${names} vault ${v}`).replace(/^M P V /,"").replace(/ Prime (Single|Dual) Pack$/," Prime ($1 pack)").replace(/ Prime Dual Pack$/," Prime");
+function relicFinder(){
+ const tiers=["Lith","Meso","Neo","Axi","Requiem"],terms=RL.q.split(/\s+/).filter(Boolean);
+ const list=RELICS.filter(r=>(RL.tier=="all"||r.t==RL.tier)&&(RL.avail=="all"||!r.v)&&(h=>terms.every(t=>h.includes(t)))((r.n+" "+r.r.map(x=>x[0]).join(" ")).toLowerCase()));
+ const opt=(v,o)=>o.map(([k,t])=>`<option value="${esc(k)}" ${v==k?"selected":""}>${esc(t)}</option>`).join("");
+ const rows=list.slice(0,300).map(r=>`<div class="relic ${r.v?"vaulted":""}"><div class="rhead"><b>${esc(r.n)}</b><span class="role r-${r.v?"":"support"}">${r.v?"Vaulted":"Available"}</span></div><ul>${r.r.map(([name,rar])=>`<li><span class="rar rar-${rar}" title="${RAR[rar][0]}"></span>${esc(name)} <small class="pct">${RATE[RL.stage][rar]}%</small></li>`).join("")}</ul></div>`).join("");
+ app.innerHTML=`<div class="hero"><div><h1>Relic finder</h1><p>Search every relic by name or reward, for example "lith c7" or "nyx prime".</p></div></div>
+ <section><h2>Results<small>${Math.min(300,list.length)} of ${list.length}</small></h2><div class="bar"><input type="search" id="rq" placeholder="Search relics or rewards" aria-label="Search relics" value="${esc(RL.raw||"")}">
+  <select data-rl="tier">${opt(RL.tier,[["all","All eras"],...tiers.map(t=>[t,t])])}</select>
+  <select data-rl="avail">${opt(RL.avail,[["all","All relics"],["now","Available now only"]])}</select>
+  <select data-rl="stage" aria-label="Refinement stage">${opt(RL.stage,STAGES.map(([n])=>[n,"Show rates: "+n]))}</select></div>
+  <p class="tag">Each relic has 3 common, 2 uncommon and 1 rare reward. Percentages are for the stage you pick above (${RL.stage}).${list.length>300?" Showing the first 300, so use the search to narrow it down.":""}</p>
+  <div class="relgrid cols">${rows||'<p class="tag">No relic matches these filters.</p>'}</div></section>`;
+ const q2=document.getElementById("rq");q2.oninput=()=>{RL.raw=q2.value;RL.q=q2.value.trim().toLowerCase();const p=q2.selectionStart;relicFinder();const e=document.getElementById("rq");e.focus();e.setSelectionRange(p,p)};
+}
 function relicsPage(){
  const n=Date.now(),ms=s=>Date.parse(s);
  // 1) prime items obtainable from relics right now
@@ -678,24 +693,13 @@ function relicsPage(){
   res=`<p class="tag">${act?`<b>${esc(v.character)}</b> at ${esc(v.location)}: this rotation ends in ${left(ms(v.expiry)-n)}.`:"Prime Resurgence is not active right now."} Items cost Aya (the API calls the price "ducats").</p>`+
    (act?`<div class="relgrid">${(v.inventory||[]).map(i=>`<div class="relic"><b>${esc(cleanPack(i.item))}</b><small class="tag">${esc(i.ducats??"?")} Aya</small></div>`).join("")}</div>`:"")+
    (sched.length>1?`<p class="tag">Coming up: ${sched.slice(1).map(s=>`${esc(cleanPack(s.item))} (from ${new Date(ms(sched[sched.indexOf(s)-1].expiry)).toLocaleDateString([], {month:"short",day:"numeric"})})`).join(", ")}</p>`:"")}
- // 3) all relics
- const tiers=["Lith","Meso","Neo","Axi","Requiem"],q=RL.q;
- const list=RELICS.filter(r=>(RL.tier=="all"||r.t==RL.tier)&&(RL.avail=="all"||!r.v)&&(!q||(r.n+" "+r.r.map(x=>x[0]).join(" ")).toLowerCase().includes(q)));
- const opt=(v,o)=>o.map(([k,t])=>`<option value="${esc(k)}" ${v==k?"selected":""}>${esc(t)}</option>`).join("");
- const rows=list.slice(0,300).map(r=>`<div class="relic ${r.v?"vaulted":""}"><div class="rhead"><b>${esc(r.n)}</b><span class="role r-${r.v?"":"support"}">${r.v?"Vaulted":"Available"}</span></div><ul>${r.r.map(([name,rar])=>`<li><span class="rar rar-${rar}" title="${RAR[rar][0]}"></span>${esc(name)} <small class="pct">${RATE[RL.stage][rar]}%</small></li>`).join("")}</ul></div>`).join("");
  app.innerHTML=`<div class="hero"><div><h1>Relics</h1><p>${items.size} Prime items can be farmed from relics right now. The other ${RELICS.filter(r=>r.v).length} relics are vaulted.</p></div></div>
  <section><h2>Available now<small>${items.size} items from ${RELICS.filter(r=>!r.v).length} relics</small></h2><p class="tag">Prime parts you can still get by opening relics (any mission with a Void Fissure). Dots show rarity: <span class="rar rar-C"></span> common, <span class="rar rar-U"></span> uncommon, <span class="rar rar-R"></span> rare. Relic names after each part tell you which relics to look for.</p><div class="relgrid">${cards}</div></section>
  <section><h2>Prime Resurgence<small>vaulted items, bought with Aya</small></h2>${res}</section>
  <section><h2>Drop rates by refinement<small>the same for every relic</small></h2><p class="tag">Every relic holds 3 common, 2 uncommon and 1 rare reward. Refining it with Void Traces moves chance from the common rewards to the rarer ones. The numbers are the chance <b>per reward</b>; the rare chance is for the single rare reward.</p>
   <div class="ratetable" role="table"><div class="rr rh" role="row"><span>Stage</span><span>Cost</span><span>Each common (x3)</span><span>Each uncommon (x2)</span><span>Rare (x1)</span></div>${STAGES.map(([n,cost,r])=>`<div class="rr" role="row"><b>${n}</b><span>${cost?cost+" Void Traces":"free"}</span><span><i class="ratebar c" style="width:${r.C*2}px"></i>${r.C}%</span><span><i class="ratebar u" style="width:${r.U*2}px"></i>${r.U}%</span><span><i class="ratebar r" style="width:${r.R*2}px"></i>${r.R}%</span></div>`).join("")}</div>
   <p class="tag">Radiant makes a rare reward ${RATE.Radiant.R/RATE.Intact.R} times as likely as an unrefined relic, but you spend ${STAGES[3][1]} Void Traces for it. Opening a relic in a squad where everyone uses a Radiant gives the best chance at a rare.</p></section>
- <section><h2>All relics<small>${Math.min(300,list.length)} of ${list.length}</small></h2><div class="bar"><input type="search" id="rq" placeholder="Search relics or rewards" aria-label="Search relics" value="${esc(RL.q)}">
-  <select data-rl="tier">${opt(RL.tier,[["all","All eras"],...tiers.map(t=>[t,t])])}</select>
-  <select data-rl="avail">${opt(RL.avail,[["all","All relics"],["now","Available now only"]])}</select>
-  <select data-rl="stage" aria-label="Refinement stage">${opt(RL.stage,STAGES.map(([n])=>[n,"Show rates: "+n]))}</select></div>
-  <p class="tag">Each relic has 3 common, 2 uncommon and 1 rare reward. Percentages are for the stage you pick above (${RL.stage}).${list.length>300?" Showing the first 300, so use the search to narrow it down.":""}</p>
-  <div class="relgrid cols">${rows||'<p class="tag">No relic matches these filters.</p>'}</div></section>`;
- const q2=document.getElementById("rq");q2.oninput=()=>{RL.q=q2.value.trim().toLowerCase();const p=q2.selectionStart;relicsPage();const e=document.getElementById("rq");e.focus();e.setSelectionRange(p,p)};
+ <section><h2>Looking for a specific relic?</h2><p class="tag">Search all 798 relics by name or reward, filter by era and see the drop rate for any refinement in the <a href="#relicfinder">Relic finder</a>.</p></section>`;
 }
 // Relic calculator: chance of at least one hit in n openings = 1-(1-p)^n, with p from the refinement table above.
 const RC={n:10,stage:"Radiant",mode:"rarity",rarity:"R",part:"",relic:""};
@@ -788,8 +792,8 @@ function backupPage(){
   backupPage();
  };
 }
-const page=()=>({"#backup":"backup","#relcalc":"relcalc","#relics":"relics","#baro":"baro","#kahl":"kahl","#nightwave":"nightwave","#factions":"factions","#resources":"resources","#mods":"mods","#arcanes":"arcanes","#helminth":"helminth","#tasks":"tasks","#frames":"frames","#weapons":"weapons","#companions":"companions"})[location.hash]||"home";
-function render(){const p=page();p=="home"?home():p=="resources"?resources():p=="nightwave"?nightwave():p=="factions"?factions():p=="kahl"?kahl():p=="baro"?baroPage():p=="relics"?relicsPage():p=="relcalc"?relicCalc():p=="backup"?backupPage():p=="tasks"?tasks():p=="frames"?frames():catalog(p)}
+const page=()=>({"#relicfinder":"relicfinder","#backup":"backup","#relcalc":"relcalc","#relics":"relics","#baro":"baro","#kahl":"kahl","#nightwave":"nightwave","#factions":"factions","#resources":"resources","#mods":"mods","#arcanes":"arcanes","#helminth":"helminth","#tasks":"tasks","#frames":"frames","#weapons":"weapons","#companions":"companions"})[location.hash]||"home";
+function render(){const p=page();p=="home"?home():p=="resources"?resources():p=="nightwave"?nightwave():p=="factions"?factions():p=="kahl"?kahl():p=="baro"?baroPage():p=="relics"?relicsPage():p=="relicfinder"?relicFinder():p=="relcalc"?relicCalc():p=="backup"?backupPage():p=="tasks"?tasks():p=="frames"?frames():catalog(p)}
 function closeMenus(except){document.querySelectorAll(".dd").forEach(d=>{if(d!==except){d.classList.remove("open");d.firstElementChild.setAttribute("aria-expanded","false")}})}
 document.querySelectorAll(".dd>button").forEach(b=>b.addEventListener("click",e=>{
  e.stopPropagation();const d=b.parentElement,o=!d.classList.contains("open");closeMenus(d);d.classList.toggle("open",o);b.setAttribute("aria-expanded",o);
@@ -800,11 +804,11 @@ addEventListener("click",()=>closeMenus());
 addEventListener("keydown",e=>{if(e.key=="Escape"){const o=document.querySelector(".dd.open>button");closeMenus();o&&o.focus()}});
 function route(){
  const p=page();
- for(const k of["home","tasks","frames","weapons","companions","mods","arcanes","helminth","resources","nightwave","factions","kahl","baro","relics","relcalc"])document.getElementById("n_"+k).className=p==k?"on":"";
- const grp={frames:"collection",weapons:"collection",companions:"collection",mods:"build",arcanes:"build",helminth:"build",nightwave:"guides",factions:"guides",kahl:"guides",baro:"guides",relics:"relics",relcalc:"relics"};
+ for(const k of["home","tasks","frames","weapons","companions","mods","arcanes","helminth","resources","nightwave","factions","kahl","baro","relics","relicfinder","relcalc"])document.getElementById("n_"+k).className=p==k?"on":"";
+ const grp={frames:"collection",weapons:"collection",companions:"collection",mods:"build",arcanes:"build",helminth:"build",nightwave:"guides",factions:"guides",kahl:"guides",baro:"guides",relics:"relics",relicfinder:"relics",relcalc:"relics"};
  for(const g of["collection","build","guides","relics"])document.getElementById("d_"+g).className=grp[p]==g?"on":"";
  closeMenus();
- document.querySelector('main').classList.toggle('wide',['home','tasks','nightwave','kahl','factions','baro','relics','relcalc'].includes(p));
+ document.querySelector('main').classList.toggle('wide',['home','tasks','nightwave','kahl','factions','baro','relics','relicfinder','relcalc'].includes(p));
  render();
 }
 addEventListener("hashchange",route);route();

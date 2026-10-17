@@ -9,7 +9,7 @@ A self-hosted companion for [Warframe](https://www.warframe.com/): a daily and w
 - **Tasks:** the daily and weekly checklist (with sub-tasks, vendors and reset timers) that resets itself at 00:00 UTC and on Mondays.
 - **Collection:** every Warframe, weapon and companion with *collected* and *mastered* ticks (frames and weapons), search, filters, how to get it, and an "easiest first" order for Warframes with role tags. Weapons are grouped by type, melee by weapon class.
 - **Upgrades:** mods, arcanes and the Helminth (which ability comes from which frame).
-- **Relics:** every Prime item you can farm from relics right now, the current Prime Resurgence rotation, and all relics with their rewards, plus drop rates per refinement stage and a calculator for how many relics you need to open to be sure of a drop.
+- **Relics:** every Prime item you can farm from relics right now, the current Prime Resurgence rotation, and all relics with their rewards, plus drop rates per refinement stage, a relic finder (search all relics by name or reward) and a calculator for how many relics you need to open to be sure of a drop.
 - **Resources:** an interactive star chart showing where to farm each resource.
 - **Guides:** this season's Nightwave acts plus every recoverable act with tips, syndicate leveling, Kahl's Garrison missions, and Baro Ki'Teer with his live stock ranked by what to buy first.
 - **Home:** the current game version, active events, what is coming up and the latest news.
