@@ -146,6 +146,8 @@ main.wide{max-width:1280px}
 .fp-price .fp-tip{left:auto;right:0;top:38px;width:210px}
 .fp-wiki{font-size:13px;margin-left:4px}
 @media(max-width:620px){.fp-parts{margin-left:0}}
+.dmgbar{display:flex;height:8px;margin:4px 0;border-radius:2px;overflow:hidden;background:#0a0e14}.dmgbar i{display:block;height:100%}
+.dmglegend{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12px;color:var(--fg)}.dmglegend span{display:inline-flex;align-items:center;gap:5px}.dmglegend i{width:8px;height:8px;border-radius:50%;display:inline-block}.dmglegend small{color:var(--mut)}
 .cstats{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--fg);margin:8px 0}
 .relic.vaulted{opacity:.8}
 .rar{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none}
@@ -834,6 +836,12 @@ function codaPage(){
  const badge=c=>`<span class="role r-${PICK_CLASS[c.pick]}">${esc(c.pick)}</span>`;
  const shop=CODA.filter(c=>c.batch==b),tops=CODA.filter(c=>c.pick=="Top pick");
  const stat=c=>`<div class="cstats"><span>${c.dmg} damage</span><span>${c.crit}% crit, x${c.cm}</span><span>${c.status}% status</span><span>${c.rate}/s</span>${c.mag?`<span>${c.mag} rounds, ${c.reload}s reload</span>`:""}</div>`;
+ const DT={impact:["Impact","#8aa0b6"],puncture:["Puncture","#c3ccd6"],slash:["Slash","#e06060"],heat:["Heat","#e08a3c"],cold:["Cold","#7fd0ff"],electricity:["Electricity","#b48cff"],toxin:["Toxin","#5be3a0"],blast:["Blast","#d6a15a"],radiation:["Radiation","#e8d44a"],magnetic:["Magnetic","#6a8cff"],viral:["Viral","#e070c0"],corrosive:["Corrosive","#a8b83a"],gas:["Gas","#4fc7b0"]};
+ const dtName=k=>(DT[k]||[k])[0],dtColor=k=>(DT[k]||[0,"#7d8896"])[1],PHYS=["impact","puncture","slash"];
+ const dmgTypes=c=>{const tot=c.types.reduce((a,t)=>a+t[1],0)||1,el=c.types.filter(t=>!PHYS.includes(t[0]));
+  return `<p class="tag" style="margin:6px 0 4px">Native element: <b style="color:var(--fg)">${el.length?el.map(t=>dtName(t[0])).join(" and "):"none (physical only)"}</b></p>
+  <div class="dmgbar" role="img" aria-label="${esc(c.types.map(t=>`${dtName(t[0])} ${Math.round(t[1]/tot*100)}%`).join(", "))}">${c.types.map(t=>`<i style="width:${t[1]/tot*100}%;background:${dtColor(t[0])}"></i>`).join("")}</div>
+  <div class="dmglegend">${c.types.map(t=>`<span><i style="background:${dtColor(t[0])}"></i>${dtName(t[0])} ${t[1]} <small>${Math.round(t[1]/tot*100)}%</small></span>`).join("")}</div>`};
  const slots=[...new Set(CODA.map(c=>c.slot))];
  app.innerHTML=`<div class="grid g2"><section><h2>In Eleanor's shop now<small>Batch ${b}, switches in ${left(swap-n)}</small></h2>
   <p class="tag">Eleanor (Höllvania, needs The Hex quest) sells two batches of seven Coda weapons that swap every week. The batch shown is worked out from the weekly rotation, so check it against the in-game shop.</p>
@@ -850,7 +858,8 @@ function codaPage(){
    <li><b>Skip Pathocyst and Pox</b> unless you want to fill the codex, because their numbers are the lowest of their types.</li>
    <li><b>Wait for the right batch.</b> Each weapon is 10 Heartcells, so if your pick is in the other batch, save the Heartcells for next week instead of buying a worse weapon now.</li></ol>
   <p class="tag">These picks come from base stats (before mods) and the wiki's description of each weapon's unique effect. I have not tested them in the game, and the bonus element you roll can change which one is best for you.</p></section>
- ${slots.map(s=>`<section><h2>${esc(s)}<small>${CODA.filter(c=>c.slot==s).length==1?"1 weapon":CODA.filter(c=>c.slot==s).length+" weapons"}</small></h2><div class="relgrid">${CODA.filter(c=>c.slot==s).map(c=>`<div class="relic"><div class="rhead"><span style="display:flex;gap:8px;align-items:center">${pic(c.name)}<b>${esc(c.name)}</b></span>${badge(c)}</div>${stat(c)}<p class="tag" style="margin:4px 0">${esc(c.note)}</p><small class="tag">Batch ${c.batch}${c.batch==b?", in the shop now":""}${c.wiki?` &middot; <a href="${esc(c.wiki)}" target="_blank" rel="noopener">wiki</a>`:""}</small></div>`).join("")}</div></section>`).join("")}`;
+ <section><h2>Reading the damage types</h2><p class="tag">Each card shows the weapon's own damage split into physical types (impact, puncture, slash) and native elements. On top of that, every Coda weapon you buy rolls one extra bonus element worth 25 to 60% of its base damage, so the element you end up with is the native one plus whatever the shop rolled.</p></section>
+ ${slots.map(s=>`<section><h2>${esc(s)}<small>${CODA.filter(c=>c.slot==s).length==1?"1 weapon":CODA.filter(c=>c.slot==s).length+" weapons"}</small></h2><div class="relgrid">${CODA.filter(c=>c.slot==s).map(c=>`<div class="relic"><div class="rhead"><span style="display:flex;gap:8px;align-items:center">${pic(c.name)}<b>${esc(c.name)}</b></span>${badge(c)}</div>${stat(c)}${dmgTypes(c)}<p class="tag" style="margin:8px 0 4px">${esc(c.note)}</p><small class="tag">Batch ${c.batch}${c.batch==b?", in the shop now":""}${c.wiki?` &middot; <a href="${esc(c.wiki)}" target="_blank" rel="noopener">wiki</a>`:""}</small></div>`).join("")}</div></section>`).join("")}`;
 }
 const page=()=>curr().id;
 function render(){const p=curr();p.fn();decorate(p)}

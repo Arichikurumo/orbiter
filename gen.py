@@ -238,7 +238,7 @@ if len(sys.argv) > 3:
      'Coda Mire': ('A', 'Good', 'Solid status melee (40%), a close second to the Caustacyst.'),
      'Coda Motovore': ('A', 'Good', 'Gains a bonus from your highest physical stat, so it suits impact, puncture or slash builds.'),
      'Coda Sporothrix': ('A', 'Situational', 'Heavy hits and 55% status, but only 5% crit, so it needs a status or crit-boosting build. Larger explosion and faster reload.'),
-     'Coda Tysis': ('B', 'Situational', '135 damage per shot and 50% status, but low crit.'),
+     'Coda Tysis': ('B', 'Situational', '135 damage per shot (part of it Corrosive damage over time) and 50% status, but low crit.'),
      'Coda Hema': ('A', 'Situational', 'Burst rifle with a 72-round magazine. Solid numbers, nothing unique.'),
      'Coda Bubonico': ('B', 'Situational', 'Shotgun-style spread with 27% crit. Solid, nothing unique.'),
      'Coda Pathocyst': ('B', 'Skip', 'Slowest attack speed (0.67), so the lowest damage output of the melee Codas. Throws spawn stronger maggots.'),
@@ -250,7 +250,9 @@ if len(sys.argv) > 3:
         b, pick, note = CODA[x['name']]
         slot = 'Melee' if x['category'] == 'Melee' else f"{x['category']} {x['type'].lower()}"
         shot = x['totalDamage'] * (x.get('multishot') or 1) if x['name'] == 'Coda Bubonico' else x['totalDamage']  # the API lists Bubonico per pellet
-        cw.append(dict(name=x['name'], slot=slot, batch=b, pick=pick, note=note, dmg=round(shot), crit=round(x['criticalChance'] * 100), cm=round(x['criticalMultiplier'], 1),
+        scale = shot / x['totalDamage'] if x['totalDamage'] else 1
+        types = sorted(((k, round(v * scale)) for k, v in (x.get('damage') or {}).items() if k != 'total' and v and round(v * scale) > 0), key=lambda kv: -kv[1])
+        cw.append(dict(name=x['name'], slot=slot, types=types, batch=b, pick=pick, note=note, dmg=round(shot), crit=round(x['criticalChance'] * 100), cm=round(x['criticalMultiplier'], 1),
                        status=round(x['procChance'] * 100), rate=round(x['fireRate'] or 0, 2), mag=x.get('magazineSize'), reload=round(x['reloadTime'], 1) if x.get('reloadTime') else None, wiki=x.get('wikiaUrl')))
     order = {'Melee': 0, 'Primary rifle': 1, 'Primary shotgun': 2, 'Primary sniper': 3, 'Secondary pistol': 4}
     cw.sort(key=lambda c: (order.get(c['slot'], 9), -c['dmg']))
