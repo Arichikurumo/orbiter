@@ -146,6 +146,7 @@ main.wide{max-width:1280px}
 .fp-price .fp-tip{left:auto;right:0;top:38px;width:210px}
 .fp-wiki{font-size:13px;margin-left:4px}
 @media(max-width:620px){.fp-parts{margin-left:0}}
+.cstats{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--fg);margin:8px 0}
 .relic.vaulted{opacity:.8}
 .rar{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none}
 .rar-C{background:#b07a45}.rar-U{background:#c3ccd6}.rar-R{background:#e8c25a;box-shadow:0 0 6px #e8c25a}
@@ -187,6 +188,7 @@ main.wide{max-width:1280px}
 <script src="resources.js"></script>
 <script src="relics.js"></script>
 <script src="nightwave.js"></script>
+<script src="coda.js"></script>
 <script src="baro_icons.js"></script>
 <script>
 // Daily resets 00:00 UTC, weekly Monday 00:00 UTC. Edit SECTIONS to taste.
@@ -429,6 +431,7 @@ const SITE=[
  {id:"nightwave",group:"guides",title:"Nightwave",short:"This season's acts and tips",desc:"This season's acts with standing values, a tick list and tips on how to complete each one.",wide:1,fn:()=>nightwave()},
  {id:"factions",group:"guides",title:"Syndicate leveling",short:"Fastest standing methods",desc:"The quickest ways to earn standing with every syndicate, from the daily cap to the best hand-ins.",wide:1,fn:()=>factions()},
  {id:"kahl",group:"guides",title:"Kahl's Garrison",short:"Weekly Break Narmer missions",desc:"The three weekly Break Narmer missions step by step, the weekly challenges and what Stock buys.",wide:1,fn:()=>kahl()},
+ {id:"coda",group:"guides",title:"Coda weapons",short:"Compare and what to buy",desc:"How Eleanor's Coda weapons work, what is in the shop now, how the 14 compare and which ones to buy.",wide:1,fn:()=>codaPage()},
  {id:"baro",group:"guides",title:"Baro Ki'Teer",short:"Stock and what to buy first",desc:"When he visits, his stock with a buy-first ranking, and how to spend your Ducats.",wide:1,fn:()=>baroPage()},
  {id:"backup",group:"more",title:"Backup & restore",desc:"Download your whole collection as a file and load it back in later, on this or another install.",fn:()=>backupPage()},
 ];
@@ -820,6 +823,34 @@ function backupPage(){
   catch(err){BKMSG=err.message}
   backupPage();
  };
+}
+// Coda weapons. Stats come from the API (gen.py); batches and unique effects from the wiki; the picks are my judgement from those numbers.
+const CODA_REF=Date.UTC(2026,9,12); // Monday of a week when batch A was in Eleanor's shop (seen on warframetools.com); batches alternate weekly
+const codaBatch=n=>(((Math.round((weekStart(n)-CODA_REF)/6048e5))%2)+2)%2?"B":"A";
+const PICK_CLASS={"Top pick":"support","Good":"stealth","Situational":"","Skip":"damage"};
+function codaPage(){
+ const n=Date.now(),b=codaBatch(n),swap=weekStart(n)+6048e5;
+ const pic=name=>{const w=WEAPONS.find(x=>x.name==name);return w&&w.img?`<img src="${esc(IMG(w.img))}" alt="" width="48" height="48" loading="lazy" onerror="this.style.visibility='hidden'">`:'<i class="noimg" style="width:48px;height:48px"></i>'};
+ const badge=c=>`<span class="role r-${PICK_CLASS[c.pick]}">${esc(c.pick)}</span>`;
+ const shop=CODA.filter(c=>c.batch==b),tops=CODA.filter(c=>c.pick=="Top pick");
+ const stat=c=>`<div class="cstats"><span>${c.dmg} damage</span><span>${c.crit}% crit, x${c.cm}</span><span>${c.status}% status</span><span>${c.rate}/s</span>${c.mag?`<span>${c.mag} rounds, ${c.reload}s reload</span>`:""}</div>`;
+ const slots=[...new Set(CODA.map(c=>c.slot))];
+ app.innerHTML=`<div class="grid g2"><section><h2>In Eleanor's shop now<small>Batch ${b}, switches in ${left(swap-n)}</small></h2>
+  <p class="tag">Eleanor (Höllvania, needs The Hex quest) sells two batches of seven Coda weapons that swap every week. The batch shown is worked out from the weekly rotation, so check it against the in-game shop.</p>
+  <div class="relgrid">${shop.map(c=>`<div class="relcard">${pic(c.name)}<div><b>${esc(c.name)}</b> ${badge(c)}<small class="tag" style="display:block">${esc(c.slot)}</small></div></div>`).join("")}</div></section>
+ <section><h2>How buying works</h2><ul class="evs">
+  <li><b>10 Live Heartcells per weapon</b><small>Enemies drop Live Heartcells. You also need an empty weapon slot and Mastery Rank 17 (the rank is enforced).</small></li>
+  <li><b>One of each per rotation</b><small>You can buy each weapon once per rotation, and the shop alternates between batch A and batch B.</small></li>
+  <li><b>A random bonus element</b><small>Each weapon in the shop has one extra damage type (Impact, Heat, Cold, Electricity, Toxin, Magnetic or Radiation) worth 25 to 60% of base damage. The roll changes every 4 days at 00:00 UTC, so check it before you buy.</small></li>
+  <li><b>Valence Fusion</b><small>Fusing two copies of the same weapon keeps the higher bonus times 1.1, capped at 60%. A bonus of 58% or more counts as 60%. Buy the same weapon in later rotations to fuse a better roll.</small></li>
+  <li><b>Forma and Rank 40</b><small>Each Forma adds two ranks, up to rank 40 after five. Rank 40 is needed for the Elemental Vice, which lets you choose the bonus element.</small></li></ul></section></div>
+ <section><h2>What to buy<small>my picks, from the numbers below</small></h2>
+  <ol class="steps">${tops.map(c=>`<li><b>${esc(c.name)}</b> <small class="tag">top pick, batch ${c.batch}${c.batch==b?", in the shop now":""}</small><br>${esc(c.note)}</li>`).join("")}
+   <li><b>Then one that fits your build.</b> Hirudo for crit, Catabolyst for status, Synapse for a crit rifle, Mire or Motovore if you want a second melee. The listed notes say what makes each one different.</li>
+   <li><b>Skip Pathocyst and Pox</b> unless you want to fill the codex, because their numbers are the lowest of their types.</li>
+   <li><b>Wait for the right batch.</b> Each weapon is 10 Heartcells, so if your pick is in the other batch, save the Heartcells for next week instead of buying a worse weapon now.</li></ol>
+  <p class="tag">These picks come from base stats (before mods) and the wiki's description of each weapon's unique effect. I have not tested them in the game, and the bonus element you roll can change which one is best for you.</p></section>
+ ${slots.map(s=>`<section><h2>${esc(s)}<small>${CODA.filter(c=>c.slot==s).length==1?"1 weapon":CODA.filter(c=>c.slot==s).length+" weapons"}</small></h2><div class="relgrid">${CODA.filter(c=>c.slot==s).map(c=>`<div class="relic"><div class="rhead"><span style="display:flex;gap:8px;align-items:center">${pic(c.name)}<b>${esc(c.name)}</b></span>${badge(c)}</div>${stat(c)}<p class="tag" style="margin:4px 0">${esc(c.note)}</p><small class="tag">Batch ${c.batch}${c.batch==b?", in the shop now":""}${c.wiki?` &middot; <a href="${esc(c.wiki)}" target="_blank" rel="noopener">wiki</a>`:""}</small></div>`).join("")}</div></section>`).join("")}`;
 }
 const page=()=>curr().id;
 function render(){const p=curr();p.fn();decorate(p)}

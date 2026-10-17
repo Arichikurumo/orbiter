@@ -225,3 +225,34 @@ if len(sys.argv) > 3:
     RL = sorted(R.values(), key=lambda r: (TIER.get(r['t'], 9), int(re.sub(r'\D', '', r['n'].split()[1]) or 0), r['n']))
     open('site/relics.js', 'w').write('const RELICS=' + json.dumps(RL, separators=(',', ':')) + ';')
     print('relics', len(RL), 'unvaulted', sum(1 for r in RL if not r['v']))
+
+# ---- Coda weapons: stats from the API plus batch, unique effect and my pick (batches and effects from wiki.warframe.com/w/Coda_Weapons) ----
+if len(sys.argv) > 3:
+    CODA = {  # name: (shop batch, pick, note)
+     'Coda Bassocyst': ('B', 'Top pick', 'Highest damage per shot of any Coda and 40% status. Alt fire mites and the teleport to enemies open to a Mercy finisher add utility.'),
+     'Dual Coda Torxica': ('A', 'Top pick', 'Huge 160-round magazine and 25% crit. Spore tagging adds Cold and damage vulnerability, which makes it an easy all-rounder.'),
+     'Coda Caustacyst': ('B', 'Top pick', 'Highest damage per hit of the melee Codas with 41% status, and larger corrosive pools from heavy attacks.'),
+     'Coda Hirudo': ('B', 'Good', 'Best crit melee: 34% chance and x3.1. Pick it for a crit build.'),
+     'Coda Catabolyst': ('A', 'Good', 'Fastest fire rate of the pistols (12 a second) and 50% status. Reloading tosses three grenades.'),
+     'Coda Synapse': ('B', 'Good', 'Highest crit of the rifles (40%, x2.7) with 76 rounds at 12 a second.'),
+     'Coda Mire': ('A', 'Good', 'Solid status melee (40%), a close second to the Caustacyst.'),
+     'Coda Motovore': ('A', 'Good', 'Gains a bonus from your highest physical stat, so it suits impact, puncture or slash builds.'),
+     'Coda Sporothrix': ('A', 'Situational', 'Heavy hits and 55% status, but only 5% crit, so it needs a status or crit-boosting build. Larger explosion and faster reload.'),
+     'Coda Tysis': ('B', 'Situational', '135 damage per shot and 50% status, but low crit.'),
+     'Coda Hema': ('A', 'Situational', 'Burst rifle with a 72-round magazine. Solid numbers, nothing unique.'),
+     'Coda Bubonico': ('B', 'Situational', 'Shotgun-style spread with 27% crit. Solid, nothing unique.'),
+     'Coda Pathocyst': ('B', 'Skip', 'Slowest attack speed (0.67), so the lowest damage output of the melee Codas. Throws spawn stronger maggots.'),
+     'Coda Pox': ('A', 'Skip', 'Smallest magazine (8) and only 10% crit, the weakest numbers of the pistols.'),
+    }
+    cw = []
+    for x in json.load(open(sys.argv[2])):
+        if x['name'] not in CODA: continue
+        b, pick, note = CODA[x['name']]
+        slot = 'Melee' if x['category'] == 'Melee' else f"{x['category']} {x['type'].lower()}"
+        shot = x['totalDamage'] * (x.get('multishot') or 1) if x['name'] == 'Coda Bubonico' else x['totalDamage']  # the API lists Bubonico per pellet
+        cw.append(dict(name=x['name'], slot=slot, batch=b, pick=pick, note=note, dmg=round(shot), crit=round(x['criticalChance'] * 100), cm=round(x['criticalMultiplier'], 1),
+                       status=round(x['procChance'] * 100), rate=round(x['fireRate'] or 0, 2), mag=x.get('magazineSize'), reload=round(x['reloadTime'], 1) if x.get('reloadTime') else None, wiki=x.get('wikiaUrl')))
+    order = {'Melee': 0, 'Primary rifle': 1, 'Primary shotgun': 2, 'Primary sniper': 3, 'Secondary pistol': 4}
+    cw.sort(key=lambda c: (order.get(c['slot'], 9), -c['dmg']))
+    open('site/coda.js', 'w').write('const CODA=' + json.dumps(cw) + ';')
+    print('coda', len(cw), sorted(set(CODA) - {c['name'] for c in cw}))
