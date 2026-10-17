@@ -23,10 +23,13 @@ nav button{background:none;border:1px solid transparent;color:var(--mut);text-tr
 nav button:hover{color:var(--fg)}nav button.on,nav .dd.open button{color:var(--cyan);background:rgba(79,209,232,.1);border-color:var(--cyan)}
 nav button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 .dd{position:relative}
-.menu{display:none;position:absolute;top:100%;left:0;min-width:170px;background:rgba(7,9,13,.97);border:1px solid var(--gold);padding:4px 0;z-index:3}
+.menu{display:none;position:absolute;top:100%;left:0;min-width:270px;background:rgba(7,9,13,.97);border:1px solid var(--gold);padding:4px 0;z-index:3}
 .dd.open .menu{display:block}
-.menu a{display:block;clip-path:none;padding:10px 16px;white-space:nowrap}
-.menu a.on{background:rgba(79,209,232,.1)}
+.menu a{display:block;clip-path:none;padding:9px 16px;white-space:normal;text-transform:none;letter-spacing:0;font-size:14px;color:var(--fg)}
+.menu a b{display:block;font-weight:500}
+.menu a small{display:block;color:var(--mut);font-size:12px;margin-top:1px}
+.menu a:hover,.menu a:focus-visible{background:rgba(79,209,232,.12);outline:none}
+.menu a.on{background:rgba(79,209,232,.1);box-shadow:inset 3px 0 0 var(--cyan)}
 a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 main{max-width:920px;margin:0 auto;padding:20px 16px}
 section{background:linear-gradient(160deg,rgba(201,164,92,.07),transparent 40%),var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);padding:14px 20px;margin-bottom:20px;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px))}
@@ -64,8 +67,16 @@ a{color:var(--cyan)}
 .task.sub b{font-weight:400;font-size:14px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
 .card{display:block;text-decoration:none;color:var(--fg);padding:14px 16px;border:1px solid var(--line);border-top:2px solid var(--gold);background:var(--card);transition:border-color .2s,transform .2s}
+.pagehead{margin:4px 0 18px;padding:0 4px}
+.pagehead .crumb{display:block;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);margin-bottom:2px}
+.pagehead h1{margin:0;font-size:26px;color:var(--gold);text-transform:uppercase;letter-spacing:.2em;font-weight:600}
+.pagehead p{margin:6px 0 0;color:var(--mut);max-width:70ch}
+.hgroup{margin:6px 0 4px}.hgroup h2{margin:0 0 8px;padding:0 2px}.hgroup h2 small{color:var(--mut)}
+.cards1{margin-bottom:16px}
+.flagrow.strip{max-width:none;margin:0 0 16px;padding:0 4px}
+.emblem{float:right;margin:0 0 8px 16px;filter:drop-shadow(0 0 14px rgba(201,164,92,.35))}
 .card:hover{border-color:var(--cyan);transform:translateY(-2px)}
-.card h2{margin:0 0 6px}.card p{margin:0;color:var(--mut);font-size:14px}
+.card h3{margin:0 0 6px;font-size:15px;color:var(--gold);text-transform:uppercase;letter-spacing:.14em}.card p{margin:0;color:var(--mut);font-size:14px}
 .evs{list-style:none;margin:0;padding:0}.evs li{padding:6px 0;border-top:1px solid rgba(42,51,64,.6)}.evs li:first-child{border-top:0}.evs small{display:block;color:var(--mut)}
 @media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
 .baro{margin:0 0 20px;padding:12px 18px;border:1px solid var(--cyan);background:rgba(79,209,232,.07);clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
@@ -164,10 +175,7 @@ main.wide{max-width:1280px}
 </style>
 </head>
 <body>
-<nav><a class="brand" href="#home" aria-label="Orbiter, go to the home page"><img src="favicon.svg" alt="" width="26" height="26">Orbiter</a><a href="#home" id="n_home">Home</a><a href="#tasks" id="n_tasks">Tasks</a>
-<div class="dd"><button type="button" id="d_collection" aria-haspopup="true" aria-expanded="false">Collection &#9662;</button><div class="menu"><a href="#frames" id="n_frames">Warframes</a><a href="#weapons" id="n_weapons">Weapons</a><a href="#companions" id="n_companions">Companions</a></div></div>
-<div class="dd"><button type="button" id="d_build" aria-haspopup="true" aria-expanded="false">Upgrades &#9662;</button><div class="menu"><a href="#mods" id="n_mods">Mods</a><a href="#arcanes" id="n_arcanes">Arcanes</a><a href="#helminth" id="n_helminth">Helminth</a></div></div><div class="dd"><button type="button" id="d_relics" aria-haspopup="true" aria-expanded="false">Relics &#9662;</button><div class="menu"><a href="#relics" id="n_relics">Overview</a><a href="#relicfinder" id="n_relicfinder">Relic finder</a><a href="#relcalc" id="n_relcalc">Calculator</a></div></div><a href="#resources" id="n_resources">Resources</a>
-<div class="dd"><button type="button" id="d_guides" aria-haspopup="true" aria-expanded="false">Guides &#9662;</button><div class="menu"><a href="#nightwave" id="n_nightwave">Nightwave</a><a href="#factions" id="n_factions">Syndicate leveling</a><a href="#kahl" id="n_kahl">Kahl's Garrison</a><a href="#baro" id="n_baro">Baro Ki'Teer</a></div></div></nav>
+<nav id="nav" aria-label="Main"></nav>
 <main id="app"></main>
 <footer id="foot"><a href="#backup">Backup &amp; restore</a> &middot; <a href="https://github.com/Arichikurumo/orbiter" target="_blank" rel="noopener">GitHub</a> &middot; unofficial fan project</footer>
 <script src="frames.js"></script>
@@ -300,7 +308,7 @@ function tasks(){
   s.items.map(t=>{const [id,name,desc,,meta]=t,dn=isDone(t);
    return `<label class="task ${dn?'done':''}"><input type="checkbox" data-t="${id}" ${dn?'checked':''}><span><b>${esc(name)}</b><small>${esc(desc)}</small>${meta?`<small class="meta">${esc(meta)}</small>`:''}</span></label>`+
    subs(t).map(([sid,sn,sd])=>`<label class="task sub ${S.tasks[sid]?'done':''}"><input type="checkbox" data-t="${sid}" ${S.tasks[sid]?'checked':''}><span><b>${esc(sn)}</b>${sd?`<small>${esc(sd)}</small>`:''}</span></label>`).join('')}).join('')+`</section>`};
- app.innerHTML=`<div class="hero">${HERO}<div><h1>Tenno Orders</h1><p>${done} of ${ALL.length} tasks complete. Daily tasks reset at 00:00 UTC (in ${left(resets.d-n)}), weekly on Monday.</p></div></div><div class="baro">${baroCard()}</div>`+'<div class="grid g2">'+["daily","weekly","dv","wv"].map(k=>sec(SECTIONS.find(s=>s.key==k))).join('')+'</div>'+sec(SECTIONS.find(s=>s.key=='other'));
+ app.innerHTML=`<div class="hero">${HERO}<div><h1>Tenno Orders</h1><p data-lead>${done} of ${ALL.length} tasks complete. Daily tasks reset at 00:00 UTC (in ${left(resets.d-n)}), weekly on Monday.</p></div></div><div class="baro">${baroCard()}</div>`+'<div class="grid g2">'+["daily","weekly","dv","wv"].map(k=>sec(SECTIONS.find(s=>s.key==k))).join('')+'</div>'+sec(SECTIONS.find(s=>s.key=='other'));
 }
 const HERO=`<svg viewBox="0 0 160 160" width="120" height="120" aria-hidden="true" fill="none" stroke-linecap="round">
  <circle cx="80" cy="80" r="74" stroke="#c9a45c" stroke-width="1.5" stroke-dasharray="3 7"/>
@@ -337,7 +345,7 @@ function frames(){
  l.sort(F.sort=="easy"?(a,b)=>a.tier-b.tier||(a.hours??1e9)-(b.hours??1e9)||a.name.localeCompare(b.name):(a,b)=>a.name.localeCompare(b.name));
  const opt=(v,o)=>o.map(([k,t])=>`<option value="${k}" ${v==k?'selected':''}>${t}</option>`).join('');
  let last;
- app.innerHTML=`<section><h2>Warframes<small>${have} / ${FRAMES.length} collected &middot; ${mas} mastered</small></h2><div class="bar">
+ app.innerHTML=`<section><h2>Progress<small>${have} / ${FRAMES.length} collected &middot; ${mas} mastered</small></h2><div class="bar">
   <input type="search" id="q" placeholder="Search" value="${esc(F.q)}">
   <select data-f="show">${opt(F.show,SHOW)}</select>
   <select data-f="type">${opt(F.type,[["all","Prime + normal"],["base","Normal"],["prime","Prime"]])}</select>
@@ -363,7 +371,7 @@ function catalog(kind){
  if(g.sort=="name")l.sort((a,b)=>a.name.localeCompare(b.name));else if(g.sort=="mr")l.sort((a,b)=>a.mr-b.mr||a.name.localeCompare(b.name));
  const opt=(v,o)=>o.map(([k,t])=>`<option value="${esc(k)}" ${v==k?'selected':''}>${esc(t)}</option>`).join('');
  let last;const cnt={};l.forEach(f=>cnt[f.group]=(cnt[f.group]||0)+1);
- app.innerHTML=`<section><h2>${C.title}<small>${have} / ${all.length} ${C.noun||"collected"}${C.mastery?` &middot; ${mas} mastered`:""}</small></h2>${C.intro||""}<div class="bar">
+ app.innerHTML=`<section><h2>Progress<small>${have} / ${all.length} ${C.noun||"collected"}${C.mastery?` &middot; ${mas} mastered`:""}</small></h2>${C.intro||""}<div class="bar">
   <input type="search" id="q" placeholder="Search" aria-label="Search" value="${esc(g.q)}">
   <select data-k="show">${opt(g.show,C.mastery?SHOW:SHOW.slice(0,3))}</select>
   <select data-k="group">${opt(g.group,[["all","All types"],...groups.map(x=>[x,x])])}</select>
@@ -396,22 +404,40 @@ app.addEventListener('change',e=>{
  else if(t.dataset.rl){RL[t.dataset.rl]=t.value;render()}
  else if(t.dataset.rc){RC[t.dataset.rc]=t.value;if(t.dataset.rc=='part')RC.relic='';relicCalc()}
 });
-const PAGES=[["tasks","Tasks","Daily and weekly checklist with reset timers, vendors to visit and a Baro Ki'Teer countdown."],
- ["frames","Warframes","Every frame, prime and normal. Mark what you own, sort by how easy it is to get, and filter by role."],
- ["weapons","Weapons","Every weapon grouped by type, with mastery rank and where to get it."],
- ["companions","Companions","Sentinels, Kubrows, Kavats, MOAs, Hounds and more, with how to obtain each."],
- ["mods","Mods","Max-rank effects and top drop sources for mods. Search by name or by what the mod does."],
- ["arcanes","Arcanes","Arcane effects with their drop sources."],
- ["helminth","Helminth","Each subsumable ability, what it does and which frame it comes from. Tick the ones you have."],
- ["relics","Relics","Which Prime items you can get from relics right now, this month's Prime Resurgence, and every relic with its rewards."],
- ["relicfinder","Relic finder","Search all 798 relics by name or reward, with the drop rate for any refinement stage."],
- ["relcalc","Relic calculator","How many relics you need to open to be sure of a drop, for every refinement level."],
- ["backup","Backup & restore","Download your whole collection as a file and load it back in later, on this or another install."],
- ["resources","Resources","A star chart of where to farm the common resources. Click a planet, or pick a resource to highlight its planets."],
- ["nightwave","Nightwave","This season's acts with standing values, a tick list and tips on how to complete each one."],
- ["factions","Syndicate leveling","The quickest ways to earn standing with every syndicate, from the daily cap to the best hand-ins."],
- ["kahl","Kahl's Garrison","The three weekly Break Narmer missions step by step, the weekly challenges and what Stock buys."],
- ["baro","Baro Ki'Teer","When he visits, his stock with a buy-first ranking, and how to spend your Ducats."]];
+// One registry drives the nav, the home page, page titles and headers, so they cannot drift apart.
+const GROUPS=[
+ {id:"collection",title:"Collection",blurb:"Track what you own"},
+ {id:"upgrades",title:"Upgrades",blurb:"Build and improve your gear"},
+ {id:"farming",title:"Farming",blurb:"Where and how to get things"},
+ {id:"guides",title:"Guides",blurb:"Events, standing and shops"},
+ {id:"more",title:"More",blurb:"",nav:false},
+];
+const SITE=[
+ {id:"home",title:"Home",wide:1,fn:()=>home()},
+ {id:"tasks",title:"Tasks",wide:1,desc:"Daily and weekly checklist with reset timers, vendors to visit and a Baro Ki'Teer countdown.",fn:()=>tasks()},
+ {id:"frames",group:"collection",title:"Warframes",short:"Prime and normal, with farm info",desc:"Every frame, prime and normal. Mark what you own, sort by how easy it is to get, and filter by role.",fn:()=>frames()},
+ {id:"weapons",group:"collection",title:"Weapons",short:"Every weapon by type",desc:"Every weapon grouped by type, with mastery rank and where to get it.",fn:()=>catalog("weapons")},
+ {id:"companions",group:"collection",title:"Companions",short:"Sentinels, beasts, MOAs, Hounds",desc:"Sentinels, Kubrows, Kavats, MOAs, Hounds and more, with how to obtain each.",fn:()=>catalog("companions")},
+ {id:"mods",group:"upgrades",title:"Mods",short:"Effects and drop sources",desc:"Max-rank effects and top drop sources for mods. Search by name or by what the mod does.",fn:()=>catalog("mods")},
+ {id:"arcanes",group:"upgrades",title:"Arcanes",short:"Effects and drop sources",desc:"Arcane effects with their drop sources.",fn:()=>catalog("arcanes")},
+ {id:"helminth",group:"upgrades",title:"Helminth",short:"Subsumable abilities by frame",desc:"Each subsumable ability, what it does and which frame it comes from. Tick the ones you have.",fn:()=>catalog("helminth")},
+ {id:"relics",group:"farming",title:"Relic overview",short:"What drops now, Prime Resurgence",desc:"Which Prime items you can get from relics right now and this month's Prime Resurgence.",wide:1,fn:()=>relicsPage()},
+ {id:"relicfinder",group:"farming",title:"Relic finder",short:"Search relics and rewards",desc:"Search all 798 relics by name or reward, with the drop rate for any refinement stage.",wide:1,fn:()=>relicFinder()},
+ {id:"relcalc",group:"farming",title:"Relic calculator",short:"Your odds of a drop",desc:"How many relics you need to open to be sure of a drop, for every refinement level.",wide:1,fn:()=>relicCalc()},
+ {id:"resources",group:"farming",title:"Resource map",short:"Where to farm each resource",desc:"A star chart of where to farm the common resources. Click a planet, or pick a resource to highlight its planets.",fn:()=>resources()},
+ {id:"nightwave",group:"guides",title:"Nightwave",short:"This season's acts and tips",desc:"This season's acts with standing values, a tick list and tips on how to complete each one.",wide:1,fn:()=>nightwave()},
+ {id:"factions",group:"guides",title:"Syndicate leveling",short:"Fastest standing methods",desc:"The quickest ways to earn standing with every syndicate, from the daily cap to the best hand-ins.",wide:1,fn:()=>factions()},
+ {id:"kahl",group:"guides",title:"Kahl's Garrison",short:"Weekly Break Narmer missions",desc:"The three weekly Break Narmer missions step by step, the weekly challenges and what Stock buys.",wide:1,fn:()=>kahl()},
+ {id:"baro",group:"guides",title:"Baro Ki'Teer",short:"Stock and what to buy first",desc:"When he visits, his stock with a buy-first ranking, and how to spend your Ducats.",wide:1,fn:()=>baroPage()},
+ {id:"backup",group:"more",title:"Backup & restore",desc:"Download your whole collection as a file and load it back in later, on this or another install.",fn:()=>backupPage()},
+];
+const curr=()=>SITE.find(p=>"#"+p.id==location.hash)||SITE[0];
+function buildNav(){
+ const top=p=>`<a href="#${p.id}" id="n_${p.id}">${esc(p.title)}</a>`;
+ document.getElementById("nav").innerHTML=`<a class="brand" href="#home" aria-label="Orbiter, go to the home page"><img src="favicon.svg" alt="" width="26" height="26">Orbiter</a>`+top(SITE[0])+top(SITE[1])+
+  GROUPS.filter(g=>g.nav!==false).map(g=>`<div class="dd"><button type="button" id="d_${g.id}" aria-haspopup="true" aria-expanded="false" aria-controls="m_${g.id}">${g.title} &#9662;</button><div class="menu" id="m_${g.id}">${SITE.filter(p=>p.group==g.id).map(p=>`<a href="#${p.id}" id="n_${p.id}"><b>${esc(p.title)}</b><small>${esc(p.short)}</small></a>`).join("")}</div></div>`).join("");
+}
+buildNav();
 // The API has no version field, so the version is read from the newest news post flagged as an update (e.g. "...: Hotfix 44.1.2 + 2.1").
 function gameVersion(){
  if(!W||!W.news)return"";
@@ -422,6 +448,7 @@ function gameVersion(){
  const link=u&&/^https?:\/\//i.test(u.link)?` &middot; <a href="${esc(u.link)}" target="_blank" rel="noopener">${esc(u.message)}</a>`:"";
  return `<p class="ver"><b>Game version ${v?esc(v[1]):"unknown"}</b>${build?` &middot; build ${build[1]}-${build[2]}-${build[3]}`:""}${link}</p>`;
 }
+const card=p=>`<a class="card" href="#${p.id}"><h3>${esc(p.title)}</h3><p>${esc(p.desc)}</p></a>`;
 function home(){
  const n=Date.now(),ms=s=>Date.parse(s),when=a=>`${new Date(a).toLocaleDateString([], {month:"short",day:"numeric"})}`;
  let now="",soon="",news="";
@@ -443,7 +470,8 @@ function home(){
  }
  const ul=(s,empty)=>s.startsWith("<p")?s:`<ul class="evs">${s||`<li><small>${empty}</small></li>`}</ul>`;
  app.innerHTML=`<div class="hero">${HERO}<div><h1>Orbiter</h1><p>Your Tenno checklist, collection tracker and farming guide.</p>${gameVersion()}</div></div>
- <div class="cards">${PAGES.map(([k,t,d])=>`<a class="card" href="#${k}"><h2>${t}</h2><p>${d}</p></a>`).join("")}</div>
+ <div class="cards cards1">${card(SITE[1])}</div>
+ ${GROUPS.filter(g=>g.id!="more").map(g=>`<div class="hgroup"><h2>${g.title}<small>${g.blurb}</small></h2><div class="cards">${SITE.filter(p=>p.group==g.id).map(card).join("")}</div></div>`).join("")}
  <div class="grid g3"><section><h2>Happening now</h2>${ul(now,"No active events found.")}</section>
  <section><h2>Coming up</h2>${ul(soon,"Nothing announced yet. Digital Extremes only posts upcoming events shortly before they start.")}</section>
  <section><h2>Latest news</h2>${ul(news,"No news found.")}</section></div>`;
@@ -464,7 +492,7 @@ function resources(){
  let detail='<p class="tag">Pick a planet on the chart or a resource below.</p>';
  if(sel)detail=`<h2>${esc(sel.name)}</h2><ul class="evs">`+sel.spots.map(s=>`<li><b>${esc(s.planet=="*"?"Any planet":s.planet)}</b><small>${esc(s.node)}</small></li>`).join("")+`</ul>`;
  else if(R.planet){const l=by[R.planet]||[];detail=`<h2>${esc(R.planet)}</h2>`+(l.length?`<ul class="evs">${l.map(([r,s])=>`<li><b>${esc(r.name)}</b><small>${esc(s.node)}</small></li>`).join("")}</ul>`:'<p class="tag">No recommended resource farming spots listed here.</p>')}
- app.innerHTML=`<section><h2>Resources<small>${RESOURCES.length} resources</small></h2><p class="tag">Click a planet on the chart to list what to farm there, or choose a resource to highlight its planets. Spots are the wiki's recommended farming locations; "Void" means any Void Survival or Defense. Hotspots are placed by eye on the picture, so a few may sit slightly off.</p><div class="chartwrap"><img class="bg" src="${CHART_IMG}" alt="" referrerpolicy="no-referrer" onerror="this.style.display='none'">${svg}</div><div class="detail" aria-live="polite">${detail}</div><div class="chips">${chips}</div></section>`;
+ app.innerHTML=`<section><h2>Star chart<small>${RESOURCES.length} resources</small></h2><p class="tag">Click a planet on the chart to list what to farm there, or choose a resource to highlight its planets. Spots are the wiki's recommended farming locations; "Void" means any Void Survival or Defense. Hotspots are placed by eye on the picture, so a few may sit slightly off.</p><div class="chartwrap"><img class="bg" src="${CHART_IMG}" alt="" referrerpolicy="no-referrer" onerror="this.style.display='none'">${svg}</div><div class="detail" aria-live="polite">${detail}</div><div class="chips">${chips}</div></section>`;
 }
 // Nightwave: live acts from the API, plus generic how-to tips matched on the act's wording (the API has no tips).
 const NW_TIPS=[
@@ -556,7 +584,7 @@ const FACTION_GUIDE=[
 const SYND_IMG={"Faction syndicates":["steel-meridian","arbiters","suda","perrin","red-veil","new-loka"],"Cephalon Simaris":["simaris"],"Ostron":["ostron"],"The Quills":["quills"],"Solaris United":["solaris"],"Vox Solaris":["vox"],"Ventkids":["ventkids"],"Entrati":["entrati"],"Necraloid":["necraloid"],"The Holdfasts":["holdfasts"],"Cavia":["cavia"],"The Hex":["hex"],"Conclave":["conclave"],"Kahl's Garrison and Nightcap":["garrison"]}; // flags from the wiki, bundled in img/synd
 const flagImgs=(l,c="")=>l.map(s=>`<img class="flag ${c}" src="img/synd/${s}.webp" alt="" loading="lazy" width="71" height="108">`).join("");
 function factions(){
- app.innerHTML=`<div class="hero synhero"><div class="flagrow">${flagImgs(Object.values(SYND_IMG).flat(),"sm")}</div><div><h1>Syndicate leveling</h1><p>The quickest known ways to earn standing with every syndicate.</p></div></div>
+ app.innerHTML=`<div class="flagrow strip">${flagImgs(Object.values(SYND_IMG).flat(),"sm")}</div>
   <section><p class="tag">Taken from the wiki's Standing page. "Fastest" here is my pick of the listed methods, since the wiki does not rank them. A Universal Syndicate Medallion from Disruption missions is worth 1,000 standing with any syndicate.</p>
   <div class="tip"><b>Quick routine:</b> medallions first (they ignore the daily cap), then bounties and hand-ins for your world syndicates, then a boosted pledge farm for the faction syndicates until you hit the cap.</div></section>
   <div class="grid g2">`+
@@ -599,7 +627,7 @@ const KAHL_MISSIONS=[
 ];
 function kahl(){
  const li=t=>`<li>${esc(t)}</li>`;
- app.innerHTML=`<div class="hero kahlhero"><img src="img/kahl/garrison.webp" alt="" width="120" height="120"><div><h1>Kahl's Garrison</h1><p>Weekly Break Narmer missions, bonus challenges and Chipper's shop.</p></div></div><section><h2>How it works</h2><p class="tag">Unlocked by finishing the Veilbreaker quest. Kahl gives one Break Narmer mission a week, rotating Sneaky Sabotage, Junk Run and Prison Break, and the rotation moves on only when you finish the current one (the wiki gives the reset as Monday 00:00 UTC). They are solo missions where you play Kahl-175. Each finished mission raises your Garrison rank once (about four weeks to the top), and the Garrison has no standing. Stock is the currency for Chipper's shop in the Drifter's Camp.</p></section>
+ app.innerHTML=`<div class="hero kahlhero"><img src="img/kahl/garrison.webp" alt="" width="120" height="120"><div><h1>Kahl's Garrison</h1><p>Weekly Break Narmer missions, bonus challenges and Chipper's shop.</p></div></div><section><img class="emblem" src="img/kahl/garrison.webp" alt="" width="96" height="96"><h2>How it works</h2><p class="tag">Unlocked by finishing the Veilbreaker quest. Kahl gives one Break Narmer mission a week, rotating Sneaky Sabotage, Junk Run and Prison Break, and the rotation moves on only when you finish the current one (the wiki gives the reset as Monday 00:00 UTC). They are solo missions where you play Kahl-175. Each finished mission raises your Garrison rank once (about four weeks to the top), and the Garrison has no standing. Stock is the currency for Chipper's shop in the Drifter's Camp.</p></section>
  <section><h2>Guides and maps</h2><ul class="evs">${KAHL_LINKS.map(([t,u,d])=>`<li><b><a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a></b><small>${esc(d)}</small></li>`).join("")}</ul></section>
  <div class="grid g3">${KAHL_MISSIONS.map(([n,wk,obj,steps,note])=>`<section class="mission"><div class="banner"><img src="img/kahl/${KAHL_IMG[n]}.webp" alt="" loading="lazy"><span>${esc(wk)}</span></div><h2>${esc(n)}</h2><p class="tag">${esc(obj)}</p><ol class="steps">${steps.map(li).join("")}</ol><p class="tag">${esc(note)}</p>${KAHL_VIDEOS[n]?`<p><a href="${esc(KAHL_VIDEOS[n][0])}" target="_blank" rel="noopener">Watch: ${esc(n)} objective locations</a></p>`:""}</section>`).join("")}</div>
  <div class="grid g2"><section><h2><img class="ico" src="img/kahl/stock.webp" alt="" width="28" height="28"> Weekly challenges and Stock</h2><ul class="evs">
@@ -693,7 +721,7 @@ function relicsPage(){
   res=`<p class="tag">${act?`<b>${esc(v.character)}</b> at ${esc(v.location)}: this rotation ends in ${left(ms(v.expiry)-n)}.`:"Prime Resurgence is not active right now."} Items cost Aya (the API calls the price "ducats").</p>`+
    (act?`<div class="relgrid">${(v.inventory||[]).map(i=>`<div class="relic"><b>${esc(cleanPack(i.item))}</b><small class="tag">${esc(i.ducats??"?")} Aya</small></div>`).join("")}</div>`:"")+
    (sched.length>1?`<p class="tag">Coming up: ${sched.slice(1).map(s=>`${esc(cleanPack(s.item))} (from ${new Date(ms(sched[sched.indexOf(s)-1].expiry)).toLocaleDateString([], {month:"short",day:"numeric"})})`).join(", ")}</p>`:"")}
- app.innerHTML=`<div class="hero"><div><h1>Relics</h1><p>${items.size} Prime items can be farmed from relics right now. The other ${RELICS.filter(r=>r.v).length} relics are vaulted.</p></div></div>
+ app.innerHTML=`<div class="hero"><div><h1>Relics</h1><p data-lead>${items.size} Prime items can be farmed from relics right now. The other ${RELICS.filter(r=>r.v).length} relics are vaulted.</p></div></div>
  <section><h2>Available now<small>${items.size} items from ${RELICS.filter(r=>!r.v).length} relics</small></h2><p class="tag">Prime parts you can still get by opening relics (any mission with a Void Fissure). Dots show rarity: <span class="rar rar-C"></span> common, <span class="rar rar-U"></span> uncommon, <span class="rar rar-R"></span> rare. Relic names after each part tell you which relics to look for.</p><div class="relgrid">${cards}</div></section>
  <section><h2>Prime Resurgence<small>vaulted items, bought with Aya</small></h2>${res}</section>
  <section><h2>Drop rates by refinement<small>the same for every relic</small></h2><p class="tag">Every relic holds 3 common, 2 uncommon and 1 rare reward. Refining it with Void Traces moves chance from the common rewards to the rarer ones. The numbers are the chance <b>per reward</b>; the rare chance is for the single rare reward.</p>
@@ -792,24 +820,46 @@ function backupPage(){
   backupPage();
  };
 }
-const page=()=>({"#relicfinder":"relicfinder","#backup":"backup","#relcalc":"relcalc","#relics":"relics","#baro":"baro","#kahl":"kahl","#nightwave":"nightwave","#factions":"factions","#resources":"resources","#mods":"mods","#arcanes":"arcanes","#helminth":"helminth","#tasks":"tasks","#frames":"frames","#weapons":"weapons","#companions":"companions"})[location.hash]||"home";
-function render(){const p=page();p=="home"?home():p=="resources"?resources():p=="nightwave"?nightwave():p=="factions"?factions():p=="kahl"?kahl():p=="baro"?baroPage():p=="relics"?relicsPage():p=="relicfinder"?relicFinder():p=="relcalc"?relicCalc():p=="backup"?backupPage():p=="tasks"?tasks():p=="frames"?frames():catalog(p)}
+const page=()=>curr().id;
+function render(){const p=curr();p.fn();decorate(p)}
+// Every page except Home gets the same header: where it sits in the nav, its title and one line about it.
+function decorate(p){
+ document.title=p.id=="home"?"Orbiter":`${p.title} · Orbiter`;
+ if(p.id=="home")return;
+ const g=GROUPS.find(x=>x.id==p.group),lead=app.querySelector("[data-lead]");
+ const text=lead?lead.textContent:p.desc; // a page can set its own live line (progress, counts) with data-lead
+ app.querySelectorAll(":scope > .hero").forEach(e=>e.remove());
+ app.insertAdjacentHTML("afterbegin",`<header class="pagehead">${g?`<span class="crumb">${esc(g.title)}</span>`:""}<h1>${esc(p.title)}</h1><p>${esc(text)}</p></header>`);
+}
 function closeMenus(except){document.querySelectorAll(".dd").forEach(d=>{if(d!==except){d.classList.remove("open");d.firstElementChild.setAttribute("aria-expanded","false")}})}
+function openMenu(d,focusFirst){
+ closeMenus(d);d.classList.add("open");d.firstElementChild.setAttribute("aria-expanded","true");
+ const m=d.querySelector(".menu");m.style.left="";const over=m.getBoundingClientRect().right-(document.documentElement.clientWidth-8);if(over>0)m.style.left=-over+"px"; // keep the menu on screen
+ if(focusFirst)m.querySelector("a").focus();
+}
 document.querySelectorAll(".dd>button").forEach(b=>b.addEventListener("click",e=>{
- e.stopPropagation();const d=b.parentElement,o=!d.classList.contains("open");closeMenus(d);d.classList.toggle("open",o);b.setAttribute("aria-expanded",o);
- const m=d.querySelector(".menu");m.style.left="";if(o){const over=m.getBoundingClientRect().right-(document.documentElement.clientWidth-8);if(over>0)m.style.left=-over+"px"} // keep the menu on screen
+ e.stopPropagation();const d=b.parentElement;
+ if(d.classList.contains("open"))closeMenus();else openMenu(d,e.detail===0); // detail 0 = opened with the keyboard
 }));
 addEventListener("resize",()=>closeMenus());
 addEventListener("click",()=>closeMenus());
-addEventListener("keydown",e=>{if(e.key=="Escape"){const o=document.querySelector(".dd.open>button");closeMenus();o&&o.focus()}});
+addEventListener("keydown",e=>{
+ const d=document.querySelector(".dd.open");
+ if(e.key=="Escape"&&d){const b=d.firstElementChild;closeMenus();b.focus();return}
+ const k=e.key;if(!["ArrowDown","ArrowUp","Home","End"].includes(k))return;
+ const btn=document.activeElement&&document.activeElement.closest&&document.activeElement.closest(".dd>button");
+ if(btn&&k=="ArrowDown"){e.preventDefault();openMenu(btn.parentElement,true);return}
+ if(!d)return;const items=[...d.querySelectorAll(".menu a")],i=items.indexOf(document.activeElement);if(i<0&&!(k=="ArrowDown"))return;
+ e.preventDefault();items[k=="Home"?0:k=="End"?items.length-1:k=="ArrowDown"?(i+1)%items.length:(i-1+items.length)%items.length].focus();
+});
+addEventListener("focusin",e=>{const d=document.querySelector(".dd.open");if(d&&!d.contains(e.target))closeMenus()});
 function route(){
- const p=page();
- for(const k of["home","tasks","frames","weapons","companions","mods","arcanes","helminth","resources","nightwave","factions","kahl","baro","relics","relicfinder","relcalc"])document.getElementById("n_"+k).className=p==k?"on":"";
- const grp={frames:"collection",weapons:"collection",companions:"collection",mods:"build",arcanes:"build",helminth:"build",nightwave:"guides",factions:"guides",kahl:"guides",baro:"guides",relics:"relics",relicfinder:"relics",relcalc:"relics"};
- for(const g of["collection","build","guides","relics"])document.getElementById("d_"+g).className=grp[p]==g?"on":"";
+ const p=curr();
+ document.querySelectorAll("nav a[id^=n_]").forEach(a=>{const on=a.id=="n_"+p.id;a.classList.toggle("on",on);on?a.setAttribute("aria-current","page"):a.removeAttribute("aria-current")});
+ document.querySelectorAll(".dd>button").forEach(b=>b.classList.toggle("on",b.id=="d_"+p.group));
  closeMenus();
- document.querySelector('main').classList.toggle('wide',['home','tasks','nightwave','kahl','factions','baro','relics','relicfinder','relcalc'].includes(p));
- render();
+ document.querySelector("main").classList.toggle("wide",!!p.wide);
+ render();window.scrollTo(0,0);
 }
 addEventListener("hashchange",route);route();
 // Server state wins when it has data; otherwise the browser's saved progress is uploaded once. Nothing is pushed before this finishes.
