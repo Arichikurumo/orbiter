@@ -52,6 +52,22 @@ Everything you tick is stored in `/data/state.db` (SQLite) inside the container,
 docker compose cp orbiter:/data/state.db ./state-backup.db
 ```
 
+### Backup and restore
+
+Open **Backup & restore** (link at the bottom of every page). *Download backup* saves your whole collection as one JSON file. To load it again, on this or another install, choose the file on the same page: Orbiter shows what is inside and lets you **replace** your progress or **merge** it with what you have. By default it downloads a backup of your current progress first.
+
+The same file is available from the command line: `curl -o orbiter-backup.json http://localhost:8080/api/export`.
+
+### Data model (stable between versions)
+
+Progress is a small JSON document, stored in SQLite and used in backup files exactly as stored:
+
+```json
+{ "tasks": { "login": true }, "owned": { "Rhino": true, "M|Rhino": true, "w:Skana": true }, "reset": { "d": 0, "w": 0 } }
+```
+
+`owned` keys: a plain name is a collected Warframe, `M|<key>` marks an item as mastered, and the prefixes `w:` weapons, `c:` companions, `m:` mods, `a:` arcanes and `h:` Helminth abilities. `tasks` holds ticked task ids, and `reset` the last daily and weekly reset. **New versions only add keys; they never rename or remove them**, so updating never resets anyone's progress and old backups keep loading. Backup files carry a `version` number for future migrations.
+
 ### Updating
 
 ```bash

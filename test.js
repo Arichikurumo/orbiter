@@ -48,7 +48,27 @@ test('state API rejects bad input', async () => {
   assert.equal((await put('null')).status, 400);
   assert.equal((await put({ tasks: {} }, { 'content-type': 'text/plain' })).status, 415); // cross-site "simple" request
   assert.equal((await put({ tasks: {} }, { 'content-type': 'application/json', origin: 'http://evil.example' })).status, 403);
-  assert.equal((await put('x'.repeat(70 * 1024))).status, 413);
+  assert.equal((await put('x'.repeat(600 * 1024))).status, 413);
   assert.equal((await req('POST', '/api/state')).status, 405);
   assert.equal((await req('DELETE', '/')).status, 405);
+});
+
+test('a fully ticked collection (about 75 KB) is accepted and kept intact', async () => {
+  const owned = {};
+  for (let i = 0; i < 3200; i++) owned[`M|w:Some Long Weapon Name ${i}`] = true;
+  assert.equal((await put({ tasks: { login: true }, owned, reset: { d: 1, w: 2 } })).status, 204);
+  const back = JSON.parse((await req('GET', '/api/state')).body);
+  assert.equal(Object.keys(back.owned).length, 3200);
+  assert.equal(back.tasks.login, true);
+});
+
+test('export returns a downloadable backup with the stored data', async () => {
+  await put({ tasks: { login: true }, owned: { Rhino: true }, reset: { d: 3, w: 4 } });
+  const r = await req('GET', '/api/export');
+  assert.equal(r.status, 200);
+  assert.match(r.headers['content-disposition'], /attachment; filename="orbiter-backup-\d{4}-\d{2}-\d{2}\.json"/);
+  const b = JSON.parse(r.body);
+  assert.equal(b.app, 'orbiter');
+  assert.equal(b.version, 1);
+  assert.deepEqual(b.data, { tasks: { login: true }, owned: { Rhino: true }, reset: { d: 3, w: 4 } });
 });

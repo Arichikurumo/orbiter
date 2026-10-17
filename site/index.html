@@ -117,6 +117,11 @@ main.wide{max-width:1280px}
 .meter{height:10px;background:#0a0e14;border:1px solid var(--line);margin:8px 0 12px}.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--cyan));transition:width .3s}
 .rr.c2{grid-template-columns:1fr 2fr}.rr.c4{grid-template-columns:1.2fr 1fr 1.3fr 1.4fr}.rr.cur{background:rgba(79,209,232,.08)}
 @media(max-width:620px){.rr.c2,.rr.c4{grid-template-columns:repeat(2,1fr)}.rr.rh.c2,.rr.rh.c4{display:none}}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin:10px 0}.stats>div{border:1px solid var(--line);background:rgba(10,14,20,.6);padding:8px 10px}.stats b{display:block;font-size:20px;color:var(--cyan)}.stats small{color:var(--mut);font-size:12px}
+.btn{background:rgba(79,209,232,.12);color:var(--cyan);border:1px solid var(--cyan);padding:9px 16px;font:inherit;font-size:13px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.btn:hover{background:rgba(79,209,232,.25)}.btn.quiet{color:var(--mut);border-color:var(--line);background:none}.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.chk{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:14px}.bkmsg{color:var(--gold)}
+#foot{max-width:920px;margin:0 auto;padding:8px 16px 28px;text-align:center;font-size:12px;color:var(--mut)}#foot a{color:var(--mut)}#foot a:hover{color:var(--cyan)}
 .relic.vaulted{opacity:.8}
 .rar{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none}
 .rar-C{background:#b07a45}.rar-U{background:#c3ccd6}.rar-R{background:#e8c25a;box-shadow:0 0 6px #e8c25a}
@@ -151,6 +156,7 @@ main.wide{max-width:1280px}
 <div class="dd"><button type="button" id="d_build" aria-haspopup="true" aria-expanded="false">Upgrades &#9662;</button><div class="menu"><a href="#mods" id="n_mods">Mods</a><a href="#arcanes" id="n_arcanes">Arcanes</a><a href="#helminth" id="n_helminth">Helminth</a></div></div><div class="dd"><button type="button" id="d_relics" aria-haspopup="true" aria-expanded="false">Relics &#9662;</button><div class="menu"><a href="#relics" id="n_relics">Relic list</a><a href="#relcalc" id="n_relcalc">Calculator</a></div></div><a href="#resources" id="n_resources">Resources</a>
 <div class="dd"><button type="button" id="d_guides" aria-haspopup="true" aria-expanded="false">Guides &#9662;</button><div class="menu"><a href="#nightwave" id="n_nightwave">Nightwave</a><a href="#factions" id="n_factions">Syndicate leveling</a><a href="#kahl" id="n_kahl">Kahl's Garrison</a><a href="#baro" id="n_baro">Baro Ki'Teer</a></div></div></nav>
 <main id="app"></main>
+<footer id="foot"><a href="#backup">Backup &amp; restore</a> &middot; <a href="https://github.com/Arichikurumo/orbiter" target="_blank" rel="noopener">GitHub</a> &middot; unofficial fan project</footer>
 <script src="frames.js"></script>
 <script src="weapons.js"></script>
 <script src="companions.js"></script>
@@ -342,7 +348,12 @@ function catalog(kind){
 function pick(t){const p=t.closest("[data-p]"),r=t.closest("[data-r]");
  if(p){R.planet=R.planet==p.dataset.p&&!R.res?null:p.dataset.p;R.res=null;resources()}
  else if(r){R.res=R.res==r.dataset.r?null:r.dataset.r;R.planet=null;resources()}}
-app.addEventListener("click",e=>page()=="resources"&&pick(e.target));
+app.addEventListener("click",e=>{
+ if(page()=="resources")pick(e.target);
+ const b=e.target.closest&&e.target.closest("[data-bk]");if(!b)return;
+ const a=b.dataset.bk;
+ if(a=="export")exportBackup();else if(a=="cancel"){IMP=null;BKMSG="";backupPage()}else if(a=="replace"||a=="merge")applyImport(a=="merge");
+});
 app.addEventListener("keydown",e=>{if((e.key=="Enter"||e.key==" ")&&e.target.dataset&&e.target.dataset.p){e.preventDefault();pick(e.target)}});
 app.addEventListener('change',e=>{
  const t=e.target;
@@ -364,6 +375,7 @@ const PAGES=[["tasks","Tasks","Daily and weekly checklist with reset timers, ven
  ["helminth","Helminth","Each subsumable ability, what it does and which frame it comes from. Tick the ones you have."],
  ["relics","Relics","Which Prime items you can get from relics right now, this month's Prime Resurgence, and every relic with its rewards."],
  ["relcalc","Relic calculator","How many relics you need to open to be sure of a drop, for every refinement level."],
+ ["backup","Backup & restore","Download your whole collection as a file and load it back in later, on this or another install."],
  ["resources","Resources","A star chart of where to farm the common resources. Click a planet, or pick a resource to highlight its planets."],
  ["nightwave","Nightwave","This season's acts with standing values, a tick list and tips on how to complete each one."],
  ["factions","Syndicate leveling","The quickest ways to earn standing with every syndicate, from the daily cap to the best hand-ins."],
@@ -694,8 +706,60 @@ function relicCalc(){
   <p class="tag">Refining costs Void Traces, which come from opening relics, so a higher stage trades traces for a better chance. Squad rolls are not modelled: each opening here is one reward roll.</p></section></div>`;
  const e=document.getElementById("rcn");e.oninput=()=>{RC.n=e.value;const p=e.selectionStart;relicCalc();const f=document.getElementById("rcn");f.focus();f.setSelectionRange(p,p)};
 }
-const page=()=>({"#relcalc":"relcalc","#relics":"relics","#baro":"baro","#kahl":"kahl","#nightwave":"nightwave","#factions":"factions","#resources":"resources","#mods":"mods","#arcanes":"arcanes","#helminth":"helminth","#tasks":"tasks","#frames":"frames","#weapons":"weapons","#companions":"companions"})[location.hash]||"home";
-function render(){const p=page();p=="home"?home():p=="resources"?resources():p=="nightwave"?nightwave():p=="factions"?factions():p=="kahl"?kahl():p=="baro"?baroPage():p=="relics"?relicsPage():p=="relcalc"?relicCalc():p=="tasks"?tasks():p=="frames"?frames():catalog(p)}
+// Backup and restore. A backup holds exactly what the server stores ({tasks, owned, reset}), so the data model stays the
+// same between versions: new versions only add keys, they never rename or drop them.
+const BK_VERSION=1;
+let IMP=null,BKMSG="";
+const BK_ROWS=[["Warframes collected",/^(?!M\||[wcmah]:)/],["Warframes mastered",/^M\|(?![wcmah]:)/],["Weapons collected",/^w:/],["Weapons mastered",/^M\|w:/],["Companions",/^c:/],["Mods",/^m:/],["Arcanes",/^a:/],["Helminth abilities",/^h:/]];
+const bkSummary=s=>[...BK_ROWS.map(([n,re])=>[n,Object.keys(s.owned).filter(k=>re.test(k)).length]),["Task ticks",Object.keys(s.tasks).length]].filter(r=>r[1]);
+async function exportBackup(){
+ let text;
+ try{const r=await fetch("/api/export");if(!r.ok)throw 0;text=await r.text()}
+ catch{text=JSON.stringify({app:"orbiter",version:BK_VERSION,exported:new Date().toISOString(),data:{tasks:S.tasks,owned:S.owned,reset:S.reset}},null,1)} // server unreachable: export what this browser has
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:"application/json"}));
+ a.download=`orbiter-backup-${new Date().toISOString().slice(0,10)}.json`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1e4);
+}
+function parseBackup(text){
+ if(text.length>1e6)throw new Error("That file is too large to be an Orbiter backup.");
+ let j;try{j=JSON.parse(text)}catch{throw new Error("That file is not valid JSON.")}
+ const d=j&&typeof j=="object"&&j.data&&typeof j.data=="object"?j.data:j; // also accepts a bare {tasks, owned, reset}
+ if(!d||typeof d!="object"||(!d.tasks&&!d.owned))throw new Error("This does not look like an Orbiter backup.");
+ return{data:mk(d),version:Number(j.version)||null,exported:j.exported||null};
+}
+async function applyImport(merge){
+ const safe=document.getElementById("bksafe");if(safe&&safe.checked)await exportBackup();
+ const d=IMP.data;
+ if(merge){Object.assign(S.tasks,d.tasks);Object.assign(S.owned,d.owned);S.reset={d:Math.max(S.reset.d,d.reset.d),w:Math.max(S.reset.w,d.reset.w)}}
+ else{S.tasks=d.tasks;S.owned=d.owned;S.reset=d.reset} // expired daily/weekly ticks are cleared by the normal reset logic
+ try{localStorage[KEY]=JSON.stringify(S)}catch{}
+ clearTimeout(pushT);await push();
+ BKMSG=`Imported ${IMP.name}: ${merge?"merged with":"replaced"} your progress.`;IMP=null;backupPage();
+}
+function backupPage(){
+ const cur=bkSummary(S),tbl=r=>`<div class="stats">${r.map(([n,c])=>`<div><b>${c.toLocaleString()}</b><small>${esc(n)}</small></div>`).join("")}</div>`;
+ const prev=IMP?`<div class="tip"><b>${esc(IMP.name)}</b>${IMP.exported?` <small>exported ${esc(new Date(IMP.exported).toLocaleString())}</small>`:""}${IMP.version>BK_VERSION?`<p class="tag">This file comes from a newer version of Orbiter. Unknown parts are ignored.</p>`:""}
+  <p class="tag">The file contains:</p>${IMP.sum.length?tbl(IMP.sum):'<p class="tag">No ticks at all.</p>'}
+  <label class="chk"><input type="checkbox" id="bksafe" checked> Download a backup of my current progress first</label>
+  <div class="btnrow"><button class="btn" data-bk="replace">Replace my progress</button><button class="btn" data-bk="merge">Merge (keep both)</button><button class="btn quiet" data-bk="cancel">Cancel</button></div>
+  <p class="tag"><b>Replace</b> swaps your progress for the file's. <b>Merge</b> keeps everything you have and adds what the file ticks.</p></div>`:"";
+ app.innerHTML=`<div class="hero"><div><h1>Backup &amp; restore</h1><p>Keep your whole collection safe, or move it to another install.</p></div></div>
+ <div class="grid g2"><section><h2>Export</h2><p class="tag">Downloads one file with everything you have ticked: tasks, collected and mastered items, mods, arcanes and Helminth. It holds no personal data.</p>
+  ${cur.length?tbl(cur):'<p class="tag">You have not ticked anything yet.</p>'}<div class="btnrow"><button class="btn" data-bk="export">Download backup</button></div></section>
+ <section><h2>Import</h2><p class="tag">Pick a backup file made by Orbiter. You see what is in it first, and nothing changes until you confirm.</p>
+  <label class="fld"><span>Backup file</span><input type="file" id="bkfile" accept=".json,application/json"></label>
+  <p class="tag bkmsg" role="status" aria-live="polite">${esc(BKMSG)}</p>${prev}</section></div>
+ <section><h2>About the file</h2><ul class="evs"><li><b>Safe across versions</b><small>The data model stays the same when Orbiter is updated, so an update never resets your progress, and a backup from an older version loads in a newer one.</small></li>
+  <li><b>Format</b><small>JSON: {"app":"orbiter","version":${BK_VERSION},"exported":"…","data":{"tasks":{…},"owned":{…},"reset":{…}}}. Each ticked item is stored as "name": true.</small></li>
+  <li><b>Daily and weekly ticks</b><small>They come back as saved and are cleared again at the next reset if they are out of date.</small></li></ul></section>`;
+ document.getElementById("bkfile").onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;BKMSG="";IMP=null;
+  try{if(f.size>1e6)throw new Error("That file is too large to be an Orbiter backup.");const p=parseBackup(await f.text());IMP={...p,name:f.name,sum:bkSummary(p.data)}}
+  catch(err){BKMSG=err.message}
+  backupPage();
+ };
+}
+const page=()=>({"#backup":"backup","#relcalc":"relcalc","#relics":"relics","#baro":"baro","#kahl":"kahl","#nightwave":"nightwave","#factions":"factions","#resources":"resources","#mods":"mods","#arcanes":"arcanes","#helminth":"helminth","#tasks":"tasks","#frames":"frames","#weapons":"weapons","#companions":"companions"})[location.hash]||"home";
+function render(){const p=page();p=="home"?home():p=="resources"?resources():p=="nightwave"?nightwave():p=="factions"?factions():p=="kahl"?kahl():p=="baro"?baroPage():p=="relics"?relicsPage():p=="relcalc"?relicCalc():p=="backup"?backupPage():p=="tasks"?tasks():p=="frames"?frames():catalog(p)}
 function closeMenus(except){document.querySelectorAll(".dd").forEach(d=>{if(d!==except){d.classList.remove("open");d.firstElementChild.setAttribute("aria-expanded","false")}})}
 document.querySelectorAll(".dd>button").forEach(b=>b.addEventListener("click",e=>{
  e.stopPropagation();const d=b.parentElement,o=!d.classList.contains("open");closeMenus(d);d.classList.toggle("open",o);b.setAttribute("aria-expanded",o);

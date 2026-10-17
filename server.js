@@ -3,7 +3,8 @@ const http = require('http'), fs = require('fs'), path = require('path');
 const { DatabaseSync } = require('node:sqlite');
 const ROOT = path.join(__dirname, 'site'), DB = process.env.DB || '/data/state.db', PORT = process.env.PORT || 8080;
 const IMG_DIR = process.env.IMG_DIR || path.join(ROOT, 'img'), images = require('./fetch-images');
-const MAX_BODY = 64 * 1024, MAX_KEYS = 5000;
+// A fully ticked collection (every frame, weapon, mod... collected and mastered) is about 75 KB, so leave generous room to grow.
+const MAX_BODY = 512 * 1024, MAX_KEYS = 20000;
 fs.mkdirSync(path.dirname(DB), { recursive: true });
 const db = new DatabaseSync(DB);
 db.exec('CREATE TABLE IF NOT EXISTS state (id INTEGER PRIMARY KEY CHECK (id = 1), json TEXT NOT NULL, updated TEXT NOT NULL)');
@@ -48,6 +49,11 @@ function handle(req, res) {
   if (url.pathname === '/favicon.ico') { res.writeHead(302, { location: '/favicon-32.png' }); return res.end(); } // browsers ask for this by default
   if (url.pathname === '/healthz') return send(res, 200, 'ok');
   if (url.pathname === '/api/images') return send(res, 200, JSON.stringify(images.status), { 'content-type': 'application/json', 'cache-control': 'no-store' });
+  if (url.pathname === '/api/export') { // the whole collection as a downloadable backup file (same data model as /api/state, plus a small envelope)
+    const row = db.prepare('SELECT json FROM state WHERE id = 1').get();
+    const body = JSON.stringify({ app: 'orbiter', version: 1, exported: new Date().toISOString(), data: row ? JSON.parse(row.json) : sanitize({}) }, null, 1);
+    return send(res, 200, body, { 'content-type': 'application/json', 'cache-control': 'no-store', 'content-disposition': `attachment; filename="orbiter-backup-${new Date().toISOString().slice(0, 10)}.json"` });
+  }
   if (url.pathname === '/api/state') {
     if (req.method === 'GET') {
       const row = db.prepare('SELECT json FROM state WHERE id = 1').get();
