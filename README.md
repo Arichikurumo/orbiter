@@ -112,6 +112,8 @@ python3 -I gen.py warframes.json weapons.json items.json
 
 Some content is written by hand and is not generated: the task list and guides in `site/index.html`, farming-time estimates and role tags in `gen.py`, `site/nightwave.js` (all Nightwave acts), and the melee classes in `meleeclass.json` (taken from the wiki's weapon data). New items from a new Baro visit show a Ducat icon until you run `python3 -I fetch_baro_icons.py` and commit the updated `site/baro_icons.js`.
 
+Which relics can drop right now is the `AVAILABLE_RELICS` list in `gen.py`, taken from the wiki's "Unvaulted/Available" list on the Void Relic page, because the API's own vaulted flag per relic is out of date. Update that list when relics are vaulted or unvaulted, then rerun `gen.py`.
+
 Descriptions of tasks, tips and "what to buy first" are general advice written from the wiki and game knowledge. Check them against the game before relying on them.
 
 ## Credits and licenses

@@ -5,6 +5,16 @@
 #   python3 -I gen.py warframes.json weapons.json items.json
 import json, re, sys
 ITEMS = json.load(open(sys.argv[3])) if len(sys.argv) > 3 else []
+# Relics that can drop right now ("Unvaulted/Available" list on wiki.warframe.com/w/Void_Relic, read 2026-10-17). The API's own per-relic
+# "vaulted" flag is stale: it marks Citrine Prime's new relics as vaulted and 20 relics that hold vaulted parts as available. Update this list
+# when relics are vaulted or unvaulted (the wiki page lists them, Prime Vault announcements say which).
+AVAILABLE_RELICS = set()
+for blk in "Lith A13,C15,C7,G14,L8,S18,S19,V11;Meso A12,C11,D8,D9,K9,N11,V13,V17,Y2;Neo A16,C10,C11,C7,K10,V13,V9,Y2;Axi A21,A22,C12,D6,P10,S21,S8,V10,V14".split(';'):
+    era, ids = blk.split(' ', 1)
+    AVAILABLE_RELICS |= {f"{era} {i}" for i in ids.split(',')}
+def prime_base(n): return (re.match(r'^(.*? Prime)\b', n) or [None, None])[1]
+# Prime items with at least one part in an available relic (so Nyx Prime etc., permanently unvaulted since Update 29.10, count as obtainable)
+AV_PRIMES = {prime_base(r['item']['name']) for x in ITEMS if x.get('category') == 'Relics' and x['name'].endswith(' Intact') and x['name'][:-7] in AVAILABLE_RELICS for r in x.get('rewards') or []} - {None}
 d = [x for x in json.load(open(sys.argv[1])) if x['type'] == 'Warframe']
 T1 = {'Excalibur': 0.5, 'Mag': 1, 'Volt': 1}
 T2 = {n: 3 for n in 'Rhino Loki Frost Ash Ember Banshee Nova Nyx Trinity Oberon Vauban Saryn Zephyr Hydroid Mirage Limbo Atlas Valkyr Titania Equinox Nekros'.split()}
@@ -55,7 +65,7 @@ for x in d:
     if n in ('Helminth', 'Sirius & Orion'): continue
     prime = bool(x.get('isPrime'))
     if prime and n == 'Excalibur Prime': tier, h, t = 6, None, 'Founders/Prime Access only - not obtainable (trade only)'
-    elif prime and x.get('vaulted'): tier, h, t = 6, None, 'Vaulted: trade with players or wait for Prime Resurgence/Prime Vault'
+    elif prime and n not in AV_PRIMES: tier, h, t = 6, None, 'Vaulted: trade with players or wait for Prime Resurgence/Prime Vault'
     elif prime: tier, h, t = 4, 15, 'Void Relics (open via fissure missions). ' + how(x)
     else:
         h = EST.get(n, 8); tier = 1 if h <= 1 else 2 if h <= 3 else 3 if h <= 8 else 4 if h <= 20 else 5
@@ -87,7 +97,7 @@ if len(sys.argv) > 3:
         if p in SYN: return f"{SYN[p]} syndicate offerings (standing; cheaper at higher rank)"
         if p == 'Dex': return 'Event/anniversary reward - rarely obtainable'
         if 'Prime' in tags or x.get('isPrime'):
-            return ('Vaulted: trade parts with players or wait for Prime Resurgence/Vault. ' if 'Vaulted' in tags or x.get('vaulted') else 'Void Relics (fissure missions). ') + drops(x)
+            return ('Vaulted: trade parts with players or wait for Prime Resurgence/Vault. ' if (x['name'] not in AV_PRIMES) else 'Void Relics (fissure missions). ') + drops(x)
         d = drops(x)
         pr = price(x, 'weapon')
         if d: return d + (f" | {pr}" if pr else '')
@@ -209,7 +219,7 @@ if len(sys.argv) > 3:
     for x in ITEMS:
         if x.get('category') != 'Relics' or not x['name'].endswith(' Intact'): continue
         n = x['name'][:-len(' Intact')]
-        R[n] = dict(n=n, t=n.split()[0], v=bool(x.get('vaulted')),
+        R[n] = dict(n=n, t=n.split()[0], v=n not in AVAILABLE_RELICS,
                     r=[[r['item']['name'], 'C' if r['chance'] > 20 else 'U' if r['chance'] > 5 else 'R'] for r in x.get('rewards') or []])  # the API's rarity field is wrong; Intact odds are 25.33 / 11 / 2 percent
     TIER = {'Lith': 0, 'Meso': 1, 'Neo': 2, 'Axi': 3, 'Requiem': 4}
     RL = sorted(R.values(), key=lambda r: (TIER.get(r['t'], 9), int(re.sub(r'\D', '', r['n'].split()[1]) or 0), r['n']))
