@@ -50,7 +50,7 @@ section>.tag{color:var(--mut)}
 .how{color:var(--mut);font-size:13px;margin:0 0 6px 100px}
 .frame img{width:64px;height:64px;object-fit:contain;flex:none;filter:drop-shadow(0 0 6px rgba(79,209,232,.25))}
 .frame label{align-items:center}
-.role{font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-left:6px;padding:1px 7px;border:1px solid var(--cyan);color:var(--cyan);white-space:nowrap}
+.role{display:inline-block;margin-top:2px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-left:6px;padding:1px 7px;border:1px solid var(--cyan);color:var(--cyan);white-space:nowrap}
 .r-tank{border-color:#e0a050;color:#e0a050}.r-damage{border-color:#e06060;color:#e06060}.r-support{border-color:var(--ok);color:var(--ok)}.r-stealth{border-color:#a08ae0;color:#a08ae0}
 a{color:var(--cyan)}
 .hero{display:flex;align-items:center;gap:20px;margin-bottom:20px;padding:12px 8px}
@@ -108,9 +108,9 @@ main.wide{max-width:1280px}
 .ratetable{margin:10px 0;border:1px solid var(--line)}
 .rr{display:grid;grid-template-columns:1.1fr 1.2fr 1.6fr 1.6fr 1.4fr;gap:8px;padding:8px 12px;border-top:1px solid var(--line);align-items:center;font-size:14px}
 .rr:first-child{border-top:0}.rr.rh{color:var(--gold);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
-.bar{display:inline-block;height:8px;margin-right:8px;vertical-align:middle;border-radius:2px}.bar.c{background:#b07a45}.bar.u{background:#c3ccd6}.bar.r{background:#e8c25a;box-shadow:0 0 6px #e8c25a}
+.ratebar{display:inline-block;height:8px;margin-right:8px;vertical-align:middle;border-radius:2px}.ratebar.c{background:#b07a45}.ratebar.u{background:#c3ccd6}.ratebar.r{background:#e8c25a;box-shadow:0 0 6px #e8c25a}
 .pct{color:var(--cyan)!important}
-@media(max-width:620px){.rr{grid-template-columns:1fr 1fr;font-size:13px}.rr.rh{display:none}.bar{display:none}}
+@media(max-width:620px){.rr{grid-template-columns:1fr 1fr;font-size:13px}.rr.rh{display:none}.ratebar{display:none}}
 .calcform{display:flex;flex-direction:column;gap:12px}.fld{display:flex;flex-direction:column;gap:4px;padding:0}.fld span{color:var(--gold);font-size:12px;letter-spacing:.1em;text-transform:uppercase}
 .fld input{background:#0a0e14;color:var(--fg);border:1px solid var(--line);padding:8px 12px;font:inherit;min-height:36px}
 .bignum{font-size:48px;font-weight:700;color:var(--cyan);line-height:1.1;text-shadow:0 0 18px rgba(79,209,232,.35)}
@@ -137,7 +137,9 @@ main.wide{max-width:1280px}
 @media(prefers-reduced-motion:reduce){.pl circle{transition:none}}
 .fsub{display:block;color:var(--mut);font-size:13px;margin-top:2px}
 .frame b+.tag{margin-left:2px}
-.rowtop{display:flex;align-items:center;gap:12px}.rowtop>label:first-child{flex:1;min-width:0}
+.rowtop{display:flex;align-items:center;gap:4px 12px;flex-wrap:wrap}.rowtop>label:first-child{flex:1;min-width:0}
+@media(max-width:620px){.rowtop>label:first-child{flex:1 0 100%}.mast{margin-left:90px}}
+.frame label>span{min-width:0;overflow-wrap:anywhere}
 .mast{flex:none;gap:6px!important;align-items:center!important;color:var(--mut);font-size:13px;white-space:nowrap}
 .mast:has(input:checked){color:var(--ok)}
 .noimg{width:64px;height:64px;flex:none}
@@ -643,7 +645,7 @@ function relicsPage(){
  <section><h2>Available now<small>${items.size} items from ${RELICS.filter(r=>!r.v).length} relics</small></h2><p class="tag">Prime parts you can still get by opening relics (any mission with a Void Fissure). Dots show rarity: <span class="rar rar-C"></span> common, <span class="rar rar-U"></span> uncommon, <span class="rar rar-R"></span> rare. Relic names after each part tell you which relics to look for.</p><div class="relgrid">${cards}</div></section>
  <section><h2>Prime Resurgence<small>vaulted items, bought with Aya</small></h2>${res}</section>
  <section><h2>Drop rates by refinement<small>the same for every relic</small></h2><p class="tag">Every relic holds 3 common, 2 uncommon and 1 rare reward. Refining it with Void Traces moves chance from the common rewards to the rarer ones. The numbers are the chance <b>per reward</b>; the rare chance is for the single rare reward.</p>
-  <div class="ratetable" role="table"><div class="rr rh" role="row"><span>Stage</span><span>Cost</span><span>Each common (x3)</span><span>Each uncommon (x2)</span><span>Rare (x1)</span></div>${STAGES.map(([n,cost,r])=>`<div class="rr" role="row"><b>${n}</b><span>${cost?cost+" Void Traces":"free"}</span><span><i class="bar c" style="width:${r.C*2}px"></i>${r.C}%</span><span><i class="bar u" style="width:${r.U*2}px"></i>${r.U}%</span><span><i class="bar r" style="width:${r.R*2}px"></i>${r.R}%</span></div>`).join("")}</div>
+  <div class="ratetable" role="table"><div class="rr rh" role="row"><span>Stage</span><span>Cost</span><span>Each common (x3)</span><span>Each uncommon (x2)</span><span>Rare (x1)</span></div>${STAGES.map(([n,cost,r])=>`<div class="rr" role="row"><b>${n}</b><span>${cost?cost+" Void Traces":"free"}</span><span><i class="ratebar c" style="width:${r.C*2}px"></i>${r.C}%</span><span><i class="ratebar u" style="width:${r.U*2}px"></i>${r.U}%</span><span><i class="ratebar r" style="width:${r.R*2}px"></i>${r.R}%</span></div>`).join("")}</div>
   <p class="tag">Radiant makes a rare reward ${RATE.Radiant.R/RATE.Intact.R} times as likely as an unrefined relic, but you spend ${STAGES[3][1]} Void Traces for it. Opening a relic in a squad where everyone uses a Radiant gives the best chance at a rare.</p></section>
  <section><h2>All relics<small>${Math.min(300,list.length)} of ${list.length}</small></h2><div class="bar"><input type="search" id="rq" placeholder="Search relics or rewards" aria-label="Search relics" value="${esc(RL.q)}">
   <select data-rl="tier">${opt(RL.tier,[["all","All eras"],...tiers.map(t=>[t,t])])}</select>
