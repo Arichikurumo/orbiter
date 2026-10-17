@@ -259,7 +259,7 @@ const SECTIONS=[
   ["voidplumes","Trade for Voidplumes","Trade with Yonta for Voidplumes.",0,"Chrysalith, Zariman"],
   ["voca","Trade for Voca","Trade with Loid for Voca.",0,"Sanctum Anatomica. Needs Whispers in the Walls"],
   ["tenet","Tenet weapons","Check Ergo Glast's shop for good valence bonuses.",0,"Any Relay. Needs The Archwing and Mastery Rank 14"],
-  ["coda","Coda weapons","Check Eleanor's shop for good valence bonuses.",0,"Höllvania Central Mall. Needs The Hex quest"]]}
+  ["coda","Coda weapons","Check Eleanor's shop for good valence bonuses. Its stock and bonuses change every 4 days.",0,"Höllvania Central Mall. Needs The Hex quest"]]}
 ];
 const ALL=SECTIONS.flatMap(s=>s.items);
 // "Mastered" is tracked separately from "collected": S.owned["M|"+id]. A mastered item you sold is still mastered.
@@ -827,11 +827,11 @@ function backupPage(){
  };
 }
 // Coda weapons. Stats come from the API (gen.py); batches and unique effects from the wiki; the picks are my judgement from those numbers.
-const CODA_REF=Date.UTC(2026,9,12); // Monday of a week when batch A was in Eleanor's shop (seen on warframetools.com); batches alternate weekly
-const codaBatch=n=>(((Math.round((weekStart(n)-CODA_REF)/6048e5))%2)+2)%2?"B":"A";
+const CODA_REF=Date.UTC(2025,2,18),CODA_LEN=4*864e5; // wiki: batch A started 2025-03-18 00:00 UTC and the shop changes every 4 days (this matched warframetools.com on 2026-10-16)
+const codaSlot=n=>Math.floor((n-CODA_REF)/CODA_LEN),codaBatch=n=>codaSlot(n)%2?"B":"A",codaNext=n=>CODA_REF+(codaSlot(n)+1)*CODA_LEN;
 const PICK_CLASS={"Top pick":"support","Good":"stealth","Situational":"","Skip":"damage"};
 function codaPage(){
- const n=Date.now(),b=codaBatch(n),swap=weekStart(n)+6048e5;
+ const n=Date.now(),b=codaBatch(n),swap=codaNext(n);
  const pic=name=>{const w=WEAPONS.find(x=>x.name==name);return w&&w.img?`<img src="${esc(IMG(w.img))}" alt="" width="48" height="48" loading="lazy" onerror="this.style.visibility='hidden'">`:'<i class="noimg" style="width:48px;height:48px"></i>'};
  const badge=c=>`<span class="role r-${PICK_CLASS[c.pick]}">${esc(c.pick)}</span>`;
  const shop=CODA.filter(c=>c.batch==b),tops=CODA.filter(c=>c.pick=="Top pick");
@@ -844,19 +844,29 @@ function codaPage(){
   <div class="dmglegend">${c.types.map(t=>`<span><i style="background:${dtColor(t[0])}"></i>${dtName(t[0])} ${t[1]} <small>${Math.round(t[1]/tot*100)}%</small></span>`).join("")}</div>`};
  const slots=[...new Set(CODA.map(c=>c.slot))];
  app.innerHTML=`<div class="grid g2"><section><h2>In Eleanor's shop now<small>Batch ${b}, switches in ${left(swap-n)}</small></h2>
-  <p class="tag">Eleanor (Höllvania, needs The Hex quest) sells two batches of seven Coda weapons that swap every week. The batch shown is worked out from the weekly rotation, so check it against the in-game shop.</p>
+  <p class="tag">Eleanor (Höllvania, needs The Hex quest) sells two batches of seven Coda weapons and switches between them every 4 days at 00:00 UTC. The batch shown is worked out from that rotation, so check it against the in-game shop.</p>
   <div class="relgrid">${shop.map(c=>`<div class="relcard">${pic(c.name)}<div><b>${esc(c.name)}</b> ${badge(c)}<small class="tag" style="display:block">${esc(c.slot)}</small></div></div>`).join("")}</div></section>
  <section><h2>How buying works</h2><ul class="evs">
   <li><b>10 Live Heartcells per weapon</b><small>Enemies drop Live Heartcells. You also need an empty weapon slot and Mastery Rank 17 (the rank is enforced).</small></li>
-  <li><b>One of each per rotation</b><small>You can buy each weapon once per rotation, and the shop alternates between batch A and batch B.</small></li>
+  <li><b>One of each per rotation</b><small>You can buy each weapon once per rotation, and the shop alternates between batch A and batch B every 4 days.</small></li>
   <li><b>A random bonus element</b><small>Each weapon in the shop has one extra damage type (Impact, Heat, Cold, Electricity, Toxin, Magnetic or Radiation) worth 25 to 60% of base damage. The roll changes every 4 days at 00:00 UTC, so check it before you buy.</small></li>
   <li><b>Valence Fusion</b><small>Fusing two copies of the same weapon keeps the higher bonus times 1.1, capped at 60%. A bonus of 58% or more counts as 60%. Buy the same weapon in later rotations to fuse a better roll.</small></li>
   <li><b>Forma and Rank 40</b><small>Each Forma adds two ranks, up to rank 40 after five. Rank 40 is needed for the Elemental Vice, which lets you choose the bonus element.</small></li></ul></section></div>
+ <section><h2>How to get Live Heartcells<small>10 per weapon</small></h2><div class="grid g2" style="margin:0"><ul class="evs">
+  <li><b>Vanquish a Technocyte Coda: 10 to 15</b><small>This is the main source, and one Coda is usually enough for one weapon. The wiki lists it under Höllvania.</small></li>
+  <li><b>Technocyte Coda Concert: +1 per extra Coda</b><small>You get 1 more for every Coda you defeat after the first, whether you vanquish or convert it. A full squad can earn up to 3 this way.</small></li>
+  <li><b>Technocyte Coda Showdown: +1 per defeated Coda</b><small>In the multiplayer version each defeated Coda gives one extra Heartcell, conquered or vanquished. In a squad of four where everyone defeats theirs, that is 3 extra.</small></li>
+  <li><b>Parazon Mercy on a Technocyte Coda Duet: 10% chance</b><small>Only with the Quick Correct mod equipped.</small></li></ul>
+  <ul class="evs">
+  <li><b>How many you need</b><small>One weapon is 10 Heartcells. Buying all 14 once is 140, which is roughly 10 to 14 vanquished Codas. Fusing every weapon up to the 60% bonus can take up to 1,400.</small></li>
+  <li><b>Fastest way</b><small>Run Concert and Showdown with a full squad, because the per-Coda bonuses add up. The wiki lists no daily or weekly cap on Heartcells.</small></li>
+  <li><b>Good to know</b><small>Live Heartcells cannot be traded or sold. Spend them in Eleanor's shop (Browse Merchandise in the Höllvania Central Mall).</small></li>
+  <li><b>More detail</b><small><a href="https://wiki.warframe.com/w/Live_Heartcell" target="_blank" rel="noopener">Live Heartcell on the wiki</a>. The wiki page does not explain how to start each Technocyte Coda mission, so check the Technocyte Coda page for that.</small></li></ul></div></section>
  <section><h2>What to buy<small>my picks, from the numbers below</small></h2>
   <ol class="steps">${tops.map(c=>`<li><b>${esc(c.name)}</b> <small class="tag">top pick, batch ${c.batch}${c.batch==b?", in the shop now":""}</small><br>${esc(c.note)}</li>`).join("")}
    <li><b>Then one that fits your build.</b> Hirudo for crit, Catabolyst for status, Synapse for a crit rifle, Mire or Motovore if you want a second melee. The listed notes say what makes each one different.</li>
    <li><b>Skip Pathocyst and Pox</b> unless you want to fill the codex, because their numbers are the lowest of their types.</li>
-   <li><b>Wait for the right batch.</b> Each weapon is 10 Heartcells, so if your pick is in the other batch, save the Heartcells for next week instead of buying a worse weapon now.</li></ol>
+   <li><b>Wait for the right batch.</b> Each weapon is 10 Heartcells, so if your pick is in the other batch, save the Heartcells for the next switch (it is at most 4 days away) instead of buying a worse weapon now.</li></ol>
   <p class="tag">These picks come from base stats (before mods) and the wiki's description of each weapon's unique effect. I have not tested them in the game, and the bonus element you roll can change which one is best for you.</p></section>
  <section><h2>Reading the damage types</h2><p class="tag">Each card shows the weapon's own damage split into physical types (impact, puncture, slash) and native elements. On top of that, every Coda weapon you buy rolls one extra bonus element worth 25 to 60% of its base damage, so the element you end up with is the native one plus whatever the shop rolled.</p></section>
  ${slots.map(s=>`<section><h2>${esc(s)}<small>${CODA.filter(c=>c.slot==s).length==1?"1 weapon":CODA.filter(c=>c.slot==s).length+" weapons"}</small></h2><div class="relgrid">${CODA.filter(c=>c.slot==s).map(c=>`<div class="relic"><div class="rhead"><span style="display:flex;gap:8px;align-items:center">${pic(c.name)}<b>${esc(c.name)}</b></span>${badge(c)}</div>${stat(c)}${dmgTypes(c)}<p class="tag" style="margin:8px 0 4px">${esc(c.note)}</p><small class="tag">Batch ${c.batch}${c.batch==b?", in the shop now":""}${c.wiki?` &middot; <a href="${esc(c.wiki)}" target="_blank" rel="noopener">wiki</a>`:""}</small></div>`).join("")}</div></section>`).join("")}`;
