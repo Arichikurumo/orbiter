@@ -15,6 +15,12 @@ EST = {**T1, **T2, **T3, **T4, **T5}
 R = {}
 for line in """Ash:stealth,damage|Atlas:tank,control|Banshee:damage,control|Baruuk:tank,control|Caliban:damage,control|Chroma:damage,tank|Citrine:support,control|Cyte-09:damage,stealth|Dagath:damage,control|Dante:support,damage|Ember:damage,control|Equinox:control,support|Excalibur:damage|Excalibur Umbra:damage|Frost:tank,control|Gara:tank,control|Garuda:damage,support|Gauss:speed,damage|Grendel:tank,damage|Gyre:damage,control|Harrow:support,damage|Hildryn:tank,support|Hydroid:control,farming|Inaros:tank,support|Ivara:stealth,farming|Jade:support,damage|Khora:damage,control|Koumei:support|Kullervo:damage,stealth|Lavos:damage,support|Limbo:control,support|Loki:stealth,control|Mag:control,damage|Mesa:damage|Mirage:damage,stealth|Nekros:farming,support|Nezha:tank,control|Nidus:tank,damage|Nova:damage,speed|Nyx:control,tank|Oberon:support,damage|Octavia:support,control|Protea:support,damage|Qorvex:tank,damage|Revenant:tank,control|Rhino:tank,support|Saryn:damage|Sevagoth:damage,support|Styanax:tank,support|Titania:damage,control|Trinity:support|Valkyr:tank,damage|Vauban:control,support|Volt:speed,damage|Voruna:damage,stealth|Wisp:support,control|Wukong:tank,damage|Xaku:damage,control|Yareli:control,speed|Zephyr:control,speed""".split('|'):
     k, v = line.split(':'); R[k] = v.split(',')  # shortcut: hand-picked, newest frames (Narin, Nokko, Temple...) untagged
+def price(x, thing):
+    # marketCost is the PLATINUM price of the finished item; bpCost is the CREDIT price of its Market blueprint (parts still have to be farmed)
+    bp = f"Blueprint: Market, {x['bpCost']:,} credits" if x.get('bpCost') else ''
+    pl = f"{x['marketCost']:,} platinum" if x.get('marketCost') else ''
+    if bp and pl: return f"{bp} (or buy the finished {thing} for {pl})"
+    return bp or (f"Buy the finished {thing} for {pl} in the Market" if pl else '')
 def short(loc): return re.sub(r', Rotation [ABC]', '', loc)
 def how(x):
     parts = []
@@ -24,8 +30,9 @@ def how(x):
             s = short(r['location'])
             if s not in locs: locs.append(s)
         if locs: parts.append(f"{c['name']}: {', '.join(locs[:2])}")
-    out = '; '.join(parts) or 'See wiki'
-    return out + (f" | Blueprint: market {x['marketCost']}p" if x.get('marketCost') else '')
+    out = '; '.join(parts) or 'Parts: see wiki'
+    pr = price(x, 'frame')
+    return out + (f" | {pr}" if pr else '')
 out = []
 for x in d:
     n = x['name']
@@ -66,8 +73,9 @@ if len(sys.argv) > 3:
         if 'Prime' in tags or x.get('isPrime'):
             return ('Vaulted: trade parts with players or wait for Prime Resurgence/Vault. ' if 'Vaulted' in tags or x.get('vaulted') else 'Void Relics (fissure missions). ') + drops(x)
         d = drops(x)
-        if d: return d + (f" | Blueprint: market {x['marketCost']}cr" if x.get('marketCost') else '')
-        return f"Blueprint: market {x['marketCost']}cr" if x.get('marketCost') else 'Starter weapon, Market, Dojo research or quest reward - see wiki'
+        pr = price(x, 'weapon')
+        if d: return d + (f" | {pr}" if pr else '')
+        return pr or 'Starter weapon, Market, Dojo research or quest reward - see wiki'
     MELEE = json.load(open('meleeclass.json'))  # weapon -> class, parsed from wiki.warframe.com Module:Weapons/data/melee
     W = []
     for x in json.load(open(sys.argv[2])):
