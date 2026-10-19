@@ -299,3 +299,29 @@ if len(sys.argv) > 3:
     kw.sort(key=lambda c: (order.index(c['slot']) if c['slot'] in order else 9, -c['dmg']))
     open('site/kuva.js', 'w').write('const KUVA=' + json.dumps(kw) + ';')
     print('kuva', len(kw), sorted(set(KUVA) - {c['name'] for c in kw}))
+
+# ---- Incarnon Genesis weapons (Duviri Circuit pool, names from wiki.warframe.com/w/Incarnon): base stats from the API, verdicts only where I wrote one ----
+if len(sys.argv) > 3:
+    GENESIS = {
+     'Primary': 'Torid Boar Boltor Braton Burston Dera Dread Gorgon Latron Miter Paris Soma Strun Sybaris Vectis'.split(),
+     'Secondary': ['Angstrum', 'Atomos', 'Ballistica', 'Bronco', 'Cestra', 'Despair', 'Dual Toxocyst', 'Furis', 'Gammacor', 'Kunai', 'Lato', 'Lex', 'Sicarus', 'Stug', 'Vasto', 'Zylok'],
+     'Melee': 'Ack & Brunt|Anku|Bo|Ceramic Dagger|Destreza|Dual Ichor|Furax|Hate|Magistar|Nami Solo|Obex|Okina|Sibear|Skana'.split('|'),
+    }
+    VERDICT = {  # this week's Steel Path Circuit pool (week of 2026-10-19); verdicts are my judgement from base stats and the wiki's Incarnon notes
+     'Sybaris': ('Top pick', 'Burst rifle with the best crit of this week\'s five (25%) and balanced physical damage. A solid take for the Tier 5 slot.'),
+     'Okina': ('Top pick', 'The only melee on offer: sai with 140 base damage, mostly Slash and Puncture. In Incarnon form it adds +30% movement speed (wiki).'),
+     'Sicarus': ('Good', 'Burst pistol with 16% crit and mostly Impact damage, but only 6% status.'),
+     'Dera': ('Good', 'Fast auto rifle (11 shots a second, 45 rounds), mostly Puncture. Only 8% crit, so build it for status or puncture.'),
+     'Cestra': ('Situational', 'Fast auto pistol with a 60-round magazine, but only 26 damage and 6% crit per shot.'),
+    }
+    inc = {}
+    for x in json.load(open(sys.argv[2])):
+        for slot, names in GENESIS.items():
+            if x['name'] in names and x.get('masterable') and x['category'] == ('Melee' if slot == 'Melee' else slot):
+                pick, note = VERDICT.get(x['name'], (None, None))
+                inc[x['name']] = dict(name=x['name'], slot=slot, type=x['type'], pick=pick, note=note,
+                    types=sorted(((k, round(v)) for k, v in (x.get('damage') or {}).items() if k != 'total' and v and round(v) > 0), key=lambda kv: -kv[1]),
+                    dmg=round(x['totalDamage']), crit=round(x['criticalChance'] * 100), cm=round(x['criticalMultiplier'], 1), status=round(x['procChance'] * 100),
+                    rate=round(x['fireRate'] or 0, 2), mag=x.get('magazineSize'), reload=round(x['reloadTime'], 1) if x.get('reloadTime') else None, wiki=x.get('wikiaUrl'))
+    open('site/incarnon.js', 'w').write('const INCARNON=' + json.dumps(inc) + ';')
+    print('incarnon', len(inc), 'of', sum(len(v) for v in GENESIS.values()), 'missing:', sorted(set(sum(GENESIS.values(), [])) - set(inc)))

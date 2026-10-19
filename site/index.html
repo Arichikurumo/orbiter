@@ -221,6 +221,7 @@ main.wide{max-width:1280px}
 <script src="nightwave.js"></script>
 <script src="coda.js"></script>
 <script src="kuva.js"></script>
+<script src="incarnon.js"></script>
 <script src="baro_icons.js"></script>
 <script>
 // Daily resets 00:00 UTC, weekly Monday 00:00 UTC. Edit SECTIONS to taste.
@@ -485,6 +486,7 @@ const SITE=[
  {id:"kahl",group:"guides",title:"Kahl's Garrison",short:"Weekly Break Narmer missions",desc:"The three weekly Break Narmer missions step by step, the weekly challenges and what Stock buys.",wide:1,fn:()=>kahl()},
  {id:"coda",group:"guides",title:"Coda weapons",short:"Compare and what to buy",desc:"How Eleanor's Coda weapons work, what is in the shop now, how the 14 compare and which ones to buy.",wide:1,fn:()=>codaPage()},
  {id:"kuva",group:"guides",title:"Kuva weapons",short:"Get them from a Lich, compare",desc:"How to get a Kuva weapon from a Kuva Lich, how the 21 compare with their damage types, and which ones to hunt first.",wide:1,fn:()=>kuvaPage()},
+ {id:"incarnon",group:"guides",title:"Incarnon picks",short:"This week's Steel Path Circuit",desc:"The Incarnon Genesis weapons on offer in this week's Steel Path Circuit, which ones to take, and how adapters and evolutions work.",wide:1,fn:()=>incarnonPage()},
  {id:"baro",group:"guides",title:"Baro Ki'Teer",short:"Stock and what to buy first",desc:"When he visits, his stock with a buy-first ranking, and how to spend your Ducats.",wide:1,fn:()=>baroPage()},
  {id:"backup",group:"more",title:"Backup & restore",desc:"Download your whole collection as a file and load it back in later, on this or another install.",fn:()=>backupPage()},
 ];
@@ -958,6 +960,34 @@ function kuvaPage(){
  <section><h2>Reading the damage types</h2><p class="tag">Each card shows the weapon's own damage split into physical types (impact, puncture, slash) and native elements. On top of that, a Kuva weapon gets a bonus element from the Lich that dropped it.</p></section>
  ${slots.map(s=>`<section><h2>${esc(s)}<small>${KUVA.filter(c=>c.slot==s).length==1?"1 weapon":KUVA.filter(c=>c.slot==s).length+" weapons"}</small></h2><div class="relgrid">${KUVA.filter(c=>c.slot==s).map(c=>`<div class="relic"><div class="rhead"><span style="display:flex;gap:8px;align-items:center">${pic(c.name)}<b>${esc(c.name)}</b></span>${badge(c)}</div>${stat(c)}${dmgTypes(c)}<p class="tag" style="margin:8px 0 4px">${esc(c.note)}</p><small class="tag">${c.wiki?`<a href="${esc(c.wiki)}" target="_blank" rel="noopener">wiki</a>`:""}</small></div>`).join("")}</div></section>`).join("")}`;
 }
+// Incarnon picks: the weekly Steel Path Circuit list is live from the API; stats and the pool come from gen.py; verdicts are only written for the weapons I judged.
+const PICK_ORDER={"Top pick":0,"Good":1,"Situational":2,"Skip":3};
+function incarnonPage(){
+ const n=Date.now(),next=weekStart(n)+6048e5,dc=W&&W.duviriCycle,ch=c=>dc&&(dc.choices||[]).find(x=>x.category==c);
+ const hard=ch("hard"),norm=ch("normal"),names=hard?hard.choices:[];
+ const vb=c=>c.pick?badge(c):'<span class="role">No verdict yet</span>';
+ const wcard=c=>`<div class="relic"><div class="rhead"><span style="display:flex;gap:8px;align-items:center">${pic(c.name)}<b>${esc(c.name)}</b></span>${vb(c)}</div><p class="tag" style="margin:4px 0 0">${esc(c.slot)}${c.type.toLowerCase()==c.slot.toLowerCase()?"":", "+esc(c.type.toLowerCase())}</p>${stat(c)}${dmgTypes(c)}${c.note?`<p class="tag" style="margin:8px 0 4px">${esc(c.note)}</p>`:""}<small class="tag">${c.wiki?`<a href="${esc(c.wiki)}" target="_blank" rel="noopener">wiki</a>`:""}</small></div>`;
+ const week=names.map(x=>INCARNON[x]||{name:x,slot:"?",type:"unknown",types:[],dmg:0,crit:0,cm:0,status:0,rate:0,pick:null,note:"Not in my Genesis list yet. Check the wiki for this one."});
+ const ranked=week.filter(c=>c.pick).sort((a,b)=>PICK_ORDER[a.pick]-PICK_ORDER[b.pick]);
+ let live;
+ if(W===null)live='<p class="tag">Loading this week\'s Circuit...</p>';
+ else if(!hard)live='<p class="tag">This week\'s Circuit list is unavailable right now (needs an internet connection). The full pool is below.</p>';
+ else live=`<p class="tag">These five Incarnon Genesis adapters are on offer in the Steel Path Circuit until the weekly reset on Monday 00:00 UTC (in ${left(next-n)}). You can take up to two, one at Tier 5 and one at Tier 10.</p>
+  <div class="tip"><b>My pick order:</b> ${ranked.length>=2?`take <b>${esc(ranked[0].name)}</b> at Tier 5 and <b>${esc(ranked[1].name)}</b> at Tier 10.`:"I have no verdict for most of this week's weapons yet, so compare their stats below."}</div>
+  <div class="relgrid">${week.map(wcard).join("")}</div>
+  ${norm?`<p class="tag" style="margin-top:12px">The normal Circuit this week offers the Warframes ${norm.choices.map(esc).join(", ")}.</p>`:""}`;
+ const slots=["Primary","Secondary","Melee"];
+ app.innerHTML=`<section><h2>This week's Steel Path Circuit<small>live</small></h2>${live}</section>
+ <div class="grid g2"><section><h2>How Incarnon Genesis works</h2><ul class="evs">
+  <li><b>Where the adapters come from</b><small>Finish the Circuit with the Steel Path modifier (after unlocking the Steel Path). Tier 5 gives the first adapter and Tier 10 the second. You can also buy the current week's adapter once from Cavalero for 120 platinum.</small></li>
+  <li><b>Installing</b><small>Installing an adapter needs Duviri resources, and they are not refunded if the upgrade is removed later.</small></li>
+  <li><b>Four evolutions</b><small>I is installing the adapter. II is a solo mission with the weapon. III is 100 kills in Incarnon form (primary and secondary) or 6 Incarnon activations in one mission (melee). IV varies by weapon.</small></li>
+  <li><b>Weekly rotation</b><small>The wiki describes a 9-week cycle of adapter sets that repeats. Drifter Intrinsics Opportunity Rank 9 also unlocks a Riven or 20,000 Kuva choice at those tiers.</small></li>
+  <li><b>More detail</b><small><a href="https://wiki.warframe.com/w/Incarnon" target="_blank" rel="noopener">Incarnon on the wiki</a></small></li></ul></section>
+ <section><h2>How I judged them</h2><p class="tag">Verdicts are my judgement from each weapon's base stats and the wiki's notes on its Incarnon form. The stats shown are for the weapon <b>before</b> it evolves, because the Incarnon form's own numbers are not in the data I use, so a weapon can be better or worse than its base stats suggest. I have not tested these in the game. Weapons without a verdict simply have not been judged yet.</p></section></div>
+ <section><h2>The full Genesis pool<small>${Object.keys(INCARNON).length} weapons with an Incarnon Genesis adapter</small></h2>
+  ${slots.map(s=>`<details class="eradet"><summary><h3>${s}<small>${Object.values(INCARNON).filter(c=>c.slot==s).length} weapons</small></h3></summary><div class="relgrid">${Object.values(INCARNON).filter(c=>c.slot==s).sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<div class="relic"><div class="rhead"><span style="display:flex;gap:8px;align-items:center">${pic(c.name)}<b>${esc(c.name)}</b></span>${vb(c)}</div>${stat(c)}</div>`).join("")}</div></details>`).join("")}</section>`;
+}
 const page=()=>curr().id;
 function render(){const p=curr();p.fn();decorate(p)}
 // Every page except Home gets the same header: where it sits in the nav, its title and one line about it.
@@ -1017,7 +1047,7 @@ fetch("/api/state").then(r=>r.ok?r.json():null).then(srv=>{
   }else if(n){n.remove();render()}
  }).catch(()=>{});
 })();
-loadBaro();setInterval(loadBaro,36e5);setInterval(()=>["tasks","home","nightwave","baro"].includes(page())&&render(),6e4);
+loadBaro();setInterval(loadBaro,36e5);setInterval(()=>["tasks","home","nightwave","baro","incarnon"].includes(page())&&render(),6e4);
 </script>
 </body>
 </html>

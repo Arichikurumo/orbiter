@@ -11,7 +11,7 @@ A self-hosted companion for [Warframe](https://www.warframe.com/): a daily and w
 - **Upgrades:** mods, arcanes and the Helminth (which ability comes from which frame).
 - **Relics:** every Prime item you can farm from relics right now, the current Prime Resurgence rotation, and all relics with their rewards, plus drop rates per refinement stage, a relic finder (search all relics by name or reward) and a calculator for how many relics you need to open to be sure of a drop.
 - **Resources:** an interactive star chart showing where to farm each resource.
-- **Guides:** this season's Nightwave acts plus every recoverable act with tips, syndicate leveling, Kahl's Garrison missions, Coda and Kuva weapon guides (how to get them, damage types, which to pick), and Baro Ki'Teer.
+- **Guides:** this season's Nightwave acts plus every recoverable act with tips, syndicate leveling, Kahl's Garrison missions, Coda and Kuva weapon guides (how to get them, damage types, which to pick), this week's Steel Path Circuit Incarnon picks, and Baro Ki'Teer.
 - **Home:** the current game version, active events, what is coming up and the latest news.
 - Runs as a single container and works on a phone. Progress is saved on the server (and in the browser), so it survives restarts and shows up on every device that opens it.
 
