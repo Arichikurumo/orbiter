@@ -434,7 +434,7 @@ app.addEventListener('change',e=>{
  else if(t.dataset.m){S.owned["M|"+t.dataset.m]=t.checked||undefined;save();render()}
  else if(t.dataset.f){F[t.dataset.f]=t.value;frames()}
  else if(t.dataset.k){G[page()][t.dataset.k]=t.value;catalog(page())}
- else if(t.dataset.rl){RL[t.dataset.rl]=t.value;render()}
+ else if(t.dataset.rl){RL[t.dataset.rl]=t.value;relicFinder()}
  else if(t.dataset.rc){RC[t.dataset.rc]=t.value;if(t.dataset.rc=='part')RC.relic='';relicCalc()}
 });
 // One registry drives the nav, the home page, page titles and headers, so they cannot drift apart.
@@ -454,7 +454,6 @@ const SITE=[
  {id:"arcanes",group:"arsenal",title:"Arcanes",short:"Effects and drop sources",desc:"Arcane effects with their drop sources.",fn:()=>catalog("arcanes")},
  {id:"helminth",group:"arsenal",title:"Helminth",short:"Subsumable abilities by frame",desc:"Each subsumable ability, what it does and which frame it comes from. Tick the ones you have.",fn:()=>catalog("helminth")},
  {id:"relics",group:"farming",title:"Relic overview",short:"What drops now, Prime Resurgence",desc:"Which Prime items you can get from relics right now and this month's Prime Resurgence.",wide:1,fn:()=>relicsPage()},
- {id:"relicfinder",group:"farming",title:"Relic finder",short:"Search relics and rewards",desc:"Search all 798 relics by name or reward, with the drop rate for any refinement stage.",wide:1,fn:()=>relicFinder()},
  {id:"relcalc",group:"farming",title:"Relic calculator",short:"Your odds of a drop",desc:"How many relics you need to open to be sure of a drop, for every refinement level.",wide:1,fn:()=>relicCalc()},
  {id:"resources",group:"farming",title:"Resource map",short:"Where to farm each resource",desc:"A star chart of where to farm the common resources. Click a planet, or pick a resource to highlight its planets.",fn:()=>resources()},
  {id:"nightwave",group:"guides",title:"Nightwave",short:"This season's acts and tips",desc:"This season's acts with standing values, a tick list and tips on how to complete each one.",wide:1,fn:()=>nightwave()},
@@ -750,19 +749,23 @@ const primeBase=n=>(/^(.*? Prime)\b/.exec(n)||[])[1];
 const primeImg=(()=>{let m;return n=>{m??=(x=>{[...FRAMES,...WEAPONS,...COMPANIONS].forEach(i=>{if(i.img&&!x.has(i.name))x.set(i.name,i.img)});return x})(new Map());return m.get(n)}})();
 const TIER_NAME=["","Lith","Meso","Neo","Axi"];
 const cleanPack=s=>s.replace(/^T(\d) Void Projection (.*) Vault ([AB]) (\w+)$/,(m,t,names,v,c)=>`${TIER_NAME[t]||"?"} relic pack (${c}): ${names} vault ${v}`).replace(/^M P V /,"").replace(/ Prime (Single|Dual) Pack$/," Prime ($1 pack)").replace(/ Prime Dual Pack$/," Prime");
-function relicFinder(){
+// The finder is a section of the relic overview; typing or filtering redraws only this section.
+function finderHtml(){
  const tiers=["Lith","Meso","Neo","Axi","Requiem"],terms=RL.q.split(/\s+/).filter(Boolean);
  const list=RELICS.filter(r=>(RL.tier=="all"||r.t==RL.tier)&&(RL.avail=="all"||!r.v)&&(h=>terms.every(t=>h.includes(t)))((r.n+" "+r.r.map(x=>x[0]).join(" ")).toLowerCase()));
  const opt=(v,o)=>o.map(([k,t])=>`<option value="${esc(k)}" ${v==k?"selected":""}>${esc(t)}</option>`).join("");
  const rows=list.slice(0,300).map(r=>`<div class="relic ${r.v?"vaulted":""}"><div class="rhead"><b>${esc(r.n)}</b><span class="role r-${r.v?"":"support"}">${r.v?"Vaulted":"Available"}</span></div><ul>${r.r.map(([name,rar])=>`<li><span class="rar rar-${rar}" title="${RAR[rar][0]}"></span>${esc(name)} <small class="pct">${RATE[RL.stage][rar]}%</small></li>`).join("")}</ul></div>`).join("");
- app.innerHTML=`<div class="hero"><div><h1>Relic finder</h1><p>Search every relic by name or reward, for example "lith c7" or "nyx prime".</p></div></div>
- <section><h2>Results<small>${Math.min(300,list.length)} of ${list.length}</small></h2><div class="bar"><input type="search" id="rq" placeholder="Search relics or rewards" aria-label="Search relics" value="${esc(RL.raw||"")}">
+ return `<h2>Relic finder<small>${Math.min(300,list.length)} of ${list.length} relics</small></h2><p class="tag">Search every relic by name or reward, for example "lith c7" or "nyx prime".</p><div class="bar"><input type="search" id="rq" placeholder="Search relics or rewards" aria-label="Search relics" value="${esc(RL.raw||"")}">
   <select data-rl="tier">${opt(RL.tier,[["all","All eras"],...tiers.map(t=>[t,t])])}</select>
   <select data-rl="avail">${opt(RL.avail,[["all","All relics"],["now","Available now only"]])}</select>
   <select data-rl="stage" aria-label="Refinement stage">${opt(RL.stage,STAGES.map(([n])=>[n,"Show rates: "+n]))}</select></div>
   <p class="tag">Each relic has 3 common, 2 uncommon and 1 rare reward. Percentages are for the stage you pick above (${RL.stage}).${list.length>300?" Showing the first 300, so use the search to narrow it down.":""}</p>
-  <div class="relgrid cols">${rows||'<p class="tag">No relic matches these filters.</p>'}</div></section>`;
- const q2=document.getElementById("rq");q2.oninput=()=>{RL.raw=q2.value;RL.q=q2.value.trim().toLowerCase();const p=q2.selectionStart;relicFinder();const e=document.getElementById("rq");e.focus();e.setSelectionRange(p,p)};
+  <div class="relgrid cols">${rows||'<p class="tag">No relic matches these filters.</p>'}</div>`;
+}
+function relicFinder(){
+ const s=document.getElementById("rf");if(!s)return;
+ s.innerHTML=finderHtml();
+ const q=document.getElementById("rq");q.oninput=()=>{RL.raw=q.value;RL.q=q.value.trim().toLowerCase();const p=q.selectionStart;relicFinder();const e=document.getElementById("rq");e.focus();e.setSelectionRange(p,p)};
 }
 function relicsPage(){
  const n=Date.now(),ms=s=>Date.parse(s);
@@ -783,13 +786,14 @@ function relicsPage(){
    (sched.length>1?`<p class="tag">Coming up: ${sched.slice(1).map(s=>`${esc(cleanPack(s.item))} (from ${new Date(ms(sched[sched.indexOf(s)-1].expiry)).toLocaleDateString([], {month:"short",day:"numeric"})})`).join(", ")}</p>`:"")}
  app.innerHTML=`<div class="hero"><div><h1>Relics</h1><p data-lead>${items.size} Prime items can be farmed from relics right now. The other ${RELICS.filter(r=>r.v).length} relics are vaulted.</p></div></div>
  <section><h2>Available now<small>${items.size} items from ${RELICS.filter(r=>!r.v).length} relics</small></h2><p class="tag">Prime parts you can still get by opening relics (any mission with a Void Fissure). Dots show rarity: <span class="rar rar-C"></span> common, <span class="rar rar-U"></span> uncommon, <span class="rar rar-R"></span> rare. Relic names after each part tell you which relics to look for.</p><div class="relgrid">${cards}</div></section>
- <section><h2>Available relics<small>${RELICS.filter(r=>!r.v).length} relics you can drop right now</small></h2><p class="tag">These are the relics that are not vaulted. Each shows its six rewards for an Intact relic; the dot is the rarity. Use the <a href="#relicfinder">Relic finder</a> for the other relics or to search by reward.</p>
+ <section id="rf">${finderHtml()}</section>
+ <section><h2>Available relics<small>${RELICS.filter(r=>!r.v).length} relics you can drop right now</small></h2><p class="tag">These are the relics that are not vaulted. Each shows its six rewards for an Intact relic; the dot is the rarity. Use the relic finder above for the other relics or to search by reward.</p>
   ${["Lith","Meso","Neo","Axi"].map(era=>{const l=RELICS.filter(r=>!r.v&&r.t==era);return l.length?`<details class="eradet" open><summary><h3>${era}<small>${l.length} relics</small></h3></summary><div class="relgrid">${l.map(r=>`<div class="relic"><div class="rhead"><b>${esc(r.n)}</b></div><ul>${r.r.map(([name,rar])=>`<li><span class="rar rar-${rar}" title="${RAR[rar][0]}"></span>${esc(name)}</li>`).join("")}</ul></div>`).join("")}</div></details>`:""}).join("")}</section>
  <section><h2>Prime Resurgence<small>vaulted items, bought with Aya</small></h2>${res}</section>
  <section><h2>Drop rates by refinement<small>the same for every relic</small></h2><p class="tag">Every relic holds 3 common, 2 uncommon and 1 rare reward. Refining it with Void Traces moves chance from the common rewards to the rarer ones. The numbers are the chance <b>per reward</b>; the rare chance is for the single rare reward.</p>
   <div class="ratetable" role="table"><div class="rr rh" role="row"><span>Stage</span><span>Cost</span><span>Each common (x3)</span><span>Each uncommon (x2)</span><span>Rare (x1)</span></div>${STAGES.map(([n,cost,r])=>`<div class="rr" role="row"><b>${n}</b><span>${cost?cost+" Void Traces":"free"}</span><span><i class="ratebar c" style="width:${r.C*2}px"></i>${r.C}%</span><span><i class="ratebar u" style="width:${r.U*2}px"></i>${r.U}%</span><span><i class="ratebar r" style="width:${r.R*2}px"></i>${r.R}%</span></div>`).join("")}</div>
-  <p class="tag">Radiant makes a rare reward ${RATE.Radiant.R/RATE.Intact.R} times as likely as an unrefined relic, but you spend ${STAGES[3][1]} Void Traces for it. Opening a relic in a squad where everyone uses a Radiant gives the best chance at a rare.</p></section>
- <section><h2>Looking for a specific relic?</h2><p class="tag">Search all 798 relics by name or reward, filter by era and see the drop rate for any refinement in the <a href="#relicfinder">Relic finder</a>.</p></section>`;
+  <p class="tag">Radiant makes a rare reward ${RATE.Radiant.R/RATE.Intact.R} times as likely as an unrefined relic, but you spend ${STAGES[3][1]} Void Traces for it. Opening a relic in a squad where everyone uses a Radiant gives the best chance at a rare.</p></section>`;
+ relicFinder();
 }
 // Relic calculator: chance of at least one hit in n openings = 1-(1-p)^n, with p from the refinement table above.
 const RC={n:10,stage:"Radiant",mode:"rarity",rarity:"R",part:"",relic:""};
