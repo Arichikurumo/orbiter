@@ -340,7 +340,7 @@ const saveUI=()=>{try{localStorage.orbiterUi=JSON.stringify(UI)}catch{}};
 function uiAction(a){
  const [k,...r]=a.split(":"),id=r.join(":");
  if(k=="all")UI.all=!UI.all;else if(k=="shut")UI.shut[id]=!UI.shut[id];else if(k=="info"||k=="sub")UI.open[a]=!(UI.open[a]??UI.all);
- saveUI();tasks();
+ saveUI();render();
 }
 function tasks(){
  rollover();const n=Date.now();
@@ -548,8 +548,8 @@ function homeTasks(reset,title,sub){
  const tasks=SECTIONS.filter(s=>s.reset==reset).flatMap(s=>s.items),groups=TASKGROUPS[reset].map(([t,ids])=>[t,ids.map(id=>tasks.find(x=>x[0]==id)).filter(Boolean)]);
  const rest=tasks.filter(t=>!groups.some(g=>g[1].includes(t)));if(rest.length)groups.push(["Other",rest]);
  const done=tasks.filter(isDone).length;
- const row=t=>{const sb=subs(t),sd=sb.filter(s=>S.tasks[s[0]]).length;
-  return `<div class="trow ${isDone(t)?"done":""}"><label class="tchk"><input type="checkbox" data-t="${esc(t[0])}" ${isDone(t)?"checked":""}><span>${esc(t[1])}${sb.length?` <small class="tag">${sd}/${sb.length}</small>`:""}</span></label>${sb.length?`<div class="tsub">${sb.map(([sid,sn,sdsc])=>`<label><input type="checkbox" data-t="${esc(sid)}" ${S.tasks[sid]?"checked":""}><span>${esc(sn)}${sdsc?`<small>${esc(sdsc)}</small>`:""}</span></label>`).join("")}</div>`:""}</div>`};
+ const row=t=>{const sb=subs(t),sd=sb.filter(s=>S.tasks[s[0]]).length,open=UI.open["sub:"+t[0]];
+  return `<div class="trow ${isDone(t)?"done":""}"><label class="tchk"><input type="checkbox" data-t="${esc(t[0])}" ${isDone(t)?"checked":""}><span>${esc(t[1])}</span></label>${sb.length?`<button type="button" class="tbtn" data-ui="sub:${esc(t[0])}" aria-expanded="${!!open}" aria-label="${esc(t[1])}: show the ${sb.length} parts">${sd}/${sb.length} ${open?"&#9652;":"&#9662;"}</button>`:""}${sb.length&&open?`<div class="tsub">${sb.map(([sid,sn,sdsc])=>`<label><input type="checkbox" data-t="${esc(sid)}" ${S.tasks[sid]?"checked":""}><span>${esc(sn)}${sdsc?`<small>${esc(sdsc)}</small>`:""}</span></label>`).join("")}</div>`:""}</div>`};
  return `<h2 class="livehead">${title}<small>${done} / ${tasks.length} done &middot; ${sub}</small></h2>
  <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${tasks.length}" aria-valuenow="${done}"><i style="width:${done/tasks.length*100}%"></i></div>
  <div class="tgrid">${groups.map(([t,l])=>`<section><h2>${t}<small>${l.filter(isDone).length} / ${l.length}</small></h2>${l.map(row).join("")}</section>`).join("")}</div>`;
