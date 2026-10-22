@@ -85,12 +85,11 @@ a{color:var(--cyan)}
 .pagehead .crumb{display:block;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);margin-bottom:2px}
 .pagehead h1{margin:0;font-size:26px;color:var(--gold);text-transform:uppercase;letter-spacing:.2em;font-weight:600}
 .pagehead p{margin:6px 0 0;color:var(--mut);max-width:70ch}
-.hgroup{margin:6px 0 4px}.hgroup h2{margin:0 0 8px;padding:0 2px}.hgroup h2 small{color:var(--mut)}
-.cards1{margin-bottom:16px}
 .flagrow.strip{max-width:none;margin:0 0 16px;padding:0 4px}
 .emblem{float:right;margin:0 0 8px 16px;filter:drop-shadow(0 0 14px rgba(201,164,92,.35))}
 .card:hover{border-color:var(--cyan);transform:translateY(-2px)}
-.livehead{margin:22px 0 10px;padding:0 2px}.livehead small,.hgroup h2 small{margin-left:10px}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;align-items:start;margin:10px 0 20px}.tgrid section{margin:0}.tgrid h2 small{color:var(--mut);margin-left:8px}
+.livehead{margin:22px 0 10px;padding:0 2px}.livehead small{margin-left:10px}
 .live{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}.livecol{display:grid;gap:20px;min-width:0}.live section{margin:0}
 .live section>h2 small{color:var(--mut)}
 .evl,.nwl{list-style:none;margin:0;padding:0}
@@ -462,8 +461,7 @@ app.addEventListener('change',e=>{
 });
 // One registry drives the nav, the home page, page titles and headers, so they cannot drift apart.
 const GROUPS=[
- {id:"collection",title:"Collection",blurb:"Track what you own"},
- {id:"upgrades",title:"Upgrades",blurb:"Build and improve your gear"},
+ {id:"arsenal",title:"Arsenal",blurb:"Track and upgrade your gear"},
  {id:"farming",title:"Farming",blurb:"Where and how to get things"},
  {id:"guides",title:"Guides",blurb:"Events, standing and shops"},
  {id:"more",title:"More",blurb:"",nav:false},
@@ -471,12 +469,13 @@ const GROUPS=[
 const SITE=[
  {id:"home",title:"Home",wide:1,fn:()=>home()},
  {id:"tasks",title:"Tasks",wide:1,desc:"Daily and weekly checklist with reset timers, vendors to visit and a Baro Ki'Teer countdown.",fn:()=>tasks()},
- {id:"frames",group:"collection",title:"Warframes",short:"Prime and normal, with farm info",desc:"Every frame, prime and normal. Mark what you own, sort by how easy it is to get, and filter by role.",fn:()=>frames()},
- {id:"weapons",group:"collection",title:"Weapons",short:"Every weapon by type",desc:"Every weapon grouped by type, with mastery rank and where to get it.",fn:()=>catalog("weapons")},
- {id:"companions",group:"collection",title:"Companions",short:"Sentinels, beasts, MOAs, Hounds",desc:"Sentinels, Kubrows, Kavats, MOAs, Hounds and more, with how to obtain each.",fn:()=>catalog("companions")},
- {id:"mods",group:"upgrades",title:"Mods",short:"Effects and drop sources",desc:"Max-rank effects and top drop sources for mods. Search by name or by what the mod does.",fn:()=>catalog("mods")},
- {id:"arcanes",group:"upgrades",title:"Arcanes",short:"Effects and drop sources",desc:"Arcane effects with their drop sources.",fn:()=>catalog("arcanes")},
- {id:"helminth",group:"upgrades",title:"Helminth",short:"Subsumable abilities by frame",desc:"Each subsumable ability, what it does and which frame it comes from. Tick the ones you have.",fn:()=>catalog("helminth")},
+ {id:"arsenal",title:"Arsenal",desc:"Everything you own and upgrade: Warframes, weapons, companions, mods, arcanes and the Helminth.",wide:1,fn:()=>arsenal()},
+ {id:"frames",group:"arsenal",title:"Warframes",short:"Prime and normal, with farm info",desc:"Every frame, prime and normal. Mark what you own, sort by how easy it is to get, and filter by role.",fn:()=>frames()},
+ {id:"weapons",group:"arsenal",title:"Weapons",short:"Every weapon by type",desc:"Every weapon grouped by type, with mastery rank and where to get it.",fn:()=>catalog("weapons")},
+ {id:"companions",group:"arsenal",title:"Companions",short:"Sentinels, beasts, MOAs, Hounds",desc:"Sentinels, Kubrows, Kavats, MOAs, Hounds and more, with how to obtain each.",fn:()=>catalog("companions")},
+ {id:"mods",group:"arsenal",title:"Mods",short:"Effects and drop sources",desc:"Max-rank effects and top drop sources for mods. Search by name or by what the mod does.",fn:()=>catalog("mods")},
+ {id:"arcanes",group:"arsenal",title:"Arcanes",short:"Effects and drop sources",desc:"Arcane effects with their drop sources.",fn:()=>catalog("arcanes")},
+ {id:"helminth",group:"arsenal",title:"Helminth",short:"Subsumable abilities by frame",desc:"Each subsumable ability, what it does and which frame it comes from. Tick the ones you have.",fn:()=>catalog("helminth")},
  {id:"relics",group:"farming",title:"Relic overview",short:"What drops now, Prime Resurgence",desc:"Which Prime items you can get from relics right now and this month's Prime Resurgence.",wide:1,fn:()=>relicsPage()},
  {id:"relicfinder",group:"farming",title:"Relic finder",short:"Search relics and rewards",desc:"Search all 798 relics by name or reward, with the drop rate for any refinement stage.",wide:1,fn:()=>relicFinder()},
  {id:"relcalc",group:"farming",title:"Relic calculator",short:"Your odds of a drop",desc:"How many relics you need to open to be sure of a drop, for every refinement level.",wide:1,fn:()=>relicCalc()},
@@ -494,7 +493,7 @@ const curr=()=>SITE.find(p=>"#"+p.id==location.hash)||SITE[0];
 function buildNav(){
  const top=p=>`<a href="#${p.id}" id="n_${p.id}">${esc(p.title)}</a>`;
  document.getElementById("nav").innerHTML=`<a class="brand" href="#home" aria-label="Orbiter, go to the home page"><img src="favicon.svg" alt="" width="26" height="26">Orbiter</a>`+top(SITE[0])+top(SITE[1])+
-  GROUPS.filter(g=>g.nav!==false).map(g=>`<div class="dd"><button type="button" id="d_${g.id}" aria-haspopup="true" aria-expanded="false" aria-controls="m_${g.id}">${g.title} &#9662;</button><div class="menu" id="m_${g.id}">${SITE.filter(p=>p.group==g.id).sort((a,b)=>a.title.localeCompare(b.title)).map(p=>`<a href="#${p.id}" id="n_${p.id}"><b>${esc(p.title)}</b><small>${esc(p.short)}</small></a>`).join("")}</div></div>`).join("");
+  GROUPS.filter(g=>g.nav!==false).map(g=>`<div class="dd"><button type="button" id="d_${g.id}" aria-haspopup="true" aria-expanded="false" aria-controls="m_${g.id}">${g.title} &#9662;</button><div class="menu" id="m_${g.id}">${SITE.some(p=>p.id==g.id)?`<a href="#${g.id}" id="n_${g.id}"><b>Overview</b><small>All ${g.title.toLowerCase()} pages</small></a>`:""}${SITE.filter(p=>p.group==g.id).sort((a,b)=>a.title.localeCompare(b.title)).map(p=>`<a href="#${p.id}" id="n_${p.id}"><b>${esc(p.title)}</b><small>${esc(p.short)}</small></a>`).join("")}</div></div>`).join("");
 }
 buildNav();
 // The API has no version field, so the version is read from the newest news post flagged as an update (e.g. "...: Hotfix 44.1.2 + 2.1").
@@ -535,13 +534,29 @@ function home(){
    .map(x=>`<li class="nw"><span class="nwd">${when(x.date)}</span><a href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.message)}</a></li>`).join("");
  }
  const list=(s,empty,cls)=>s.startsWith("<p")?s:s?`<ul class="${cls}">${s}</ul>`:`<p class="tag">${empty}</p>`;
- app.innerHTML=`<div class="hero">${HERO}<div><h1>Orbiter</h1><p>Your Tenno checklist, collection tracker and farming guide.</p>${gameVersion()}</div></div>
- <div class="cards cards1">${card(SITE[1])}</div>
- ${GROUPS.filter(g=>g.id!="more").map(g=>`<div class="hgroup"><h2>${g.title}<small>${g.blurb}</small></h2><div class="cards">${SITE.filter(p=>p.group==g.id).map(card).join("")}</div></div>`).join("")}
- <h2 class="livehead">Live<small>from the game's world state, refreshed hourly</small></h2>
- <div class="live"><section><h2>Happening now<small>soonest to end first</small></h2>${list(now,"No active events found.","evl")}</section>
- <div class="livecol"><section><h2>Coming up</h2>${list(soon,"Nothing announced yet. Digital Extremes only posts upcoming events shortly before they start.","evl")}</section>
- <section><h2>Latest news</h2>${list(news,"No news found.","nwl")}</section></div></div>`;
+ app.innerHTML=`<div class="hero">${HERO}<div><h1>Orbiter</h1><p>Orbiter is a self-hosted companion for Warframe: a daily and weekly checklist, trackers for your Warframes, weapons and companions, and farming guides for relics, resources, syndicates and more. Your progress is saved on your own machine.</p>${gameVersion()}</div></div>
+ <div class="live"><section><h2>Happening now<small>soonest to end first</small></h2>${list(now,"No active events found.","evl")}
+ <h2 style="margin-top:16px">Coming up</h2>${list(soon,"Nothing announced yet. Digital Extremes only posts upcoming events shortly before they start.","evl")}</section>
+ <section><h2>Latest news</h2>${list(news,"No news found.","nwl")}</section></div>
+ ${homeTasks("d","Daily","Resets at 00:00 UTC, in "+left(dayStart(n)+864e5-n))}${homeTasks("w","Weekly","Resets Monday 00:00 UTC, in "+left(weekStart(n)+6048e5-n))}
+ <p class="tag"><a href="#tasks">Open the full checklist</a> for task details and vendor locations.</p>`;
+}
+// Home checklist: the same tasks and saved ticks as the Tasks page, grouped by type. Tasks not listed here fall into "Other".
+const TASKGROUPS={d:[["Login & crafting",["login","forma","craft","drones","firstwin"]],["Syndicates",["factions","factionspend","worldsyn"]],["Missions",["sortie","incursions","nwdaily","focus"]],["Social",["kim"]],["Vendors",["acrithisd","ticker","marie"]]],
+ w:[["Nightwave",["nwweekly","nwspend"]],["Missions",["maroo","clem","narmer","archon","eximus","clan"]],["Circuit & towers",["circuit","circuitsp","descendia","descendiasp"]],["Archimedea & Netracells",["pulses","netracells","eda","eta","cryobells","icebind"]],["Vendors & shops",["palladino","yonta","acrithisw","teshin","bird3","kaya","nightcap","zorba","hunhow","melica","baro","family","voidplumes","voca","tenet","coda"]]]};
+function homeTasks(reset,title,sub){
+ const tasks=SECTIONS.filter(s=>s.reset==reset).flatMap(s=>s.items),groups=TASKGROUPS[reset].map(([t,ids])=>[t,ids.map(id=>tasks.find(x=>x[0]==id)).filter(Boolean)]);
+ const rest=tasks.filter(t=>!groups.some(g=>g[1].includes(t)));if(rest.length)groups.push(["Other",rest]);
+ const done=tasks.filter(isDone).length;
+ const row=t=>{const sb=subs(t),sd=sb.filter(s=>S.tasks[s[0]]).length;
+  return `<div class="trow ${isDone(t)?"done":""}"><label class="tchk"><input type="checkbox" data-t="${esc(t[0])}" ${isDone(t)?"checked":""}><span>${esc(t[1])}${sb.length?` <small class="tag">${sd}/${sb.length}</small>`:""}</span></label></div>`};
+ return `<h2 class="livehead">${title}<small>${done} / ${tasks.length} done &middot; ${sub}</small></h2>
+ <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${tasks.length}" aria-valuenow="${done}"><i style="width:${done/tasks.length*100}%"></i></div>
+ <div class="tgrid">${groups.map(([t,l])=>`<section><h2>${t}<small>${l.filter(isDone).length} / ${l.length}</small></h2>${l.map(row).join("")}</section>`).join("")}</div>`;
+}
+// Overview of everything in one nav group, one card per page.
+function arsenal(){
+ app.innerHTML=`<div class="cards">${SITE.filter(p=>p.group=="arsenal").map(card).join("")}</div>`;
 }
 // Star chart: the backdrop is the in-game solar system picture (downloaded by the server on first start, from wiki.warframe.com). Hotspot positions were placed by eye on that picture;
 // moons and Deimos are not drawn there, so they sit next to their parent planet.
@@ -1024,7 +1039,7 @@ addEventListener("focusin",e=>{const d=document.querySelector(".dd.open");if(d&&
 function route(){
  const p=curr();
  document.querySelectorAll("nav a[id^=n_]").forEach(a=>{const on=a.id=="n_"+p.id;a.classList.toggle("on",on);on?a.setAttribute("aria-current","page"):a.removeAttribute("aria-current")});
- document.querySelectorAll(".dd>button").forEach(b=>b.classList.toggle("on",b.id=="d_"+p.group));
+ document.querySelectorAll(".dd>button").forEach(b=>b.classList.toggle("on",b.id=="d_"+(p.group||p.id)));
  closeMenus();
  document.querySelector("main").classList.toggle("wide",!!p.wide);
  render();window.scrollTo(0,0);
