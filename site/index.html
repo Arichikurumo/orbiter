@@ -88,7 +88,7 @@ a{color:var(--cyan)}
 .flagrow.strip{max-width:none;margin:0 0 16px;padding:0 4px}
 .emblem{float:right;margin:0 0 8px 16px;filter:drop-shadow(0 0 14px rgba(201,164,92,.35))}
 .card:hover{border-color:var(--cyan);transform:translateY(-2px)}
-.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;align-items:start;margin:10px 0 20px}.tgrid section{margin:0}.tgrid h2 small{color:var(--mut);margin-left:8px}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;align-items:start;margin:10px 0 20px}.tgrid section{margin:0}.tgrid h2 small{color:var(--mut);margin-left:8px}
 .livehead{margin:22px 0 10px;padding:0 2px}.livehead small{margin-left:10px}
 .live{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}.livecol{display:grid;gap:20px;min-width:0}.live section{margin:0}
 .live section>h2 small{color:var(--mut)}
@@ -323,7 +323,7 @@ let lastBaro=0,retries=0;
 async function loadBaro(){
  lastBaro=Date.now();
  try{const r=await fetch("https://api.warframestat.us/pc?language=en",{signal:AbortSignal.timeout(30000)});if(!r.ok)throw 0;W=await r.json();B=W.voidTrader;retries=0}catch{if(!W){B=false;W=false}if(retries++<3)setTimeout(loadBaro,12e4)} // keep older data if a refresh fails; retry a few times, then wait for the hourly refresh
- if(["tasks","home","nightwave","baro","relics"].includes(page()))render();
+ if(["home","nightwave","baro","relics"].includes(page()))render();
 }
 function baroCard(noList){
  if(B===null)return"Checking Baro Ki'Teer...";
@@ -334,34 +334,13 @@ function baroCard(noList){
   return`<b>Baro Ki'Teer is here, leaves in ${left(e-n)}</b> at ${esc(B.location)}${inv&&!noList?`<details><summary>Inventory (${B.inventory.length})</summary><ul>${inv}</ul></details>`:""}`}
  if(Date.now()-lastBaro>6e5)loadBaro();return"Baro Ki'Teer has left. Checking the next visit...";
 }
-// Tasks page. UI choices (hide done, open details, collapsed sections) are per-browser conveniences and are not part of the saved progress.
+// UI choices (hide done, open details, collapsed sections) are per-browser conveniences and are not part of the saved progress.
 const UI=(()=>{try{return JSON.parse(localStorage.orbiterUi)}catch{return{}}})();UI.open??={};UI.shut??={};
 const saveUI=()=>{try{localStorage.orbiterUi=JSON.stringify(UI)}catch{}};
 function uiAction(a){
  const [k,...r]=a.split(":"),id=r.join(":");
  if(k=="all")UI.all=!UI.all;else if(k=="shut")UI.shut[id]=!UI.shut[id];else if(k=="info"||k=="sub")UI.open[a]=!(UI.open[a]??UI.all);
  saveUI();render();
-}
-function tasks(){
- rollover();const n=Date.now();
- const done=ALL.filter(isDone).length,resets={d:dayStart(n)+864e5,w:weekStart(n)+6048e5};
- const row=t=>{const [id,name,desc,,meta]=t,dn=isDone(t),sb=subs(t),sd=sb.filter(s=>S.tasks[s[0]]).length;
-  const info=UI.open["info:"+id]??UI.all,sub=UI.open["sub:"+id]??UI.all;
-  return `<div class="trow ${dn?"done":""}"><label class="tchk"><input type="checkbox" data-t="${esc(id)}" ${dn?"checked":""}><span>${esc(name)}</span></label>
-   ${sb.length?`<button type="button" class="tbtn" data-ui="sub:${esc(id)}" aria-expanded="${!!sub}" aria-label="${esc(name)}: show the ${sb.length} parts">${sd}/${sb.length} ${sub?"&#9652;":"&#9662;"}</button>`:""}
-   <button type="button" class="tinfo" data-ui="info:${esc(id)}" aria-expanded="${!!info}" aria-label="Details for ${esc(name)}">i</button>
-   ${info?`<div class="tdesc">${esc(desc)}${meta?`<span class="meta">${esc(meta)}</span>`:""}</div>`:""}
-   ${sb.length&&sub?`<div class="tsub">${sb.map(([sid,sn,sdsc])=>`<label><input type="checkbox" data-t="${esc(sid)}" ${S.tasks[sid]?"checked":""}><span>${esc(sn)}${sdsc?`<small>${esc(sdsc)}</small>`:""}</span></label>`).join("")}</div>`:""}</div>`};
- const sec=s=>{const d=s.items.filter(isDone).length,shut=UI.shut[s.key],list=UI.hide?s.items.filter(t=>!isDone(t)):s.items;
-  return `<section class="tsec"><h2 class="thead"><button type="button" data-ui="shut:${s.key}" aria-expanded="${!shut}"><span>${s.title}</span><span class="tcount">${d}/${s.items.length}</span><small title="${s.reset=="d"?"Daily reset at 00:00 UTC":"Weekly reset on Monday at 00:00 UTC"}">resets in ${left(resets[s.reset]-n)}</small><span class="chev">${shut?"&#9662;":"&#9652;"}</span></button></h2>
-  <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${s.items.length}" aria-valuenow="${d}"><i style="width:${d/s.items.length*100}%"></i></div>
-  ${shut?"":list.map(row).join("")||'<p class="tag">All done here.</p>'}</section>`};
- const by=k=>sec(SECTIONS.find(s=>s.key==k));
- app.innerHTML=`<div class="tsum"><div><div class="tbig">${done}<small> / ${ALL.length} done</small></div><div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${ALL.length}" aria-valuenow="${done}"><i style="width:${done/ALL.length*100}%"></i></div>
-   <div class="tag">Daily resets in ${left(resets.d-n)} &middot; weekly resets in ${left(resets.w-n)} (00:00 UTC)</div></div>
-  <div class="baro">${baroCard(true)}</div>
-  <div class="tctl"><label class="chk"><input type="checkbox" data-ui="hide" ${UI.hide?"checked":""}> Hide done</label><button type="button" class="btn quiet" data-ui="all">${UI.all?"Hide details":"Show all details"}</button></div></div>
-  <div class="tcols"><div>${by("daily")}${by("dv")}${by("other")}</div><div>${by("weekly")}${by("wv")}</div></div>`;
 }
 const HERO=`<svg viewBox="0 0 160 160" width="120" height="120" aria-hidden="true" fill="none" stroke-linecap="round">
  <circle cx="80" cy="80" r="74" stroke="#c9a45c" stroke-width="1.5" stroke-dasharray="3 7"/>
@@ -452,7 +431,6 @@ app.addEventListener('change',e=>{
  if(t.dataset.t){const p=ALL.find(x=>x[0]==t.dataset.t&&subs(x).length);
   (p?subs(p).map(s=>s[0]):[t.dataset.t]).forEach(id=>S.tasks[id]=t.checked||undefined);save();render()}
  else if(t.dataset.o){S.owned[t.dataset.o]=t.checked||undefined;save();render()}
- else if(t.dataset.ui=="hide"){UI.hide=t.checked;saveUI();tasks()}
  else if(t.dataset.m){S.owned["M|"+t.dataset.m]=t.checked||undefined;save();render()}
  else if(t.dataset.f){F[t.dataset.f]=t.value;frames()}
  else if(t.dataset.k){G[page()][t.dataset.k]=t.value;catalog(page())}
@@ -468,7 +446,6 @@ const GROUPS=[
 ];
 const SITE=[
  {id:"home",title:"Home",wide:1,fn:()=>home()},
- {id:"tasks",title:"Tasks",wide:1,desc:"Daily and weekly checklist with reset timers, vendors to visit and a Baro Ki'Teer countdown.",fn:()=>tasks()},
  {id:"arsenal",title:"Arsenal",desc:"Everything you own and upgrade: Warframes, weapons, companions, mods, arcanes and the Helminth.",wide:1,fn:()=>arsenal()},
  {id:"frames",group:"arsenal",title:"Warframes",short:"Prime and normal, with farm info",desc:"Every frame, prime and normal. Mark what you own, sort by how easy it is to get, and filter by role.",fn:()=>frames()},
  {id:"weapons",group:"arsenal",title:"Weapons",short:"Every weapon by type",desc:"Every weapon grouped by type, with mastery rank and where to get it.",fn:()=>catalog("weapons")},
@@ -492,7 +469,7 @@ const SITE=[
 const curr=()=>SITE.find(p=>"#"+p.id==location.hash)||SITE[0];
 function buildNav(){
  const top=p=>`<a href="#${p.id}" id="n_${p.id}">${esc(p.title)}</a>`;
- document.getElementById("nav").innerHTML=`<a class="brand" href="#home" aria-label="Orbiter, go to the home page"><img src="favicon.svg" alt="" width="26" height="26">Orbiter</a>`+top(SITE[0])+top(SITE[1])+
+ document.getElementById("nav").innerHTML=`<a class="brand" href="#home" aria-label="Orbiter, go to the home page"><img src="favicon.svg" alt="" width="26" height="26">Orbiter</a>`+top(SITE[0])+
   GROUPS.filter(g=>g.nav!==false).map(g=>`<div class="dd"><button type="button" id="d_${g.id}" aria-haspopup="true" aria-expanded="false" aria-controls="m_${g.id}">${g.title} &#9662;</button><div class="menu" id="m_${g.id}">${SITE.some(p=>p.id==g.id)?`<a href="#${g.id}" id="n_${g.id}"><b>Overview</b><small>All ${g.title.toLowerCase()} pages</small></a>`:""}${SITE.filter(p=>p.group==g.id).sort((a,b)=>a.title.localeCompare(b.title)).map(p=>`<a href="#${p.id}" id="n_${p.id}"><b>${esc(p.title)}</b><small>${esc(p.short)}</small></a>`).join("")}</div></div>`).join("");
 }
 buildNav();
@@ -510,7 +487,7 @@ const ICONS={"tasks": "<rect x=\"6\" y=\"4\" width=\"20\" height=\"24\" rx=\"2\"
 const ico=id=>ICONS[id]?`<svg class="cardico" viewBox="0 0 32 32" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[id]}</svg>`:"";
 const card=p=>`<a class="card" href="#${p.id}">${ico(p.id)}<h3>${esc(p.title)}</h3><p>${esc(p.desc)}</p></a>`;
 function home(){
- const n=Date.now(),ms=s=>Date.parse(s),when=a=>`${new Date(a).toLocaleDateString([], {month:"short",day:"numeric"})}`;
+ rollover();const n=Date.now(),ms=s=>Date.parse(s),when=a=>`${new Date(a).toLocaleDateString([], {month:"short",day:"numeric"})}`;
  let now="",soon="",news="";
  const clean=s=>(s||"").replace(/ Event Name$/i,""),metaOk=s=>s&&!/Event Desc/i.test(s); // the game ships some placeholder strings
  const kinds={event:"Event",shop:"Shop",trader:"Trader",season:"Season"};
@@ -539,10 +516,10 @@ function home(){
  <h2 style="margin-top:16px">Coming up</h2>${list(soon,"Nothing announced yet. Digital Extremes only posts upcoming events shortly before they start.","evl")}</section>
  <section><h2>Latest news</h2>${list(news,"No news found.","nwl")}</section></div>
  ${homeTasks("d","Daily","Resets at 00:00 UTC, in "+left(dayStart(n)+864e5-n))}${homeTasks("w","Weekly","Resets Monday 00:00 UTC, in "+left(weekStart(n)+6048e5-n))}
- <p class="tag"><a href="#tasks">Open the full checklist</a> for task details and vendor locations.</p>`;
+`;
 }
-// Home checklist: the same tasks and saved ticks as the Tasks page, grouped by type. Tasks not listed here fall into "Other".
-const TASKGROUPS={d:[["Login & crafting",["login","forma","craft","drones","firstwin"]],["Syndicates",["factions","factionspend","worldsyn"]],["Missions",["sortie","incursions","nwdaily","focus"]],["Social",["kim"]],["Vendors",["acrithisd","ticker","marie"]]],
+// Home checklist: the same tasks and saved ticks as before, grouped by type. Tasks not listed here fall into "Other".
+const TASKGROUPS={d:[["Login & crafting",["login","forma","craft","drones","firstwin"]],["Syndicates",["factions","factionspend","worldsyn"]],["Missions",["sortie","incursions","nwdaily","focus"]],["Social & vendors",["kim","acrithisd","ticker","marie"]]],
  w:[["Nightwave",["nwweekly","nwspend"]],["Missions",["maroo","clem","narmer","archon","eximus","clan"]],["Circuit & towers",["circuit","circuitsp","descendia","descendiasp"]],["Archimedea & Netracells",["pulses","netracells","eda","eta","cryobells","icebind"]],["Vendors & shops",["palladino","yonta","acrithisw","teshin","bird3","kaya","nightcap","zorba","hunhow","melica","baro","family","voidplumes","voca","tenet","coda"]]]};
 function homeTasks(reset,title,sub){
  const tasks=SECTIONS.filter(s=>s.reset==reset).flatMap(s=>s.items),groups=TASKGROUPS[reset].map(([t,ids])=>[t,ids.map(id=>tasks.find(x=>x[0]==id)).filter(Boolean)]);

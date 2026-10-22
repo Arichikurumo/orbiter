@@ -6,12 +6,11 @@ A self-hosted companion for [Warframe](https://www.warframe.com/): a daily and w
 
 ## Features
 
-- **Tasks:** the daily and weekly checklist (with sub-tasks, vendors and reset timers) that resets itself at 00:00 UTC and on Mondays.
 - **Arsenal:** an overview page plus every Warframe, weapon and companion with *collected* and *mastered* ticks (frames and weapons), search, filters, how to get it, and an "easiest first" order for Warframes with role tags; also mods, arcanes and the Helminth (which ability comes from which frame).
 - **Relics:** every Prime item you can farm from relics right now, the current Prime Resurgence rotation, and all relics with their rewards, plus drop rates per refinement stage, a relic finder (search all relics by name or reward) and a calculator for how many relics you need to open to be sure of a drop.
 - **Resources:** an interactive star chart showing where to farm each resource.
 - **Guides:** this season's Nightwave acts plus every recoverable act with tips, syndicate leveling, Kahl's Garrison missions, Coda and Kuva weapon guides (how to get them, damage types, which to pick), this week's Steel Path Circuit Incarnon picks, and Baro Ki'Teer.
-- **Home:** what Orbiter is, the current game version, active events, the latest news, and your daily and weekly tasks grouped by type.
+- **Home:** what Orbiter is, the current game version, active events, the latest news, and your daily and weekly checklist grouped by type (with sub-tasks), which resets itself at 00:00 UTC and on Mondays.
 - Runs as a single container and works on a phone. Progress is saved on the server (and in the browser), so it survives restarts and shows up on every device that opens it.
 
 ## Quick start
@@ -84,7 +83,7 @@ The server only accepts a small JSON document with ticks, validates and trims it
 
 ## Live data and the internet
 
-Home, Tasks (Baro timer) and the Nightwave and Baro pages read live data from the community API at [api.warframestat.us](https://docs.warframestat.us/) (events, news, Baro, Nightwave, game version). It is requested when a page opens and then at most once an hour. Without a connection those parts say they are unavailable and everything else keeps working.
+Home and the Nightwave and Baro pages read live data from the community API at [api.warframestat.us](https://docs.warframestat.us/) (events, news, Baro, Nightwave, game version). It is requested when a page opens and then at most once an hour. Without a connection those parts say they are unavailable and everything else keeps working.
 
 ## Development
 
