@@ -549,7 +549,7 @@ function homeTasks(reset,title,sub){
  const rest=tasks.filter(t=>!groups.some(g=>g[1].includes(t)));if(rest.length)groups.push(["Other",rest]);
  const done=tasks.filter(isDone).length;
  const row=t=>{const sb=subs(t),sd=sb.filter(s=>S.tasks[s[0]]).length;
-  return `<div class="trow ${isDone(t)?"done":""}"><label class="tchk"><input type="checkbox" data-t="${esc(t[0])}" ${isDone(t)?"checked":""}><span>${esc(t[1])}${sb.length?` <small class="tag">${sd}/${sb.length}</small>`:""}</span></label></div>`};
+  return `<div class="trow ${isDone(t)?"done":""}"><label class="tchk"><input type="checkbox" data-t="${esc(t[0])}" ${isDone(t)?"checked":""}><span>${esc(t[1])}${sb.length?` <small class="tag">${sd}/${sb.length}</small>`:""}</span></label>${sb.length?`<div class="tsub">${sb.map(([sid,sn,sdsc])=>`<label><input type="checkbox" data-t="${esc(sid)}" ${S.tasks[sid]?"checked":""}><span>${esc(sn)}${sdsc?`<small>${esc(sdsc)}</small>`:""}</span></label>`).join("")}</div>`:""}</div>`};
  return `<h2 class="livehead">${title}<small>${done} / ${tasks.length} done &middot; ${sub}</small></h2>
  <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${tasks.length}" aria-valuenow="${done}"><i style="width:${done/tasks.length*100}%"></i></div>
  <div class="tgrid">${groups.map(([t,l])=>`<section><h2>${t}<small>${l.filter(isDone).length} / ${l.length}</small></h2>${l.map(row).join("")}</section>`).join("")}</div>`;
