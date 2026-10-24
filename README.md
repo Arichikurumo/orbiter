@@ -6,7 +6,7 @@ A self-hosted companion for [Warframe](https://www.warframe.com/): a daily and w
 
 ## Features
 
-- **Arsenal:** an overview page plus every Warframe, weapon and companion with *collected* and *mastered* ticks (frames and weapons), search, filters, how to get it, and an "easiest first" order for Warframes with role tags and, for Prime Warframes, the price of the full set on [warframe.market](https://warframe.market/) (lowest and highest of the 10 cheapest offers from online traders); also mods, arcanes and the Helminth (which ability comes from which frame).
+- **Arsenal:** an overview page plus every Warframe, weapon and companion with *collected* and *mastered* ticks (frames and weapons), search, filters, how to get it, and an "easiest first" order for Warframes with role tags and, for Prime Warframes, the price of the full set on [warframe.market](https://warframe.market/) (average of the 10 cheapest offers from online traders); also mods, arcanes and the Helminth (which ability comes from which frame).
 - **Relics:** every Prime item you can farm from relics right now, the current Prime Resurgence rotation, and all relics with their rewards, plus drop rates per refinement stage, a relic finder (search all relics by name or reward) and a calculator for how many relics you need to open to be sure of a drop.
 - **Resources:** an interactive star chart showing where to farm each resource.
 - **Guides:** this season's Nightwave acts plus every recoverable act with tips, syndicate leveling, Kahl's Garrison missions, Coda and Kuva weapon guides (how to get them, damage types, which to pick), this week's Steel Path Circuit Incarnon picks, and Baro Ki'Teer.

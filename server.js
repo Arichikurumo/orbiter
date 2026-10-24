@@ -7,7 +7,8 @@ const IMG_DIR = process.env.IMG_DIR || path.join(ROOT, 'img'), images = require(
 const MAX_BODY = 512 * 1024, MAX_KEYS = 20000;
 fs.mkdirSync(path.dirname(DB), { recursive: true });
 const db = new DatabaseSync(DB);
-db.exec('CREATE TABLE IF NOT EXISTS prices (slug TEXT PRIMARY KEY, name TEXT NOT NULL, min INTEGER, max INTEGER, offers INTEGER, updated TEXT, error TEXT)');
+db.exec('CREATE TABLE IF NOT EXISTS prices (slug TEXT PRIMARY KEY, name TEXT NOT NULL, min INTEGER, max INTEGER, avg INTEGER, offers INTEGER, updated TEXT, error TEXT)');
+try { db.exec('ALTER TABLE prices ADD COLUMN avg INTEGER'); } catch {} // tables made before the average was stored
 db.exec('CREATE TABLE IF NOT EXISTS state (id INTEGER PRIMARY KEY CHECK (id = 1), json TEXT NOT NULL, updated TEXT NOT NULL)');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
 // Inline script/styles are used by the page, so 'unsafe-inline' stays; everything else is locked to this origin plus the live-data API.

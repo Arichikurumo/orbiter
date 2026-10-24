@@ -171,6 +171,7 @@ main.wide{max-width:1280px}
 .fp-sp{flex:1}
 .fp-price{position:relative;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--cyan);color:var(--cyan);font-size:13px;cursor:help;outline:none}
 .fp-price .fp-tip{left:auto;right:0;top:38px;width:210px}
+.fp-mkt{border-color:var(--gold);color:var(--gold);text-decoration:none}
 .fp-wiki{font-size:13px;margin-left:4px}
 @media(max-width:620px){.fp-parts{margin-left:0}}
 .dmgbar{display:flex;height:8px;margin:4px 0;border-radius:2px;overflow:hidden;background:#0a0e14}.dmgbar i{display:block;height:100%}
@@ -364,23 +365,24 @@ function primeSource(f,p){
 }
 const partSrc=(f,p)=>f.prime?primeSource(f,p):(p.s||"No drop source in the data. See the wiki link.");
 const COIN='<svg class="coin" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.5v7M5.5 6.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+const SWAP='<svg class="coin" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2 5h10M9 2l3 3-3 3M14 11H4M7 8l-3 3 3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function partsRow(f){
  const parts=f.parts.length?f.parts.map(p=>{const src=partSrc(f,p);
   return `<span class="fp-pt" tabindex="0" aria-label="${esc(p.n+": "+src)}"><img src="${esc(IMG(p.i))}" alt="" width="34" height="34" loading="lazy" onerror="this.style.visibility='hidden'"><span class="fp-tip" aria-hidden="true"><b>${esc(p.n)}</b>${src.split("; ").map(esc).join("<br>")}</span></span>`}).join(""):`<span class="tag">${esc(f.how||"No part data. See the wiki link.")}</span>`;
- const price=f.plat?`<span class="fp-price" tabindex="0" aria-label="${f.plat} platinum: skip the farm and buy the finished Warframe in the Market">${COIN}${f.plat} plat<span class="fp-tip" aria-hidden="true"><b>Skip the farm</b>Buy the finished Warframe in the Market for ${f.plat} platinum.</span></span>`:"";
- return `<div class="fp-parts">${parts}<span class="fp-sp"></span>${price}${f.wiki?`<a class="fp-wiki" href="${esc(f.wiki)}" target="_blank" rel="noopener">wiki</a>`:""}</div>`;
+ const mp=f.prime&&PRICES&&PRICES[f.name],mkt=mp?`<a class="fp-price fp-mkt" href="https://warframe.market/items/${esc(mp.slug)}" target="_blank" rel="noopener" aria-label="${mp.avg} platinum on warframe.market, average of the ${mp.offers} cheapest offers">${SWAP}${mp.avg} plat<span class="fp-tip" aria-hidden="true"><b>Player trading, warframe.market</b>Average of the ${mp.offers} cheapest offers from online traders for the full set (${mp.min}-${mp.max} plat).</span></a>`:"";
+ const price=f.plat?`<span class="fp-price" tabindex="0" aria-label="${f.plat} platinum in the in-game Market: skip the farm and buy the finished Warframe">${COIN}${f.plat} plat<span class="fp-tip" aria-hidden="true"><b>In-game Market</b>Skip the farm: buy the finished Warframe in the Market for ${f.plat} platinum.</span></span>`:"";
+ return `<div class="fp-parts">${parts}<span class="fp-sp"></span>${price}${mkt}${f.wiki?`<a class="fp-wiki" href="${esc(f.wiki)}" target="_blank" rel="noopener">wiki</a>`:""}</div>`;
 }
-const setPrice=f=>{const x=PRICES&&PRICES[f.name];return x?` <a class="tag" href="https://warframe.market/items/${esc(x.slug)}" target="_blank" rel="noopener" title="Full set on warframe.market: lowest and highest of the 10 cheapest offers from online traders">Set ${x.min==x.max?x.min:x.min+"-"+x.max} p</a>`:""};
 function frames(){
  if(!PRICES)loadPrices();
- const miss=PRICES?FRAMES.filter(f=>f.prime&&!S.owned[f.name]&&PRICES[f.name]).map(f=>PRICES[f.name]):[],sum=k=>miss.reduce((t,x)=>t+x[k],0);
+ const miss=PRICES?FRAMES.filter(f=>f.prime&&!S.owned[f.name]&&PRICES[f.name]).map(f=>PRICES[f.name]):[],sum=miss.reduce((t,x)=>t+x.avg,0);
  const have=FRAMES.filter(f=>S.owned[f.name]).length,mas=FRAMES.filter(f=>mastered(f.name)).length;
  let l=FRAMES.filter(f=>(showOk(F.show,S.owned[f.name],mastered(f.name)))&&
   (F.type=="all"||(F.type=="prime")==f.prime)&&(F.role=="all"||f.roles.includes(F.role))&&f.name.toLowerCase().includes(F.q));
  l.sort(F.sort=="easy"?(a,b)=>a.tier-b.tier||(a.hours??1e9)-(b.hours??1e9)||a.name.localeCompare(b.name):(a,b)=>a.name.localeCompare(b.name));
  const opt=(v,o)=>o.map(([k,t])=>`<option value="${k}" ${v==k?'selected':''}>${t}</option>`).join('');
  let last;
- app.innerHTML=`<section><h2>Progress<small>${have} / ${FRAMES.length} collected &middot; ${mas} mastered${miss.length?` &middot; ${miss.length} missing Prime sets cost ${sum("min").toLocaleString()}-${sum("max").toLocaleString()} p`:""}</small></h2><div class="bar">
+ app.innerHTML=`<section><h2>Progress<small>${have} / ${FRAMES.length} collected &middot; ${mas} mastered${miss.length?` &middot; ${miss.length} missing Prime sets cost about ${sum.toLocaleString()} p on warframe.market`:""}</small></h2><div class="bar">
   <input type="search" id="q" placeholder="Search" value="${esc(F.q)}">
   <select data-f="show">${opt(F.show,SHOW)}</select>
   <select data-f="type">${opt(F.type,[["all","Prime + normal"],["base","Normal"],["prime","Prime"]])}</select>
@@ -388,7 +390,7 @@ function frames(){
   <select data-f="sort">${opt(F.sort,[["easy","Easiest first"],["name","Name"]])}</select></div>
   <div class="tag">Farm times are rough estimates; drop locations come from warframestat.us. Check the wiki link before farming.</div>`+
   l.map(f=>{let h='';if(F.sort=="easy"&&f.tier!==last){last=f.tier;h=`<h2 class="tier">${TIERS[f.tier]}</h2>`}
-   return h+`<div class="frame"><div class="rowtop"><label><input type="checkbox" data-o="${esc(f.name)}" ${S.owned[f.name]?'checked':''}>${f.img?`<img src="${esc(IMG(f.img))}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`:''}<span><b>${esc(f.name)}</b><span class="tag">${f.hours?'~'+f.hours+'h':''}</span>${f.roles.map(r=>`<span class="role r-${r}">${ROLES[r]}</span>`).join('')}${setPrice(f)}</span></label>${mast(f.name)}</div>`+
+   return h+`<div class="frame"><div class="rowtop"><label><input type="checkbox" data-o="${esc(f.name)}" ${S.owned[f.name]?'checked':''}>${f.img?`<img src="${esc(IMG(f.img))}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`:''}<span><b>${esc(f.name)}</b><span class="tag">${f.hours?'~'+f.hours+'h':''}</span>${f.roles.map(r=>`<span class="role r-${r}">${ROLES[r]}</span>`).join('')}</span></label>${mast(f.name)}</div>`+
    (S.owned[f.name]?'':partsRow(f))+`</div>`}).join('')+(l.length?'':'<p class="tag">Nothing matches these filters.</p>')+`</section>`;
  const q=document.getElementById('q');q.oninput=()=>{F.q=q.value.toLowerCase();const p=q.selectionStart;frames();const n=document.getElementById('q');n.focus();n.setSelectionRange(p,p)};
 }
@@ -798,7 +800,7 @@ function relicsPage(){
 // Prime set prices come from the server's own scan of warframe.market (/api/prices), never from the browser.
 let PRICES=null;
 async function loadPrices(){
- try{const r=await fetch("/api/prices");if(!r.ok)throw 0;PRICES=Object.fromEntries((await r.json()).items.filter(x=>x.min!=null).map(x=>[x.name,x]))}catch{PRICES={}}
+ try{const r=await fetch("/api/prices");if(!r.ok)throw 0;PRICES=Object.fromEntries((await r.json()).items.filter(x=>x.avg!=null).map(x=>[x.name,x]))}catch{PRICES={}}
  if(page()=="frames")render();
 }
 // Relic calculator: chance of at least one hit in n openings = 1-(1-p)^n, with p from the refinement table above.

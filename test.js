@@ -78,9 +78,9 @@ test('price summary uses the 10 cheapest sell offers of online traders', () => {
   const { summarize, slug } = require('./prices.js');
   const o = (platinum, status = 'ingame', type = 'sell') => ({ type, platinum, visible: true, user: { status } });
   const orders = [...Array.from({ length: 12 }, (_, i) => o(100 + i * 10)), o(1, 'offline'), o(2, 'online', 'buy')];
-  assert.deepEqual(summarize(orders), { min: 100, max: 190, offers: 10 });
-  assert.deepEqual(summarize([o(2), ...Array.from({ length: 11 }, (_, i) => o(47 + i))]), { min: 47, max: 56, offers: 10 }); // the 2 p bait offer is ignored
-  assert.deepEqual(summarize([o(5, 'offline')]), { min: null, max: null, offers: 0 });
+  assert.deepEqual(summarize(orders), { min: 100, max: 190, avg: 145, offers: 10 });
+  assert.deepEqual(summarize([o(2), ...Array.from({ length: 11 }, (_, i) => o(47 + i))]), { min: 47, max: 56, avg: 52, offers: 10 }); // the 2 p bait offer is ignored
+  assert.deepEqual(summarize([o(5, 'offline')]), { min: null, max: null, avg: null, offers: 0 });
   assert.equal(slug('Rhino Prime'), 'rhino_prime_set');
 });
 

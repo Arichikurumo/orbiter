@@ -12,13 +12,13 @@ function primeFrames(siteDir) {
   return frames.filter(f => f.prime && !SKIP.has(f.name)).map(f => f.name);
 }
 
-// Cheapest OFFERS sell orders of users who can trade right now -> {min, max, offers}.
+// Cheapest OFFERS sell orders of users who can trade right now -> {min, max, avg, offers}.
 // Bait listings (a set for 2 p) would hide the real price, so offers under half the median of the cheapest OFFERS are ignored.
 function summarize(orders) {
   const all = orders.filter(o => o.type === 'sell' && o.visible !== false && o.user && o.user.status !== 'offline').map(o => o.platinum).sort((a, b) => a - b);
   const first = all.slice(0, OFFERS), median = first.length ? first[Math.floor(first.length / 2)] : 0;
   const p = all.filter(x => x >= median / 2).slice(0, OFFERS);
-  return p.length ? { min: p[0], max: p[p.length - 1], offers: p.length } : { min: null, max: null, offers: 0 };
+  return p.length ? { min: p[0], max: p[p.length - 1], avg: Math.round(p.reduce((t, x) => t + x, 0) / p.length), offers: p.length } : { min: null, max: null, avg: null, offers: 0 };
 }
 
 async function fetchOrders(s, log) {
@@ -31,12 +31,12 @@ async function fetchOrders(s, log) {
 }
 
 async function scan({ db, siteDir, log = console.log }) {
-  const names = primeFrames(siteDir), up = db.prepare('INSERT INTO prices (slug, name, min, max, offers, updated, error) VALUES (?, ?, ?, ?, ?, ?, NULL) ON CONFLICT(slug) DO UPDATE SET min=excluded.min, max=excluded.max, offers=excluded.offers, updated=excluded.updated, error=NULL');
+  const names = primeFrames(siteDir), up = db.prepare('INSERT INTO prices (slug, name, min, max, avg, offers, updated, error) VALUES (?, ?, ?, ?, ?, ?, ?, NULL) ON CONFLICT(slug) DO UPDATE SET min=excluded.min, max=excluded.max, avg=excluded.avg, offers=excluded.offers, updated=excluded.updated, error=NULL');
   const fail = db.prepare('INSERT INTO prices (slug, name, error) VALUES (?, ?, ?) ON CONFLICT(slug) DO UPDATE SET error=excluded.error');
   Object.assign(status, { total: names.length, done: 0, running: true });
   for (const name of names) {
     const s = slug(name);
-    try { const x = summarize(await fetchOrders(s, log)); up.run(s, name, x.min, x.max, x.offers, new Date().toISOString()); }
+    try { const x = summarize(await fetchOrders(s, log)); up.run(s, name, x.min, x.max, x.avg, x.offers, new Date().toISOString()); }
     catch (e) { fail.run(s, name, String(e.message || e)); log(`prices: ${name}: ${e.message || e}`); }
     status.done++;
     await sleep(SLEEP_MS);
@@ -48,13 +48,14 @@ async function scan({ db, siteDir, log = console.log }) {
 // Scan now if data is missing or old, then again every RESCAN_MS.
 async function run(opts) {
   const { db } = opts;
+  try { db.exec('ALTER TABLE prices ADD COLUMN avg INTEGER'); } catch {}
   const list_ = primeFrames(opts.siteDir), names = list_.length;
-  db.exec('CREATE TABLE IF NOT EXISTS prices (slug TEXT PRIMARY KEY, name TEXT NOT NULL, min INTEGER, max INTEGER, offers INTEGER, updated TEXT, error TEXT)');
+  db.exec('CREATE TABLE IF NOT EXISTS prices (slug TEXT PRIMARY KEY, name TEXT NOT NULL, min INTEGER, max INTEGER, avg INTEGER, offers INTEGER, updated TEXT, error TEXT)');
   db.prepare(`DELETE FROM prices WHERE slug NOT IN (${list_.map(() => '?').join(',')})`).run(...list_.map(slug)); // frames dropped from the list
-  const row = db.prepare('SELECT COUNT(updated) n, MIN(updated) oldest FROM prices').get();
+  const row = db.prepare('SELECT COUNT(avg) n, MIN(updated) oldest FROM prices').get();
   let wait = row.n >= names && row.oldest ? Math.max(0, Date.parse(row.oldest) + RESCAN_MS - Date.now()) : 0;
   for (;;) { await sleep(wait); await scan(opts).catch(e => { status.running = false; opts.log ? opts.log('prices: ' + e) : console.error('prices:', e); }); wait = RESCAN_MS; }
 }
 
-const list = db => db.prepare('SELECT slug, name, min, max, offers, updated, error FROM prices ORDER BY name').all();
+const list = db => db.prepare('SELECT slug, name, min, max, avg, offers, updated, error FROM prices ORDER BY name').all();
 module.exports = { run, status, list, summarize, slug };
