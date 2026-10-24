@@ -800,8 +800,10 @@ function relicsPage(){
 // Prime set prices come from the server's own scan of warframe.market (/api/prices), never from the browser.
 let PRICES=null;
 async function loadPrices(){
- try{const r=await fetch("/api/prices");if(!r.ok)throw 0;PRICES=Object.fromEntries((await r.json()).items.filter(x=>x.avg!=null).map(x=>[x.name,x]))}catch{PRICES={}}
+ let running=false;
+ try{const r=await fetch("/api/prices"),d=await r.json();running=d.scan.running;PRICES=Object.fromEntries(d.items.filter(x=>x.avg!=null).map(x=>[x.name,x]))}catch{PRICES={}}
  if(page()=="frames")render();
+ if(running)setTimeout(()=>page()=="frames"&&loadPrices(),3e4); // a scan is still filling in prices
 }
 // Relic calculator: chance of at least one hit in n openings = 1-(1-p)^n, with p from the refinement table above.
 const RC={n:10,stage:"Radiant",mode:"rarity",rarity:"R",part:"",relic:""};
