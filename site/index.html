@@ -94,7 +94,12 @@ a{color:var(--cyan)}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;margin-right:6px}.d-g{background:#3fb97a}.d-y{background:#e6c04a}.d-o{background:#e8873a}.d-r{background:#e0524d}
 .legend{list-style:none;padding:0;margin:8px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.legend small{display:block;color:var(--mut);margin-top:2px}
 .build{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}.build h4{margin:0 0 4px;color:var(--gold);font-size:15px}.bmeta{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.bmeta span{font-size:12px;padding:2px 8px;border:1px solid var(--line);color:var(--cyan)}
-.mods{display:grid;gap:8px;margin:8px 0}.mrow{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}.mtile{display:flex;flex-direction:column;align-items:center;gap:2px;width:92px;padding:6px 4px;border:1px solid var(--line);background:rgba(10,14,20,.6);font-size:12px;text-align:center;line-height:1.25}.mtile img{width:56px;height:56px;object-fit:contain}.mtile.unk{border-style:dashed;justify-content:center;min-height:56px}.mrow.arc .mtile{border-color:var(--cyan)}
+.mods{display:grid;gap:8px;margin:8px 0}.mrow{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}.mtile{display:flex;flex-direction:column;align-items:center;gap:2px;width:92px;padding:6px 4px;border:1px solid var(--line);background:rgba(10,14,20,.6);font-size:12px;text-align:center;line-height:1.25}.mtile img{width:56px;height:56px;object-fit:contain}.mtile{position:relative;cursor:help;outline:none}.mtile:hover,.mtile:focus{border-color:var(--gold);z-index:5}
+.mtile.r-common{border-bottom:2px solid #b07a4a}.mtile.r-uncommon{border-bottom:2px solid #b8c0c8}.mtile.r-rare{border-bottom:2px solid #d4b24c}.mtile.r-legendary{border-bottom:2px solid #8fd3ff}
+.mtip{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);width:250px;max-width:80vw;padding:8px 10px;background:#07090d;border:1px solid var(--gold);text-align:left;font-size:12px;line-height:1.45;color:var(--fg);cursor:default;z-index:20}
+.mtip.below{bottom:auto;top:100%}.mtile:hover .mtip,.mtile:focus .mtip,.mtile:focus-within .mtip{display:block}
+.mtip b{display:block;color:var(--gold);font-size:13px}.mtip small{display:block;color:var(--mut);margin-top:2px}.mtip .meff{display:block;margin:6px 0;color:var(--fg)}.mtip a{font-size:12px}
+.mtile.unk{border-style:dashed;justify-content:center;min-height:56px}.mrow.arc .mtile{border-color:var(--cyan)}
 .relic .bnotes,.bnotes{list-style:disc;margin:6px 0;padding-left:20px;font-size:14px}.relic .bnotes li,.bnotes li{display:list-item;margin:4px 0;padding:0}.relic .bnotes ul,.bnotes ul{list-style:circle;margin:2px 0;padding-left:20px;color:var(--mut);font-size:14px}.bsrc{display:inline-block;margin-top:10px;font-size:13px}
 .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;align-items:start;margin:10px 0 20px}.tgrid section{margin:0}.tgrid h2 small{color:var(--mut);margin-left:8px}
 .livehead{margin:22px 0 10px;padding:0 2px}.livehead small{margin-left:10px}
@@ -1032,8 +1037,20 @@ const cimg=n=>{const all=[...FRAMES,...WEAPONS,...COMPANIONS];for(const c of [n,
 const cTabs=cur=>`<nav class="subtabs" aria-label="Void Cascade sections"><a href="#cascade"${cur=="cascade"?' class="on" aria-current="page"':""}>Overview</a>${CASCADE_PAGES.map(s=>`<a href="#cascade-${s.key}"${cur==s.key?' class="on" aria-current="page"':""}>${esc(s.short)}</a>`).join("")}</nav>`;
 const bullets=l=>`<ul class="bnotes">${l.map(([t,sub])=>`<li>${esc(t)}${sub.length?`<ul>${sub.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</li>`).join("")}</ul>`;
 // Mod layouts: names read from the guide's loadout screenshots (cascade_mods.js), drawn with the mod pictures this app already downloads.
-const MODIMG=(m=>{[...MODS,...ARCANES].forEach(x=>{if(x.img&&!m.has(x.name))m.set(x.name,x.img)});return m})(new Map());
-const modTile=n=>{const i=MODIMG.get(n);return`<span class="mtile${i?"":" unk"}">${i?`<img src="${esc(IMG(i))}" alt="" width="56" height="56" loading="lazy" onerror="this.style.visibility='hidden'">`:""}<span>${esc(n)}</span></span>`};
+const MODINFO=(m=>{[...MODS,...ARCANES].forEach(x=>{if(!m.has(x.name))m.set(x.name,x)});return m})(new Map());
+const modTile=n=>{const x=MODINFO.get(n);if(!x)return`<span class="mtile unk"><span>${esc(n)}</span></span>`;
+ const [rar,pol]=(x.tag||"").split(" \u00b7 ");
+ return`<span class="mtile r-${esc((rar||"").toLowerCase().split(" ")[0])}" tabindex="0" aria-label="${esc(n)}: ${esc(x.sub||"")}">${x.img?`<img src="${esc(IMG(x.img))}" alt="" width="56" height="56" loading="lazy" onerror="this.style.visibility='hidden'">`:""}<span>${esc(n)}</span>
+ <span class="mtip" role="tooltip"><b>${esc(n)}</b><small>${esc(x.group)}${x.tag?" \u00b7 "+esc(x.tag):""}</small>${x.sub?`<span class="meff">${esc(x.sub)}</span>`:""}${x.how?`<small>${esc(x.how)}</small>`:""}${x.wiki?`<a href="${esc(x.wiki)}" target="_blank" rel="noopener">wiki</a>`:""}</span></span>`};
+// keep the hover box on screen: shift it sideways, or flip it below the card near the top
+function placeTip(t){const tip=t.querySelector(".mtip");if(!tip)return;
+ tip.style.transform="translateX(-50%)";tip.classList.remove("below");
+ const r=tip.getBoundingClientRect(),vw=document.documentElement.clientWidth;
+ let dx=0;if(r.left<8)dx=8-r.left;else if(r.right>vw-8)dx=vw-8-r.right;
+ if(dx)tip.style.transform=`translateX(calc(-50% + ${dx}px))`;
+ if(r.top<60)tip.classList.add("below")}
+app.addEventListener("mouseover",e=>{const t=e.target.closest&&e.target.closest(".mtile");if(t)placeTip(t)});
+app.addEventListener("focusin",e=>{const t=e.target.closest&&e.target.closest(".mtile");if(t)placeTip(t)});
 const modShots=l=>(l||[]).map(s=>`<div class="mods">${s.rows.map(r=>`<div class="mrow">${r.map(modTile).join("")}</div>`).join("")}${s.arcanes.length?`<div class="mrow arc">${s.arcanes.map(modTile).join("")}</div>`:""}${s.other.length?`<small class="tag">${s.other.map(esc).join(" &middot; ")}</small>`:""}</div>`).join("");
 function buildCard(it){
  const bs=it.doc?CASCADE.docs[it.doc]||[]:[],d=DIFF[it.d];let si=0;
