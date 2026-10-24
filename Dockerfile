@@ -2,7 +2,7 @@ FROM node:24-alpine
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
-COPY server.js fetch-images.js ./
+COPY server.js fetch-images.js prices.js ./
 COPY site site
 RUN mkdir /data && chown node:node /data
 USER node

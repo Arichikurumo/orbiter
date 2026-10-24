@@ -2,11 +2,12 @@
 const http = require('http'), fs = require('fs'), path = require('path');
 const { DatabaseSync } = require('node:sqlite');
 const ROOT = path.join(__dirname, 'site'), DB = process.env.DB || '/data/state.db', PORT = process.env.PORT || 8080;
-const IMG_DIR = process.env.IMG_DIR || path.join(ROOT, 'img'), images = require('./fetch-images');
+const IMG_DIR = process.env.IMG_DIR || path.join(ROOT, 'img'), images = require('./fetch-images'), prices = require('./prices');
 // A fully ticked collection (every frame, weapon, mod... collected and mastered) is about 75 KB, so leave generous room to grow.
 const MAX_BODY = 512 * 1024, MAX_KEYS = 20000;
 fs.mkdirSync(path.dirname(DB), { recursive: true });
 const db = new DatabaseSync(DB);
+db.exec('CREATE TABLE IF NOT EXISTS prices (slug TEXT PRIMARY KEY, name TEXT NOT NULL, min INTEGER, max INTEGER, offers INTEGER, updated TEXT, error TEXT)');
 db.exec('CREATE TABLE IF NOT EXISTS state (id INTEGER PRIMARY KEY CHECK (id = 1), json TEXT NOT NULL, updated TEXT NOT NULL)');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
 // Inline script/styles are used by the page, so 'unsafe-inline' stays; everything else is locked to this origin plus the live-data API.
@@ -49,6 +50,7 @@ function handle(req, res) {
   if (url.pathname === '/favicon.ico') { res.writeHead(302, { location: '/favicon-32.png' }); return res.end(); } // browsers ask for this by default
   if (url.pathname === '/healthz') return send(res, 200, 'ok');
   if (url.pathname === '/api/images') return send(res, 200, JSON.stringify(images.status), { 'content-type': 'application/json', 'cache-control': 'no-store' });
+  if (url.pathname === '/api/prices') return send(res, 200, JSON.stringify({ scan: prices.status, items: prices.list(db) }), { 'content-type': 'application/json', 'cache-control': 'no-store' });
   if (url.pathname === '/api/export') { // the whole collection as a downloadable backup file (same data model as /api/state, plus a small envelope)
     const row = db.prepare('SELECT json FROM state WHERE id = 1').get();
     const body = JSON.stringify({ app: 'orbiter', version: 1, exported: new Date().toISOString(), data: row ? JSON.parse(row.json) : sanitize({}) }, null, 1);
@@ -103,6 +105,7 @@ const server = http.createServer((req, res) => {
 if (require.main === module) {
   server.listen(PORT, () => console.log(`listening on :${PORT}, db ${DB}`));
   if (process.env.FETCH_IMAGES !== '0') images.run({ siteDir: ROOT, dir: IMG_DIR }).catch(e => console.error('images:', e));
+  if (process.env.FETCH_PRICES !== '0') prices.run({ db, siteDir: ROOT }).catch(e => console.error('prices:', e));
   for (const s of ['SIGTERM', 'SIGINT']) process.on(s, () => process.exit(0)); // PID 1 ignores signals by default
 }
 module.exports = { server, sanitize };

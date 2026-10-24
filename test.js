@@ -1,5 +1,6 @@
 // Run: node --test test.js   (uses a throwaway database)
 process.env.FETCH_IMAGES = '0';
+process.env.FETCH_PRICES = '0';
 process.env.IMG_DIR = require('path').join(require('os').tmpdir(), `orbiter-test-img-${process.pid}`);
 process.env.DB = require('path').join(require('os').tmpdir(), `orbiter-test-${process.pid}.db`);
 const test = require('node:test'), assert = require('node:assert'), http = require('http');
@@ -71,4 +72,19 @@ test('export returns a downloadable backup with the stored data', async () => {
   assert.equal(b.app, 'orbiter');
   assert.equal(b.version, 1);
   assert.deepEqual(b.data, { tasks: { login: true }, owned: { Rhino: true }, reset: { d: 3, w: 4 } });
+});
+
+test('price summary uses the 10 cheapest sell offers of online traders', () => {
+  const { summarize, slug } = require('./prices.js');
+  const o = (platinum, status = 'ingame', type = 'sell') => ({ type, platinum, visible: true, user: { status } });
+  const orders = [...Array.from({ length: 12 }, (_, i) => o(100 + i * 10)), o(1, 'offline'), o(2, 'online', 'buy')];
+  assert.deepEqual(summarize(orders), { min: 100, max: 190, offers: 10 });
+  assert.deepEqual(summarize([o(5, 'offline')]), { min: null, max: null, offers: 0 });
+  assert.equal(slug('Rhino Prime'), 'rhino_prime_set');
+});
+
+test('prices API returns the stored scan', async () => {
+  const r = JSON.parse((await req('GET', '/api/prices')).body);
+  assert.deepEqual(r.items, []);
+  assert.equal(r.scan.running, false);
 });

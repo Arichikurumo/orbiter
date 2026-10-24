@@ -88,6 +88,7 @@ a{color:var(--cyan)}
 .flagrow.strip{max-width:none;margin:0 0 16px;padding:0 4px}
 .emblem{float:right;margin:0 0 8px 16px;filter:drop-shadow(0 0 14px rgba(201,164,92,.35))}
 .card:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.ptable{width:100%;border-collapse:collapse}.ptable th{text-align:left;color:var(--mut);font-weight:400;font-size:13px;padding:4px 8px}.ptable td{padding:7px 8px;border-top:1px solid rgba(42,51,64,.45)}
 .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;align-items:start;margin:10px 0 20px}.tgrid section{margin:0}.tgrid h2 small{color:var(--mut);margin-left:8px}
 .livehead{margin:22px 0 10px;padding:0 2px}.livehead small{margin-left:10px}
 .live{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}.livecol{display:grid;gap:20px;min-width:0}.live section{margin:0}
@@ -434,6 +435,7 @@ app.addEventListener('change',e=>{
  else if(t.dataset.m){S.owned["M|"+t.dataset.m]=t.checked||undefined;save();render()}
  else if(t.dataset.f){F[t.dataset.f]=t.value;frames()}
  else if(t.dataset.k){G[page()][t.dataset.k]=t.value;catalog(page())}
+ else if(t.dataset.pr){PR.sort=t.value;pricesPage(true)}
  else if(t.dataset.rl){RL[t.dataset.rl]=t.value;relicFinder()}
  else if(t.dataset.rc){RC[t.dataset.rc]=t.value;if(t.dataset.rc=='part')RC.relic='';relicCalc()}
 });
@@ -455,6 +457,7 @@ const SITE=[
  {id:"helminth",group:"arsenal",title:"Helminth",short:"Subsumable abilities by frame",desc:"Each subsumable ability, what it does and which frame it comes from. Tick the ones you have.",fn:()=>catalog("helminth")},
  {id:"relics",group:"farming",title:"Relic overview",short:"What drops now, Prime Resurgence",desc:"Which Prime items you can get from relics right now and this month's Prime Resurgence.",wide:1,fn:()=>relicsPage()},
  {id:"relcalc",group:"farming",title:"Relic calculator",short:"Your odds of a drop",desc:"How many relics you need to open to be sure of a drop, for every refinement level.",wide:1,fn:()=>relicCalc()},
+ {id:"prices",group:"farming",title:"Prime prices",short:"Warframe set prices on warframe.market",desc:"What a full Prime Warframe set costs in platinum on warframe.market: the lowest and highest of the 10 cheapest offers from traders who are online.",wide:1,fn:()=>pricesPage()},
  {id:"resources",group:"farming",title:"Resource map",short:"Where to farm each resource",desc:"A star chart of where to farm the common resources. Click a planet, or pick a resource to highlight its planets.",fn:()=>resources()},
  {id:"nightwave",group:"guides",title:"Nightwave",short:"This season's acts and tips",desc:"This season's acts with standing values, a tick list and tips on how to complete each one.",wide:1,fn:()=>nightwave()},
  {id:"factions",group:"guides",title:"Syndicate leveling",short:"Fastest standing methods",desc:"The quickest ways to earn standing with every syndicate, from the daily cap to the best hand-ins.",wide:1,fn:()=>factions()},
@@ -791,6 +794,29 @@ function relicsPage(){
  <section><h2>Prime Resurgence<small>vaulted items, bought with Aya</small></h2>${res}</section>
  <section id="rf">${finderHtml()}</section>`;
  relicFinder();
+}
+// Prime set prices come from the server's own scan of warframe.market (/api/prices), never from the browser.
+const PR={data:null,q:"",sort:"min",err:false,timer:0};
+async function loadPrices(){
+ clearTimeout(PR.timer);
+ try{const r=await fetch("/api/prices");if(!r.ok)throw 0;PR.data=await r.json();PR.err=false}catch{PR.err=true}
+ if(page()=="prices"){pricesPage(true);if(PR.data&&PR.data.scan.running)PR.timer=setTimeout(loadPrices,3e4)}
+}
+function pricesPage(loaded){
+ if(!loaded&&!PR.data)loadPrices();
+ const d=PR.data,q=PR.q,ago=t=>{const m=Math.round((Date.now()-Date.parse(t))/6e4);return m<60?`${Math.max(m,0)} min ago`:m<2880?`${Math.round(m/60)} h ago`:`${Math.round(m/1440)} days ago`};
+ let body;
+ if(!d)body=`<p class="tag">${PR.err?"Prices are unavailable right now (the server could not be reached).":"Loading prices..."}</p>`;
+ else{
+  const rows=d.items.filter(x=>x.name.toLowerCase().includes(q)).sort(PR.sort=="name"?(a,b)=>a.name.localeCompare(b.name):(a,b)=>(a[PR.sort]??1e9)-(b[PR.sort]??1e9)||a.name.localeCompare(b.name));
+  const opt=(v,o)=>o.map(([k,t])=>`<option value="${k}" ${v==k?"selected":""}>${t}</option>`).join("");
+  body=`<section><h2>Full sets<small>${d.items.filter(x=>x.min!=null).length} priced${d.scan.running?` &middot; scanning ${d.scan.done} of ${d.scan.total}`:""}</small></h2>
+  <div class="bar"><input type="search" id="pq" placeholder="Search" aria-label="Search Warframes" value="${esc(PR.raw||"")}"><select data-pr="sort" aria-label="Sort">${opt(PR.sort,[["min","Cheapest first"],["max","Lowest max first"],["name","Name"]])}</select></div>
+  <p class="tag">Each price is the full Prime set in platinum. Min and max are taken from the 10 cheapest sell offers by traders who are online or in game; with fewer offers, only those count. Sets are scanned one at a time with a 10 second pause, so a full scan takes about ${Math.ceil(d.scan.total*10/60)||10} minutes and repeats every 6 hours.</p>
+  <table class="ptable"><thead><tr><th>Warframe</th><th>Min</th><th>Max</th><th>Offers</th><th>Updated</th><th></th></tr></thead><tbody>${rows.map(x=>`<tr><td><b>${esc(x.name)}</b></td>${x.min!=null?`<td>${x.min} p</td><td>${x.max} p</td><td>${x.offers}</td>`:`<td colspan="3" class="tag">${x.error?esc(x.error):x.updated?"No online offers":"Not scanned yet"}</td>`}<td class="tag">${x.updated?ago(x.updated):""}</td><td><a href="https://warframe.market/items/${esc(x.slug)}" target="_blank" rel="noopener">market</a></td></tr>`).join("")||'<tr><td colspan="6" class="tag">Nothing matches.</td></tr>'}</tbody></table></section>`;
+ }
+ app.innerHTML=body;
+ const i=document.getElementById("pq");if(i)i.oninput=()=>{PR.raw=i.value;PR.q=i.value.trim().toLowerCase();const p=i.selectionStart;pricesPage(true);const n=document.getElementById("pq");n.focus();n.setSelectionRange(p,p)};
 }
 // Relic calculator: chance of at least one hit in n openings = 1-(1-p)^n, with p from the refinement table above.
 const RC={n:10,stage:"Radiant",mode:"rarity",rarity:"R",part:"",relic:""};
