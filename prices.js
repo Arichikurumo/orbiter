@@ -1,6 +1,7 @@
 // Prime Warframe set prices from warframe.market. Runs in the server so the browser never talks to it and the rate limit is respected:
 // one request per Warframe, then a pause. Only sell orders from users who are online or in game count, cheapest 10 (the "first 10 offerings").
 const fs = require('fs'), path = require('path'), vm = require('vm');
+const SKIP = new Set(['Excalibur Prime']); // no longer obtainable, so there is no market set
 const SLEEP_MS = 10_000, RESCAN_MS = 6 * 3600_000, OFFERS = 10;
 const status = { total: 0, done: 0, running: false };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -8,12 +9,15 @@ const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|
 
 function primeFrames(siteDir) {
   const frames = vm.runInNewContext(fs.readFileSync(path.join(siteDir, 'frames.js'), 'utf8') + ';FRAMES');
-  return frames.filter(f => f.prime).map(f => f.name);
+  return frames.filter(f => f.prime && !SKIP.has(f.name)).map(f => f.name);
 }
 
-// Cheapest OFFERS sell orders of users who can trade right now -> {min, max, offers}
+// Cheapest OFFERS sell orders of users who can trade right now -> {min, max, offers}.
+// Bait listings (a set for 2 p) would hide the real price, so offers under half the median of the cheapest OFFERS are ignored.
 function summarize(orders) {
-  const p = orders.filter(o => o.type === 'sell' && o.visible !== false && o.user && o.user.status !== 'offline').map(o => o.platinum).sort((a, b) => a - b).slice(0, OFFERS);
+  const all = orders.filter(o => o.type === 'sell' && o.visible !== false && o.user && o.user.status !== 'offline').map(o => o.platinum).sort((a, b) => a - b);
+  const first = all.slice(0, OFFERS), median = first.length ? first[Math.floor(first.length / 2)] : 0;
+  const p = all.filter(x => x >= median / 2).slice(0, OFFERS);
   return p.length ? { min: p[0], max: p[p.length - 1], offers: p.length } : { min: null, max: null, offers: 0 };
 }
 
@@ -44,8 +48,10 @@ async function scan({ db, siteDir, log = console.log }) {
 // Scan now if data is missing or old, then again every RESCAN_MS.
 async function run(opts) {
   const { db } = opts;
+  const list_ = primeFrames(opts.siteDir), names = list_.length;
   db.exec('CREATE TABLE IF NOT EXISTS prices (slug TEXT PRIMARY KEY, name TEXT NOT NULL, min INTEGER, max INTEGER, offers INTEGER, updated TEXT, error TEXT)');
-  const names = primeFrames(opts.siteDir).length, row = db.prepare('SELECT COUNT(updated) n, MIN(updated) oldest FROM prices').get();
+  db.prepare(`DELETE FROM prices WHERE slug NOT IN (${list_.map(() => '?').join(',')})`).run(...list_.map(slug)); // frames dropped from the list
+  const row = db.prepare('SELECT COUNT(updated) n, MIN(updated) oldest FROM prices').get();
   let wait = row.n >= names && row.oldest ? Math.max(0, Date.parse(row.oldest) + RESCAN_MS - Date.now()) : 0;
   for (;;) { await sleep(wait); await scan(opts).catch(e => { status.running = false; opts.log ? opts.log('prices: ' + e) : console.error('prices:', e); }); wait = RESCAN_MS; }
 }
