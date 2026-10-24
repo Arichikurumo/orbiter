@@ -94,6 +94,7 @@ a{color:var(--cyan)}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;margin-right:6px}.d-g{background:#3fb97a}.d-y{background:#e6c04a}.d-o{background:#e8873a}.d-r{background:#e0524d}
 .legend{list-style:none;padding:0;margin:8px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.legend small{display:block;color:var(--mut);margin-top:2px}
 .build{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}.build h4{margin:0 0 4px;color:var(--gold);font-size:15px}.bmeta{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.bmeta span{font-size:12px;padding:2px 8px;border:1px solid var(--line);color:var(--cyan)}
+.fch{display:inline-block;margin:3px 6px 3px 0;padding:2px 9px;border:1px solid var(--line);font-size:13px;color:var(--fg)}.fch.have{border-color:var(--ok);color:var(--ok)}
 .mods{display:grid;gap:8px;margin:8px 0}.mrow{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}.mtile{display:flex;flex-direction:column;align-items:center;gap:2px;width:92px;padding:6px 4px;border:1px solid var(--line);background:rgba(10,14,20,.6);font-size:12px;text-align:center;line-height:1.25}.mtile img{width:56px;height:56px;object-fit:contain}.mtile{position:relative;cursor:help;outline:none}.mtile:hover,.mtile:focus{border-color:var(--gold);z-index:5}
 .mtile.r-common{border-bottom:2px solid #b07a4a}.mtile.r-uncommon{border-bottom:2px solid #b8c0c8}.mtile.r-rare{border-bottom:2px solid #d4b24c}.mtile.r-legendary{border-bottom:2px solid #8fd3ff}
 .mtip{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);width:250px;max-width:80vw;padding:8px 10px;background:#07090d;border:1px solid var(--gold);text-align:left;font-size:12px;line-height:1.45;color:var(--fg);cursor:default;z-index:20}
@@ -978,6 +979,10 @@ function codaPage(){
  <section><h2>Reading the damage types</h2><p class="tag">Each card shows the weapon's own damage split into physical types (impact, puncture, slash) and native elements. On top of that, every Coda weapon you buy rolls one extra bonus element worth 25 to 60% of its base damage, so the element you end up with is the native one plus whatever the shop rolled.</p></section>
  ${slots.map(s=>`<section><h2>${esc(s)}<small>${CODA.filter(c=>c.slot==s).length==1?"1 weapon":CODA.filter(c=>c.slot==s).length+" weapons"}</small></h2><div class="relgrid">${CODA.filter(c=>c.slot==s).map(c=>`<div class="relic"><div class="rhead"><span style="display:flex;gap:8px;align-items:center">${pic(c.name)}<b>${esc(c.name)}</b></span>${badge(c)}</div>${stat(c)}${dmgTypes(c)}<p class="tag" style="margin:8px 0 4px">${esc(c.note)}</p><small class="tag">Batch ${c.batch}${c.batch==b?", in the shop now":""}${c.wiki?` &middot; <a href="${esc(c.wiki)}" target="_blank" rel="noopener">wiki</a>`:""}</small></div>`).join("")}</div></section>`).join("")}`;
 }
+// Bonus element of a Kuva weapon by the Lich's Progenitor Warframe (wiki.warframe.com, Adversary System/Progenitor, checked 2026-10; Primed and Umbra versions share the element).
+const PROGENITOR=[["impact","Baruuk, Dante, Gauss, Grendel, Rhino, Sevagoth, Sirius & Orion, Wukong, Zephyr"],["heat","Chroma, Ember, Inaros, Jade, Kullervo, Nezha, Protea, Temple, Uriel, Vauban, Wisp"],
+ ["cold","Frost, Gara, Hildryn, Koumei, Narin, Revenant, Styanax, Titania, Trinity"],["electricity","Banshee, Caliban, Excalibur, Follie, Gyre, Limbo, Nova, Valkyr, Volt"],
+ ["toxin","Atlas, Dagath, Ivara, Khora, Nekros, Nidus, Nokko, Oberon, Oraxia, Saryn"],["magnetic","Citrine, Cyte-09, Harrow, Hydroid, Lavos, Mag, Mesa, Xaku, Yareli"],["radiation","Ash, Equinox, Garuda, Loki, Mirage, Nyx, Octavia, Qorvex, Voruna"]];
 function kuvaPage(){
  const tops=KUVA.filter(c=>c.pick=="Top pick"),slots=[...new Set(KUVA.map(c=>c.slot))];
  app.innerHTML=`<div class="grid g2"><section><h2>How to get a Kuva weapon<small>from a Kuva Lich</small></h2><ol class="steps">
@@ -994,6 +999,10 @@ function kuvaPage(){
   <li><b>The Lich takes a cut</b><small>It steals roughly 0.7% of rewards per node it controls. You get everything back once it is defeated.</small></li>
   <li><b>Ephemera</b><small>A defeated Lich has a 20% chance to drop an Ephemera in its Progenitor's element, and you keep it whether you vanquish or convert. Your first defeat also gives the Old Blood Emblem.</small></li>
   <li><b>More detail</b><small><a href="https://wiki.warframe.com/w/Kuva_Lich" target="_blank" rel="noopener">Kuva Lich on the wiki</a></small></li></ul></section></div>
+ <section><h2>Which element can you get?<small>set by the Lich's Progenitor Warframe</small></h2>
+  <p class="tag">A Kuva weapon gets its bonus element from the Warframe the Lich is a Progenitor of. To end up with a given element, you need a Lich whose Progenitor is one of the Warframes in that row. Primed and Umbra versions count as the same Warframe. Green outline: you have this Warframe collected in your Arsenal.</p>
+  <ul class="evs">${PROGENITOR.map(([k,l])=>`<li><b style="color:${dtColor(k)}">${dtName(k)}</b><small>${l.split(", ").map(f=>`<span class="fch${S.owned[f]?" have":""}">${esc(f)}</span>`).join("")}</small></li>`).join("")}</ul>
+  <p class="tag">Source: <a href="https://wiki.warframe.com/w/Adversary_System/Progenitor" target="_blank" rel="noopener">Warframe Progenitors on the wiki</a>. Pick the element that fits your build: for example Toxin or Magnetic if the weapon's own damage lacks them. The weapon's own damage types are on the cards below.</p></section>
  <section><h2>What to hunt first<small>my picks, from the numbers below</small></h2>
   <ol class="steps">${tops.map(c=>`<li><b>${esc(c.name)}</b> <small class="tag">top pick, ${esc(c.slot.toLowerCase())}</small><br>${esc(c.note)}</li>`).join("")}
    <li><b>Decide before you roll.</b> You choose the weapon by retrying Larvlings until yours shows up, so pick one first. The element is the Progenitor's, so you cannot choose it that way.</li>
