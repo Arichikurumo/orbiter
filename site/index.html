@@ -435,7 +435,7 @@ app.addEventListener('change',e=>{
  else if(t.dataset.m){S.owned["M|"+t.dataset.m]=t.checked||undefined;save();render()}
  else if(t.dataset.f){F[t.dataset.f]=t.value;frames()}
  else if(t.dataset.k){G[page()][t.dataset.k]=t.value;catalog(page())}
- else if(t.dataset.pr){PR.sort=t.value;pricesPage(true)}
+ else if(t.dataset.pr){PR[t.dataset.pr]=t.value;pricesPage(true)}
  else if(t.dataset.rl){RL[t.dataset.rl]=t.value;relicFinder()}
  else if(t.dataset.rc){RC[t.dataset.rc]=t.value;if(t.dataset.rc=='part')RC.relic='';relicCalc()}
 });
@@ -796,7 +796,7 @@ function relicsPage(){
  relicFinder();
 }
 // Prime set prices come from the server's own scan of warframe.market (/api/prices), never from the browser.
-const PR={data:null,q:"",sort:"min",err:false,timer:0};
+const PR={data:null,q:"",sort:"min",show:"all",err:false,timer:0};
 async function loadPrices(){
  clearTimeout(PR.timer);
  try{const r=await fetch("/api/prices");if(!r.ok)throw 0;PR.data=await r.json();PR.err=false}catch{PR.err=true}
@@ -808,12 +808,12 @@ function pricesPage(loaded){
  let body;
  if(!d)body=`<p class="tag">${PR.err?"Prices are unavailable right now (the server could not be reached).":"Loading prices..."}</p>`;
  else{
-  const rows=d.items.filter(x=>x.name.toLowerCase().includes(q)).sort(PR.sort=="name"?(a,b)=>a.name.localeCompare(b.name):(a,b)=>(a[PR.sort]??1e9)-(b[PR.sort]??1e9)||a.name.localeCompare(b.name));
+  const items=PR.show=="missing"?d.items.filter(x=>!S.owned[x.name]):d.items,rows=items.filter(x=>x.name.toLowerCase().includes(q)).sort(PR.sort=="name"?(a,b)=>a.name.localeCompare(b.name):(a,b)=>(a[PR.sort]??1e9)-(b[PR.sort]??1e9)||a.name.localeCompare(b.name));
   const opt=(v,o)=>o.map(([k,t])=>`<option value="${k}" ${v==k?"selected":""}>${t}</option>`).join("");
-  const pr=d.items.filter(x=>x.min!=null),sum=k=>pr.reduce((t,x)=>t+x[k],0);
-  body=`<section><h2>Total<small>to buy ${pr.length==d.items.length?"every":`${pr.length} of ${d.items.length}`} Prime Warframe set${pr.length==1?"":"s"}</small></h2><div class="grid g2"><div><div class="bignum">${sum("min").toLocaleString()} p</div><p class="tag">if every set goes for its cheapest offer</p></div><div><div class="bignum">${sum("max").toLocaleString()} p</div><p class="tag">if every set goes for the highest of its 10 cheapest offers</p></div></div></section>
-  <section><h2>Full sets<small>${d.items.filter(x=>x.min!=null).length} priced${d.scan.running?` &middot; scanning ${d.scan.done} of ${d.scan.total}`:""}</small></h2>
-  <div class="bar"><input type="search" id="pq" placeholder="Search" aria-label="Search Warframes" value="${esc(PR.raw||"")}"><select data-pr="sort" aria-label="Sort">${opt(PR.sort,[["min","Cheapest first"],["max","Lowest max first"],["name","Name"]])}</select></div>
+  const pr=items.filter(x=>x.min!=null),sum=k=>pr.reduce((t,x)=>t+x[k],0);
+  body=`<section><h2>Total<small>to buy ${PR.show=="missing"?"the missing":pr.length==items.length?"every":`${pr.length} of ${items.length}`} Prime Warframe set${pr.length==1?"":"s"}${PR.show=="missing"?` (${items.length} not collected)`:""}</small></h2><div class="grid g2"><div><div class="bignum">${sum("min").toLocaleString()} p</div><p class="tag">if every set goes for its cheapest offer</p></div><div><div class="bignum">${sum("max").toLocaleString()} p</div><p class="tag">if every set goes for the highest of its 10 cheapest offers</p></div></div></section>
+  <section><h2>Full sets<small>${items.filter(x=>x.min!=null).length} priced${d.scan.running?` &middot; scanning ${d.scan.done} of ${d.scan.total}`:""}</small></h2>
+  <div class="bar"><input type="search" id="pq" placeholder="Search" aria-label="Search Warframes" value="${esc(PR.raw||"")}"><select data-pr="show" aria-label="Show">${opt(PR.show,[["all","All Prime Warframes"],["missing","Only ones I do not own"]])}</select><select data-pr="sort" aria-label="Sort">${opt(PR.sort,[["min","Cheapest first"],["max","Lowest max first"],["name","Name"]])}</select></div>
   <p class="tag">Each price is the full Prime set in platinum. Min and max are taken from the 10 cheapest sell offers by traders who are online or in game; with fewer offers, only those count. Offers below half the median of the cheapest ten are ignored as bait or mistakes. Sets are scanned one at a time with a 10 second pause, so a full scan takes about ${Math.ceil(d.scan.total*10/60)||10} minutes and repeats every 6 hours.</p>
   <table class="ptable"><thead><tr><th>Warframe</th><th>Min</th><th>Max</th><th>Offers</th><th>Updated</th><th></th></tr></thead><tbody>${rows.map(x=>`<tr><td><b>${esc(x.name)}</b></td>${x.min!=null?`<td>${x.min} p</td><td>${x.max} p</td><td>${x.offers}</td>`:`<td colspan="3" class="tag">${x.error?esc(x.error):x.updated?"No online offers":"Not scanned yet"}</td>`}<td class="tag">${x.updated?ago(x.updated):""}</td><td><a href="https://warframe.market/items/${esc(x.slug)}" target="_blank" rel="noopener">market</a></td></tr>`).join("")||'<tr><td colspan="6" class="tag">Nothing matches.</td></tr>'}</tbody></table></section>`;
  }
