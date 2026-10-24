@@ -88,6 +88,13 @@ a{color:var(--cyan)}
 .flagrow.strip{max-width:none;margin:0 0 16px;padding:0 4px}
 .emblem{float:right;margin:0 0 8px 16px;filter:drop-shadow(0 0 14px rgba(201,164,92,.35))}
 .card:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.subtabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}.subtabs a{padding:6px 12px;border:1px solid var(--line);color:var(--fg);text-decoration:none;font-size:14px}.subtabs a:hover{border-color:var(--cyan)}.subtabs a.on{border-color:var(--gold);color:var(--gold)}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;align-items:start;margin-top:10px}.bcard[open]{grid-column:1/-1}
+.bsum{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;list-style:none}.bsum::-webkit-details-marker{display:none}.bhead{display:flex;align-items:center;gap:10px;min-width:0}.bhead b{margin-right:6px}.bhead small{display:block}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;margin-right:6px}.d-g{background:#3fb97a}.d-y{background:#e6c04a}.d-o{background:#e8873a}.d-r{background:#e0524d}
+.legend{list-style:none;padding:0;margin:8px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.legend small{display:block;color:var(--mut);margin-top:2px}
+.build{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}.build h4{margin:0 0 4px;color:var(--gold);font-size:15px}.bmeta{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.bmeta span{font-size:12px;padding:2px 8px;border:1px solid var(--line);color:var(--cyan)}
+.relic .bnotes,.bnotes{list-style:disc;margin:6px 0;padding-left:20px;font-size:14px}.relic .bnotes li,.bnotes li{display:list-item;margin:4px 0;padding:0}.relic .bnotes ul,.bnotes ul{list-style:circle;margin:2px 0;padding-left:20px;color:var(--mut);font-size:14px}.bsrc{display:inline-block;margin-top:10px;font-size:13px}
 .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;align-items:start;margin:10px 0 20px}.tgrid section{margin:0}.tgrid h2 small{color:var(--mut);margin-left:8px}
 .livehead{margin:22px 0 10px;padding:0 2px}.livehead small{margin-left:10px}
 .live{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}.livecol{display:grid;gap:20px;min-width:0}.live section{margin:0}
@@ -222,6 +229,7 @@ main.wide{max-width:1280px}
 <script src="coda.js"></script>
 <script src="kuva.js"></script>
 <script src="incarnon.js"></script>
+<script src="cascade.js"></script>
 <script src="baro_icons.js"></script>
 <script>
 // Daily resets 00:00 UTC, weekly Monday 00:00 UTC. Edit SECTIONS to taste.
@@ -446,8 +454,18 @@ app.addEventListener('change',e=>{
 const GROUPS=[
  {id:"arsenal",title:"Arsenal",blurb:"Track and upgrade your gear"},
  {id:"farming",title:"Farming",blurb:"Where and how to get things"},
+ {id:"builds",title:"Builds",blurb:"Community loadouts"},
+ {id:"cascade",title:"Void Cascade",blurb:"",nav:false,parent:"builds"},
  {id:"guides",title:"Guides",blurb:"Events, standing and shops"},
  {id:"more",title:"More",blurb:"",nav:false},
+];
+const CASCADE_PAGES=[
+ {key:"warframes",sec:"warframes",short:"Warframes",desc:"Warframes ranked by how they play in Void Cascade, with the builds the community uses for each."},
+ {key:"thrax-killers",sec:"thrax-killers",short:"Thrax killers",desc:"Primary, secondary and melee weapons that can kill Thrax, plus amps."},
+ {key:"primers-utility",sec:"primers-utility",short:"Primers & utility",desc:"Weapons that prime enemies with status effects or fill a utility role."},
+ {key:"trash-killers",sec:"trash-killers",short:"Trash killers",desc:"Weapons that clear the regular enemies quickly."},
+ {key:"companions",sec:"companions",short:"Companions",desc:"Sentinels, Hounds, Kavats and Vulpaphylas and how they support the loadout."},
+ {key:"tips",sec:"",short:"Tips & survivability",desc:"General tips for building your own loadout, survivability options at level cap and which subsume to pick."},
 ];
 const SITE=[
  {id:"home",title:"Home",wide:1,fn:()=>home()},
@@ -461,6 +479,8 @@ const SITE=[
  {id:"relics",group:"farming",title:"Relic overview",short:"What drops now, Prime Resurgence",desc:"Which Prime items you can get from relics right now and this month's Prime Resurgence.",wide:1,fn:()=>relicsPage()},
  {id:"relcalc",group:"farming",title:"Relic calculator",short:"Your odds of a drop",desc:"How many relics you need to open to be sure of a drop, for every refinement level.",wide:1,fn:()=>relicCalc()},
  {id:"resources",group:"farming",title:"Resource map",short:"Where to farm each resource",desc:"A star chart of where to farm the common resources. Click a planet, or pick a resource to highlight its planets.",fn:()=>resources()},
+ {id:"cascade",group:"builds",title:"Void Cascade",short:"Loadouts for Thrax, trash and more",desc:"Community loadouts for Void Cascade from the Cascade Club builds guide: Warframes, Thrax killers, primers, trash killers and companions.",wide:1,fn:()=>cascadeHome()},
+ ...CASCADE_PAGES.map(s=>({id:"cascade-"+s.key,group:"cascade",title:"Cascade "+s.short.toLowerCase(),short:s.short,desc:s.desc,wide:1,fn:()=>cascadePage(s.key)})),
  {id:"nightwave",group:"guides",title:"Nightwave",short:"This season's acts and tips",desc:"This season's acts with standing values, a tick list and tips on how to complete each one.",wide:1,fn:()=>nightwave()},
  {id:"factions",group:"guides",title:"Syndicate leveling",short:"Fastest standing methods",desc:"The quickest ways to earn standing with every syndicate, from the daily cap to the best hand-ins.",wide:1,fn:()=>factions()},
  {id:"kahl",group:"guides",title:"Kahl's Garrison",short:"Weekly Break Narmer missions",desc:"The three weekly Break Narmer missions step by step, the weekly challenges and what Stock buys.",wide:1,fn:()=>kahl()},
@@ -998,6 +1018,34 @@ function incarnonPage(){
  <section><h2>The full Genesis pool<small>${Object.keys(INCARNON).length} weapons with an Incarnon Genesis adapter</small></h2>
   ${slots.map(s=>`<details class="eradet"><summary><h3>${s}<small>${Object.values(INCARNON).filter(c=>c.slot==s).length} weapons</small></h3></summary><div class="relgrid">${Object.values(INCARNON).filter(c=>c.slot==s).sort((a,b)=>(PICK_ORDER[a.pick]??9)-(PICK_ORDER[b.pick]??9)||a.name.localeCompare(b.name)).map(c=>`<div class="relic"><div class="rhead"><span style="display:flex;gap:8px;align-items:center">${pic(c.name)}<b>${esc(c.name)}</b></span>${vb(c)}</div>${stat(c)}${c.note?`<p class="tag" style="margin:8px 0 0">${esc(c.note)}</p>`:""}</div>`).join("")}</div></details>`).join("")}</section>`;
 }
+// Void Cascade builds: text from the Cascade Club builds guide (see fetch_cascade.py); loadout screenshots stay in the linked documents.
+const DOC=id=>`https://docs.google.com/document/d/${id}/edit`;
+const DIFF={g:["Relaxed","Survival comes from stealth or avoiding damage."],y:["Shield gating plus tools","Shield gating, with other tools such as Overguard, i-frames or crowd control."],o:["Shield gating only","Survival depends entirely on shield gating, so positioning and energy matter."],r:["Cannot shield gate","Survival depends on the passive, Overguard gating or ability i-frames."]};
+const cimg=n=>{const all=[...FRAMES,...WEAPONS,...COMPANIONS];for(const c of [n,n.replace(/ Incarnon$/,""),n.replace(/ Incarnon$/,"").replace(/ Prime$/,""),n.replace(/ Prime Incarnon$/," Prime")]){const x=all.find(i=>i.name==c&&i.img);if(x)return`<img src="${esc(IMG(x.img))}" alt="" width="40" height="40" loading="lazy" onerror="this.style.visibility='hidden'">`}return'<i class="noimg" style="width:40px;height:40px"></i>'};
+const cTabs=cur=>`<nav class="subtabs" aria-label="Void Cascade sections"><a href="#cascade"${cur=="cascade"?' class="on" aria-current="page"':""}>Overview</a>${CASCADE_PAGES.map(s=>`<a href="#cascade-${s.key}"${cur==s.key?' class="on" aria-current="page"':""}>${esc(s.short)}</a>`).join("")}</nav>`;
+const bullets=l=>`<ul class="bnotes">${l.map(([t,sub])=>`<li>${esc(t)}${sub.length?`<ul>${sub.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</li>`).join("")}</ul>`;
+function buildCard(it){
+ const bs=it.doc?CASCADE.docs[it.doc]||[]:[],d=DIFF[it.d];
+ const head=`<span class="bhead">${cimg(it.n)}<span><b>${esc(it.n)}</b>${d?`<span class="dot d-${it.d}" title="${esc(d[0])}"></span>`:""}${it.t?`<small class="tag">${esc(it.t)}</small>`:""}</span></span><span class="tag">${bs.length?`${bs.length} build${bs.length>1?"s":""}`:"no build yet"}</span>`;
+ if(!bs.length)return`<div class="relic bcard"><div class="bsum">${head}</div></div>`;
+ return`<details class="relic bcard"><summary class="bsum">${head}</summary>${bs.map(b=>`<div class="build">${b.title?`<h4>${esc(b.title)}</h4>`:""}${b.meta.length?`<div class="bmeta">${b.meta.map(m=>`<span>${esc(m)}</span>`).join("")}</div>`:""}${b.notes.length?bullets(b.notes):""}${b.by?`<small class="tag">Build by ${esc(b.by)}</small>`:""}</div>`).join("")}<a class="bsrc" href="${esc(DOC(it.doc))}" target="_blank" rel="noopener">Original guide with loadout screenshots</a></details>`;
+}
+function cascadeHome(){
+ const n=s=>s.groups.reduce((t,g)=>t+g.items.length,0);
+ app.innerHTML=`${cTabs("cascade")}<section><h2>About these builds</h2>${CASCADE.intro.map(t=>`<p class="tag">${esc(t)}</p>`).join("")}<p class="tag">Orbiter shows the written notes from each build. The loadout screenshots (mods, arcanes and shards) are in the original documents, linked on every build. Source: <a href="${esc(DOC(CASCADE.main))}" target="_blank" rel="noopener">Cascade Club builds guide</a>.</p></section>
+ <div class="cards">${CASCADE_PAGES.map(s=>{const sec=CASCADE.sections.find(x=>x.id==s.sec);return`<a class="card" href="#cascade-${s.key}"><h3>${esc(s.short)}</h3><p>${esc(s.desc)}</p><p class="tag">${sec?`${n(sec)} entries`:`${CASCADE.extra.length} guides`}</p></a>`}).join("")}</div>`;
+}
+const boldLead=t=>{const i=t.indexOf(": ");return i>0&&i<32?`<b>${esc(t.slice(0,i))}:</b> ${esc(t.slice(i+2))}`:esc(t)};
+function cascadePage(key){
+ const s=CASCADE_PAGES.find(x=>x.key==key);let body;
+ if(!s.sec)body=CASCADE.extra.map(e=>`<section><h2>${esc(e.title.split(" - ")[0])}<small><a href="${esc(DOC(e.id))}" target="_blank" rel="noopener">original</a></small></h2>${e.sections.filter(x=>x.items.length).map(x=>{let out="",li=[];const flush=()=>{if(li.length)out+=bullets(li);li=[]};
+   x.items.forEach(([k,t])=>{if(k=="p"){flush();out+=`<p>${boldLead(t)}</p>`}else if(k=="sub"&&li.length)li[li.length-1][1].push(t);else li.push([t,[]])});flush();
+   return`${x.h?`<h3>${esc(x.h)}</h3>`:""}${out}`}).join("")}</section>`).join("");
+ else{const sec=CASCADE.sections.find(x=>x.id==s.sec);
+  body=(key=="warframes"?`<section><h2>How hard is it to play?</h2><p class="tag">${esc(sec.desc)}</p><ul class="legend">${CASCADE.legend.map(([c,t])=>`<li><span class="dot d-${c}"></span><b>${esc(DIFF[c][0])}</b><small>${esc(t)}</small></li>`).join("")}</ul></section>`:"")+
+  sec.groups.map(g=>`<section><h2>${esc(g.title)}<small>${g.items.length} entries</small></h2>${g.desc?`<p class="tag">${esc(g.desc)}</p>`:""}<div class="bgrid">${g.items.map(buildCard).join("")}</div></section>`).join("");}
+ app.innerHTML=cTabs(key)+body;
+}
 const page=()=>curr().id;
 function render(){const p=curr();p.fn();decorate(p)}
 // Every page except Home gets the same header: where it sits in the nav, its title and one line about it.
@@ -1007,7 +1055,7 @@ function decorate(p){
  const g=GROUPS.find(x=>x.id==p.group),lead=app.querySelector("[data-lead]");
  const text=lead?lead.textContent:p.desc; // a page can set its own live line (progress, counts) with data-lead
  app.querySelectorAll(":scope > .hero").forEach(e=>e.remove());
- app.insertAdjacentHTML("afterbegin",`<header class="pagehead">${g?`<span class="crumb">${esc(g.title)}</span>`:""}<h1>${esc(p.title)}</h1><p>${esc(text)}</p></header>`);
+ app.insertAdjacentHTML("afterbegin",`<header class="pagehead">${g?`<span class="crumb">${g.parent?esc(GROUPS.find(x=>x.id==g.parent).title)+" &rsaquo; ":""}${esc(g.title)}</span>`:""}<h1>${esc(p.title)}</h1><p>${esc(text)}</p></header>`);
 }
 function closeMenus(except){document.querySelectorAll(".dd").forEach(d=>{if(d!==except){d.classList.remove("open");d.firstElementChild.setAttribute("aria-expanded","false")}})}
 function openMenu(d,focusFirst){
@@ -1034,7 +1082,7 @@ addEventListener("focusin",e=>{const d=document.querySelector(".dd.open");if(d&&
 function route(){
  const p=curr();
  document.querySelectorAll("nav a[id^=n_]").forEach(a=>{const on=a.id=="n_"+p.id;a.classList.toggle("on",on);on?a.setAttribute("aria-current","page"):a.removeAttribute("aria-current")});
- document.querySelectorAll(".dd>button").forEach(b=>b.classList.toggle("on",b.id=="d_"+(p.group||p.id)));
+ document.querySelectorAll(".dd>button").forEach(b=>b.classList.toggle("on",b.id=="d_"+((GROUPS.find(x=>x.id==p.group)||{}).parent||p.group||p.id)));
  closeMenus();
  document.querySelector("main").classList.toggle("wide",!!p.wide);
  render();window.scrollTo(0,0);

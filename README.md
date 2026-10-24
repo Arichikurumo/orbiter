@@ -8,6 +8,7 @@ A self-hosted companion for [Warframe](https://www.warframe.com/): a daily and w
 
 - **Arsenal:** an overview page plus every Warframe, weapon and companion with *collected* and *mastered* ticks (frames and weapons), search, filters, how to get it, and an "easiest first" order for Warframes with role tags and, for Prime Warframes, the price of the full set on [warframe.market](https://warframe.market/) (average of the 10 cheapest offers from online traders); also mods, arcanes and the Helminth (which ability comes from which frame).
 - **Relics:** every Prime item you can farm from relics right now, the current Prime Resurgence rotation, and all relics with their rewards, plus drop rates per refinement stage, a relic finder (search all relics by name or reward) and a calculator for how many relics you need to open to be sure of a drop.
+- **Builds:** Void Cascade loadouts from the Cascade Club builds guide, sorted by Warframes, Thrax killers, primers and utility, trash killers and companions, with the written notes of every build, tips and survivability options. Mod and shard screenshots stay in the original documents, which each build links to.
 - **Resources:** an interactive star chart showing where to farm each resource.
 - **Guides:** this season's Nightwave acts plus every recoverable act with tips, syndicate leveling, Kahl's Garrison missions, Coda and Kuva weapon guides (how to get them, damage types, which to pick), this week's Steel Path Circuit Incarnon picks, and Baro Ki'Teer.
 - **Home:** what Orbiter is, the current game version, active events, the latest news, and your daily and weekly checklist grouped by type (with sub-tasks), which resets itself at 00:00 UTC and on Mondays.
@@ -108,7 +109,7 @@ curl -s "https://api.warframestat.us/items?language=en"     -o items.json   # ab
 python3 -I gen.py warframes.json weapons.json items.json
 ```
 
-Some content is written by hand and is not generated: the task list and guides in `site/index.html`, farming-time estimates and role tags in `gen.py`, `site/nightwave.js` (all Nightwave acts), and the melee classes in `meleeclass.json` (taken from the wiki's weapon data). New items from a new Baro visit show a Ducat icon until you run `python3 -I fetch_baro_icons.py` and commit the updated `site/baro_icons.js`.
+The Void Cascade builds in `site/cascade.js` come from the public guide document and the build documents it links to; refresh them with `python3 -I fetch_cascade.py` (about 90 requests, one every 0.7 seconds). Some content is written by hand and is not generated: the task list and guides in `site/index.html`, farming-time estimates and role tags in `gen.py`, `site/nightwave.js` (all Nightwave acts), and the melee classes in `meleeclass.json` (taken from the wiki's weapon data). New items from a new Baro visit show a Ducat icon until you run `python3 -I fetch_baro_icons.py` and commit the updated `site/baro_icons.js`.
 
 Which relics can drop right now is the `AVAILABLE_RELICS` list in `gen.py`, taken from the wiki's "Unvaulted/Available" list on the Void Relic page, because the API's own vaulted flag per relic is out of date. Update that list when relics are vaulted or unvaulted, then rerun `gen.py`.
 
