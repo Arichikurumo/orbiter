@@ -94,6 +94,7 @@ a{color:var(--cyan)}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;margin-right:6px}.d-g{background:#3fb97a}.d-y{background:#e6c04a}.d-o{background:#e8873a}.d-r{background:#e0524d}
 .legend{list-style:none;padding:0;margin:8px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.legend small{display:block;color:var(--mut);margin-top:2px}
 .build{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}.build h4{margin:0 0 4px;color:var(--gold);font-size:15px}.bmeta{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.bmeta span{font-size:12px;padding:2px 8px;border:1px solid var(--line);color:var(--cyan)}
+.mods{display:grid;gap:8px;margin:8px 0}.mrow{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}.mtile{display:flex;flex-direction:column;align-items:center;gap:2px;width:92px;padding:6px 4px;border:1px solid var(--line);background:rgba(10,14,20,.6);font-size:12px;text-align:center;line-height:1.25}.mtile img{width:56px;height:56px;object-fit:contain}.mtile.unk{border-style:dashed;justify-content:center;min-height:56px}.mrow.arc .mtile{border-color:var(--cyan)}
 .relic .bnotes,.bnotes{list-style:disc;margin:6px 0;padding-left:20px;font-size:14px}.relic .bnotes li,.bnotes li{display:list-item;margin:4px 0;padding:0}.relic .bnotes ul,.bnotes ul{list-style:circle;margin:2px 0;padding-left:20px;color:var(--mut);font-size:14px}.bsrc{display:inline-block;margin-top:10px;font-size:13px}
 .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;align-items:start;margin:10px 0 20px}.tgrid section{margin:0}.tgrid h2 small{color:var(--mut);margin-left:8px}
 .livehead{margin:22px 0 10px;padding:0 2px}.livehead small{margin-left:10px}
@@ -230,6 +231,7 @@ main.wide{max-width:1280px}
 <script src="kuva.js"></script>
 <script src="incarnon.js"></script>
 <script src="cascade.js"></script>
+<script src="cascade_mods.js"></script>
 <script src="baro_icons.js"></script>
 <script>
 // Daily resets 00:00 UTC, weekly Monday 00:00 UTC. Edit SECTIONS to taste.
@@ -1029,11 +1031,15 @@ const DIFF={g:["Relaxed","Survival comes from stealth or avoiding damage."],y:["
 const cimg=n=>{const all=[...FRAMES,...WEAPONS,...COMPANIONS];for(const c of [n,n.replace(/ Incarnon$/,""),n.replace(/ Incarnon$/,"").replace(/ Prime$/,""),n.replace(/ Prime Incarnon$/," Prime")]){const x=all.find(i=>i.name==c&&i.img);if(x)return`<img src="${esc(IMG(x.img))}" alt="" width="40" height="40" loading="lazy" onerror="this.style.visibility='hidden'">`}return'<i class="noimg" style="width:40px;height:40px"></i>'};
 const cTabs=cur=>`<nav class="subtabs" aria-label="Void Cascade sections"><a href="#cascade"${cur=="cascade"?' class="on" aria-current="page"':""}>Overview</a>${CASCADE_PAGES.map(s=>`<a href="#cascade-${s.key}"${cur==s.key?' class="on" aria-current="page"':""}>${esc(s.short)}</a>`).join("")}</nav>`;
 const bullets=l=>`<ul class="bnotes">${l.map(([t,sub])=>`<li>${esc(t)}${sub.length?`<ul>${sub.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</li>`).join("")}</ul>`;
+// Mod layouts: names read from the guide's loadout screenshots (cascade_mods.js), drawn with the mod pictures this app already downloads.
+const MODIMG=(m=>{[...MODS,...ARCANES].forEach(x=>{if(x.img&&!m.has(x.name))m.set(x.name,x.img)});return m})(new Map());
+const modTile=n=>{const i=MODIMG.get(n);return`<span class="mtile${i?"":" unk"}">${i?`<img src="${esc(IMG(i))}" alt="" width="56" height="56" loading="lazy" onerror="this.style.visibility='hidden'">`:""}<span>${esc(n)}</span></span>`};
+const modShots=l=>(l||[]).map(s=>`<div class="mods">${s.rows.map(r=>`<div class="mrow">${r.map(modTile).join("")}</div>`).join("")}${s.arcanes.length?`<div class="mrow arc">${s.arcanes.map(modTile).join("")}</div>`:""}${s.other.length?`<small class="tag">${s.other.map(esc).join(" &middot; ")}</small>`:""}</div>`).join("");
 function buildCard(it){
- const bs=it.doc?CASCADE.docs[it.doc]||[]:[],d=DIFF[it.d];
+ const bs=it.doc?CASCADE.docs[it.doc]||[]:[],d=DIFF[it.d];let si=0;
  const head=`<span class="bhead">${cimg(it.n)}<span><b>${esc(it.n)}</b>${d||it.t?`<small class="tag">${d?`<span class="dot d-${it.d}"></span>${esc(d[0])}`:""}${d&&it.t?" &middot; ":""}${esc(it.t)}</small>`:""}</span></span><span class="tag">${bs.length?`${bs.length} build${bs.length>1?"s":""}`:"no build yet"}</span>`;
  if(!bs.length)return`<div class="relic bcard"><div class="bsum">${head}</div></div>`;
- return`<details class="relic bcard"><summary class="bsum">${head}</summary>${bs.map(b=>`<div class="build">${b.title?`<h4>${esc(b.title)}</h4>`:""}${b.meta.length?`<div class="bmeta">${b.meta.map(m=>`<span>${esc(m)}</span>`).join("")}</div>`:""}${b.notes.length?bullets(b.notes):""}${b.by?`<small class="tag">Build by ${esc(b.by)}</small>`:""}</div>`).join("")}<a class="bsrc" href="${esc(DOC(it.doc))}" target="_blank" rel="noopener">Original guide with loadout screenshots</a></details>`;
+ return`<details class="relic bcard"><summary class="bsum">${head}</summary>${bs.map(b=>`<div class="build">${b.title?`<h4>${esc(b.title)}</h4>`:""}${b.meta.length?`<div class="bmeta">${b.meta.map(m=>`<span>${esc(m)}</span>`).join("")}</div>`:""}${b.by?modShots(((CASCADE_MODS[it.doc]||[])[si++])):""}${b.notes.length?bullets(b.notes):""}${b.by?`<small class="tag">Build by ${esc(b.by)}</small>`:""}</div>`).join("")}<a class="bsrc" href="${esc(DOC(it.doc))}" target="_blank" rel="noopener">Original guide with loadout screenshots</a></details>`;
 }
 function cascadeHome(){
  const n=s=>s.groups.reduce((t,g)=>t+g.items.length,0);
