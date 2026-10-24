@@ -95,12 +95,20 @@ a{color:var(--cyan)}
 .legend{list-style:none;padding:0;margin:8px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.legend small{display:block;color:var(--mut);margin-top:2px}
 .build{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}.build h4{margin:0 0 4px;color:var(--gold);font-size:15px}.bmeta{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.bmeta span{font-size:12px;padding:2px 8px;border:1px solid var(--line);color:var(--cyan)}
 .fch{display:inline-block;margin:3px 6px 3px 0;padding:2px 9px;border:1px solid var(--line);font-size:13px;color:var(--fg)}.fch.have{border-color:var(--ok);color:var(--ok)}
-.mods{display:grid;gap:8px;margin:8px 0}.mrow{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}.mtile{display:flex;flex-direction:column;align-items:center;gap:2px;width:92px;padding:6px 4px;border:1px solid var(--line);background:rgba(10,14,20,.6);font-size:12px;text-align:center;line-height:1.25}.mtile img{width:56px;height:56px;object-fit:contain}.mtile{position:relative;cursor:help;outline:none}.mtile:hover,.mtile:focus{border-color:var(--gold);z-index:5}
-.mtile.r-common{border-bottom:2px solid #b07a4a}.mtile.r-uncommon{border-bottom:2px solid #b8c0c8}.mtile.r-rare{border-bottom:2px solid #d4b24c}.mtile.r-legendary{border-bottom:2px solid #8fd3ff}
-.mtip{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);width:250px;max-width:80vw;padding:8px 10px;background:#07090d;border:1px solid var(--gold);text-align:left;font-size:12px;line-height:1.45;color:var(--fg);cursor:default;z-index:20}
-.mtip.below{bottom:auto;top:100%}.mtile:hover .mtip,.mtile:focus .mtip,.mtile:focus-within .mtip{display:block}
+.mods{margin:10px 0}.mloadout{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 22px;padding:14px;background:radial-gradient(ellipse at 30% 20%,rgba(60,40,80,.35),rgba(8,10,16,.85));border:1px solid var(--line)}
+.mgrid{display:grid;gap:12px;flex:0 1 640px;min-width:0}.mrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.mrow.few>:first-child{grid-column:2}
+.mtile{position:relative;display:block;aspect-ratio:150/84;cursor:help;outline:none}
+.mface{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:6px 8px 12px;text-align:center;font-size:14px;line-height:1.15;color:#f2efe8;text-shadow:0 1px 3px #000,0 0 6px #000;border:2px solid var(--rc,#b8935a);border-radius:5px;background:linear-gradient(rgba(6,8,12,.35),rgba(6,8,12,.6)),var(--art) center/cover,#10141b;box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),inset 0 -14px 14px -10px rgba(0,0,0,.7);clip-path:polygon(0 8px,8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,0 calc(100% - 4px))}
+.mface::after{content:"";position:absolute;left:22%;right:22%;bottom:4px;height:4px;background:radial-gradient(circle,#5bc8ff 1.4px,transparent 2px) 0 0/8px 4px repeat-x;opacity:.85}
+.mtile.r-common{--rc:#a8743f}.mtile.r-uncommon{--rc:#b5bec7}.mtile.r-rare{--rc:#d9b84c}.mtile.r-legendary{--rc:#e9f4fb}
+.mtile:hover .mface,.mtile:focus .mface{filter:brightness(1.25)}.mtile:hover,.mtile:focus{z-index:5}
+.mtile.unk .mface{border-style:dashed;--rc:var(--line);background:#10141b}
+.marcs{display:flex;flex-direction:column;justify-content:space-around;gap:14px;flex:0 0 120px}.marc{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;font-size:13px;color:var(--gold);cursor:help;outline:none;text-shadow:0 1px 3px #000}.marc img{width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(79,209,232,.5))}
+.marc:hover,.marc:focus{z-index:5;color:#f3d794}
+.mtip{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);width:250px;max-width:80vw;padding:8px 10px;background:#07090d;border:1px solid var(--gold);text-align:left;font-size:12px;line-height:1.45;color:var(--fg);text-shadow:none;cursor:default;z-index:20}
+.mtip.below{bottom:auto;top:100%}.mtile:hover .mtip,.mtile:focus .mtip,.mtile:focus-within .mtip,.marc:hover .mtip,.marc:focus .mtip,.marc:focus-within .mtip{display:block}
 .mtip b{display:block;color:var(--gold);font-size:13px}.mtip small{display:block;color:var(--mut);margin-top:2px}.mtip .meff{display:block;margin:6px 0;color:var(--fg)}.mtip a{font-size:12px}
-.mtile.unk{border-style:dashed;justify-content:center;min-height:56px}.mrow.arc .mtile{border-color:var(--cyan)}
+@media(max-width:520px){.mgrid,.mrow{gap:8px}.mrow{grid-template-columns:repeat(2,minmax(0,1fr))}.mrow.few>:first-child{grid-column:auto}.mloadout{padding:10px}.mface{font-size:11px;padding:4px 4px 10px}.marcs{flex-direction:row;flex-basis:100%;justify-content:center}}
 .relic .bnotes,.bnotes{list-style:disc;margin:6px 0;padding-left:20px;font-size:14px}.relic .bnotes li,.bnotes li{display:list-item;margin:4px 0;padding:0}.relic .bnotes ul,.bnotes ul{list-style:circle;margin:2px 0;padding-left:20px;color:var(--mut);font-size:14px}.bsrc{display:inline-block;margin-top:10px;font-size:13px}
 .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;align-items:start;margin:10px 0 20px}.tgrid section{margin:0}.tgrid h2 small{color:var(--mut);margin-left:8px}
 .livehead{margin:22px 0 10px;padding:0 2px}.livehead small{margin-left:10px}
@@ -1047,10 +1055,11 @@ const cTabs=cur=>`<nav class="subtabs" aria-label="Void Cascade sections"><a hre
 const bullets=l=>`<ul class="bnotes">${l.map(([t,sub])=>`<li>${esc(t)}${sub.length?`<ul>${sub.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</li>`).join("")}</ul>`;
 // Mod layouts: names read from the guide's loadout screenshots (cascade_mods.js), drawn with the mod pictures this app already downloads.
 const MODINFO=(m=>{[...MODS,...ARCANES].forEach(x=>{if(!m.has(x.name))m.set(x.name,x)});return m})(new Map());
-const modTile=n=>{const x=MODINFO.get(n);if(!x)return`<span class="mtile unk"><span>${esc(n)}</span></span>`;
- const [rar,pol]=(x.tag||"").split(" \u00b7 ");
- return`<span class="mtile r-${esc((rar||"").toLowerCase().split(" ")[0])}" tabindex="0" aria-label="${esc(n)}: ${esc(x.sub||"")}">${x.img?`<img src="${esc(IMG(x.img))}" alt="" width="56" height="56" loading="lazy" onerror="this.style.visibility='hidden'">`:""}<span>${esc(n)}</span>
- <span class="mtip" role="tooltip"><b>${esc(n)}</b><small>${esc(x.group)}${x.tag?" \u00b7 "+esc(x.tag):""}</small>${x.sub?`<span class="meff">${esc(x.sub)}</span>`:""}${x.how?`<small>${esc(x.how)}</small>`:""}${x.wiki?`<a href="${esc(x.wiki)}" target="_blank" rel="noopener">wiki</a>`:""}</span></span>`};
+const modTip=(n,x)=>`<span class="mtip" role="tooltip"><b>${esc(n)}</b><small>${esc(x.group)}${x.tag?" \u00b7 "+esc(x.tag):""}</small>${x.sub?`<span class="meff">${esc(x.sub)}</span>`:""}${x.how?`<small>${esc(x.how)}</small>`:""}${x.wiki?`<a href="${esc(x.wiki)}" target="_blank" rel="noopener">wiki</a>`:""}</span>`;
+const modTile=(n,arc)=>{const x=MODINFO.get(n);if(!x)return`<span class="mtile unk"><span class="mface">${esc(n)}</span></span>`;
+ const rar=((x.tag||"").split(" \u00b7 ")[0]||"").toLowerCase().split(" ")[0],lab=`${esc(n)}: ${esc(x.sub||"")}`;
+ if(arc)return`<span class="marc" tabindex="0" aria-label="${lab}">${x.img?`<img src="${esc(IMG(x.img))}" alt="" width="64" height="64" loading="lazy" onerror="this.style.visibility='hidden'">`:""}<span>${esc(n)}</span>${modTip(n,x)}</span>`;
+ return`<span class="mtile r-${esc(rar)}" tabindex="0" aria-label="${lab}"><span class="mface"${x.img?` style="--art:url('${esc(IMG(x.img))}')"`:""}>${esc(n)}</span>${modTip(n,x)}</span>`};
 // keep the hover box on screen: shift it sideways, or flip it below the card near the top
 function placeTip(t){const tip=t.querySelector(".mtip");if(!tip)return;
  tip.style.transform="translateX(-50%)";tip.classList.remove("below");
@@ -1058,9 +1067,9 @@ function placeTip(t){const tip=t.querySelector(".mtip");if(!tip)return;
  let dx=0;if(r.left<8)dx=8-r.left;else if(r.right>vw-8)dx=vw-8-r.right;
  if(dx)tip.style.transform=`translateX(calc(-50% + ${dx}px))`;
  if(r.top<60)tip.classList.add("below")}
-app.addEventListener("mouseover",e=>{const t=e.target.closest&&e.target.closest(".mtile");if(t)placeTip(t)});
-app.addEventListener("focusin",e=>{const t=e.target.closest&&e.target.closest(".mtile");if(t)placeTip(t)});
-const modShots=l=>(l||[]).map(s=>`<div class="mods">${s.rows.map(r=>`<div class="mrow">${r.map(modTile).join("")}</div>`).join("")}${s.arcanes.length?`<div class="mrow arc">${s.arcanes.map(modTile).join("")}</div>`:""}${s.other.length?`<small class="tag">${s.other.map(esc).join(" &middot; ")}</small>`:""}</div>`).join("");
+app.addEventListener("mouseover",e=>{const t=e.target.closest&&e.target.closest(".mtile,.marc");if(t)placeTip(t)});
+app.addEventListener("focusin",e=>{const t=e.target.closest&&e.target.closest(".mtile,.marc");if(t)placeTip(t)});
+const modShots=l=>(l||[]).map(s=>`<div class="mods"><div class="mloadout"><div class="mgrid">${s.rows.map(r=>`<div class="mrow${r.length<3?" few":""}">${r.map(n=>modTile(n)).join("")}</div>`).join("")}</div>${s.arcanes.length?`<div class="marcs">${s.arcanes.map(n=>modTile(n,1)).join("")}</div>`:""}</div>${s.other.length?`<small class="tag">${s.other.map(esc).join(" &middot; ")}</small>`:""}</div>`).join("");
 function buildCard(it){
  const bs=it.doc?CASCADE.docs[it.doc]||[]:[],d=DIFF[it.d];let si=0;
  const head=`<span class="bhead">${cimg(it.n)}<span><b>${esc(it.n)}</b>${d||it.t?`<small class="tag">${d?`<span class="dot d-${it.d}"></span>${esc(d[0])}`:""}${d&&it.t?" &middot; ":""}${esc(it.t)}</small>`:""}</span></span><span class="tag">${bs.length?`${bs.length} build${bs.length>1?"s":""}`:"no build yet"}</span>`;
