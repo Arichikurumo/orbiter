@@ -100,6 +100,8 @@ details.more{margin:4px 0 0}details.more summary{cursor:pointer;color:var(--cyan
 @media(max-width:1000px){.bpanel{grid-template-columns:minmax(0,1fr)}}
 .build{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}.build h4{margin:0 0 4px;color:var(--gold);font-size:15px}.bmeta{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.bmeta span{font-size:12px;padding:2px 8px;border:1px solid var(--line);color:var(--cyan)}
 .fch{display:inline-block;margin:3px 6px 3px 0;padding:2px 9px;border:1px solid var(--line);font-size:13px;color:var(--fg)}.fch.have{border-color:var(--ok);color:var(--ok)}
+h3 small{margin-left:10px;color:var(--mut);font-weight:400}
+.ptable{width:100%;border-collapse:collapse}.ptable th{text-align:left;color:var(--mut);font-weight:400;font-size:13px;padding:4px 8px}.ptable td{padding:6px 8px;border-top:1px solid rgba(42,51,64,.45)}.ptable td.win{color:var(--ok);font-weight:600}
 .mods{margin:10px 0}.mloadout{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 22px;padding:14px;background:radial-gradient(ellipse at 30% 20%,rgba(60,40,80,.35),rgba(8,10,16,.85));border:1px solid var(--line)}
 .mgrid{display:grid;gap:12px;flex:0 1 640px;min-width:0}.mrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.mrow.few>:first-child{grid-column:2}
 .mtile{position:relative;display:block;aspect-ratio:150/84;cursor:help;outline:none}
@@ -251,6 +253,7 @@ main.wide{max-width:1280px}
 <script src="incarnon.js"></script>
 <script src="cascade.js"></script>
 <script src="cascade_mods.js"></script>
+<script src="spy.js"></script>
 <script src="baro_icons.js"></script>
 <script>
 // Daily resets 00:00 UTC, weekly Monday 00:00 UTC. Edit SECTIONS to taste.
@@ -499,6 +502,7 @@ const SITE=[
  {id:"helminth",group:"arsenal",title:"Helminth",short:"Subsumable abilities by frame",desc:"Each subsumable ability, what it does and which frame it comes from. Tick the ones you have.",fn:()=>catalog("helminth")},
  {id:"relics",group:"farming",title:"Relic overview",short:"What drops now, Prime Resurgence",desc:"Which Prime items you can get from relics right now and this month's Prime Resurgence.",wide:1,fn:()=>relicsPage()},
  {id:"relcalc",group:"farming",title:"Relic calculator",short:"Your odds of a drop",desc:"How many relics you need to open to be sure of a drop, for every refinement level.",wide:1,fn:()=>relicCalc()},
+ {id:"spy",group:"farming",title:"Spy vault loot",short:"Pago and Pavlov with plat prices",desc:"The vault rewards of the Spy missions Pago and Pavlov with drop chances and warframe.market prices, and which one pays more.",wide:1,fn:()=>spyPage()},
  {id:"resources",group:"farming",title:"Resource map",short:"Where to farm each resource",desc:"A star chart of where to farm the common resources. Click a planet, or pick a resource to highlight its planets.",fn:()=>resources()},
  {id:"cascade",group:"builds",title:"Void Cascade",short:"Loadouts for Thrax, trash and more",desc:"Community loadouts for Void Cascade from the Cascade Club builds guide: Warframes, Thrax killers, primers, trash killers and companions.",wide:1,fn:()=>cascadeHome()},
  ...CASCADE_PAGES.map(s=>({id:"cascade-"+s.key,group:"cascade",title:"Cascade "+s.short.toLowerCase(),short:s.short,desc:s.desc,wide:1,fn:()=>cascadePage(s.key)})),
@@ -850,6 +854,20 @@ async function loadPrices(){
  try{const r=await fetch("/api/prices"),d=await r.json();running=d.scan.running;PRICES=Object.fromEntries(d.items.filter(x=>x.avg!=null).map(x=>[x.name,x]))}catch{PRICES={}}
  if(page()=="frames")render();
  if(running)setTimeout(()=>page()=="frames"&&loadPrices(),3e4); // a scan is still filling in prices
+}
+// Spy missions: rewards and prices are written by fetch_spy.py (spy.js); the expected value is worked out here.
+function spyPage(){
+ const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0),ev=v=>sum(v,x=>x.p*(x.price||0))/sum(v,x=>x.p);
+ const ms=SPY.missions,E=ms.map(m=>Object.fromEntries(Object.entries(m.vaults).map(([k,v])=>[k,ev(v)]))),run=E.map(e=>sum(Object.values(e),x=>x));
+ const f=x=>x.toFixed(1),cell=(a,b)=>`<td class="${a>b?"win":""}">${f(a)} p</td>`;
+ const rows=["A","B","C"].map(k=>`<tr><td>Vault ${k}</td>${cell(E[0][k],E[1][k])}${cell(E[1][k],E[0][k])}</tr>`).join("")+`<tr><td><b>One reward from each vault</b></td>${cell(run[0],run[1])}${cell(run[1],run[0])}</tr>`;
+ const better=run[0]==run[1]?"They pay the same.":`${ms[run[0]>run[1]?0:1].name} pays more per run, by about ${f(Math.abs(run[0]-run[1]))} plat.`;
+ const vault=(k,v)=>`<h3>Vault ${k}<small>about ${f(ev(v))} plat per roll</small></h3><table class="ptable"><thead><tr><th>Item</th><th>Chance</th><th>Lowest price</th></tr></thead><tbody>${[...v].sort((a,b)=>(b.price||0)-(a.price||0)||b.p-a.p).map(x=>`<tr><td>${esc(x.n)}</td><td>${x.p}%</td>${x.price!=null?`<td>${x.price} p</td>`:`<td class="tag">${esc(x.note||"-")}</td>`}</tr>`).join("")}</tbody></table>`;
+ app.innerHTML=`<section><h2>${esc(ms[0].name)} or ${esc(ms[1].name)}?<small>expected platinum per vault roll</small></h2>
+  <table class="ptable"><thead><tr><th></th><th>${esc(ms[0].name)} <small class="tag">${esc(ms[0].where)}</small></th><th>${esc(ms[1].name)} <small class="tag">${esc(ms[1].where)}</small></th></tr></thead><tbody>${rows}</tbody></table>
+  <p><b>${esc(better)}</b></p>
+  <p class="tag">Expected value is each item's drop chance times its lowest sell price from an online trader on warframe.market, prices as of ${esc(SPY.date)}. Items you cannot trade (Endo, credits, blueprints) count as 0, and so do items nobody is selling right now. The lowest price is the cheapest ask, not what you can reliably sell for, so treat the numbers as a rough guide. Items with only a few online sellers, such as relics, can swing a lot between refreshes. A Spy run gives one reward per vault you crack.</p></section>
+ <div class="grid g2">${ms.map(m=>`<section><h2>${esc(m.name)}<small>${esc(m.where)} &middot; <a href="${esc(m.wiki)}" target="_blank" rel="noopener">wiki</a></small></h2>${Object.entries(m.vaults).map(([k,v])=>vault(k,v)).join("")}</section>`).join("")}</div>`;
 }
 // Relic calculator: chance of at least one hit in n openings = 1-(1-p)^n, with p from the refinement table above.
 const RC={n:10,stage:"Radiant",mode:"rarity",rarity:"R",part:"",relic:""};
