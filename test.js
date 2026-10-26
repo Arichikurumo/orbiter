@@ -78,9 +78,9 @@ test('price summary uses the 10 cheapest sell offers of online traders', () => {
   const { summarize, slug } = require('./prices.js');
   const o = (platinum, status = 'ingame', type = 'sell') => ({ type, platinum, visible: true, user: { status } });
   const orders = [...Array.from({ length: 12 }, (_, i) => o(100 + i * 10)), o(1, 'offline'), o(2, 'online', 'buy')];
-  assert.deepEqual(summarize(orders), { min: 100, max: 190, avg: 145, offers: 10 });
-  assert.deepEqual(summarize([o(2), ...Array.from({ length: 11 }, (_, i) => o(47 + i))]), { min: 47, max: 56, avg: 52, offers: 10 }); // the 2 p bait offer is ignored
-  assert.deepEqual(summarize([o(5, 'offline')]), { min: null, max: null, avg: null, offers: 0 });
+  assert.deepEqual(summarize(orders), { min: 100, max: 190, avg: 145, offers: 10, prices: Array.from({ length: 10 }, (_, i) => 100 + i * 10) });
+  assert.deepEqual(summarize([o(2), ...Array.from({ length: 11 }, (_, i) => o(47 + i))]), { min: 47, max: 56, avg: 52, offers: 10, prices: Array.from({ length: 10 }, (_, i) => 47 + i) }); // the 2 p bait offer is ignored
+  assert.deepEqual(summarize([o(5, 'offline')]), { min: null, max: null, avg: null, offers: 0, prices: [] });
   assert.equal(slug('Rhino Prime'), 'rhino_prime_set');
 });
 
@@ -88,4 +88,17 @@ test('prices API returns the stored scan', async () => {
   const r = JSON.parse((await req('GET', '/api/prices')).body);
   assert.deepEqual(r.items, []);
   assert.equal(r.scan.running, false);
+});
+
+test('price history: one frame, all frames added up, bad slugs rejected', async () => {
+  const { DatabaseSync } = require('node:sqlite'), db = new DatabaseSync(process.env.DB);
+  const ins = db.prepare('INSERT INTO price_history (scan, slug, min, avg, max, offers) VALUES (?, ?, ?, ?, ?, ?)');
+  for (const scan of ['2026-01-01T00:00:00Z', '2026-01-01T06:00:00Z']) { ins.run(scan, 'a_prime_set', 10, 12, 15, 10); ins.run(scan, 'b_prime_set', 20, 22, 25, 10); }
+  ins.run('2026-01-01T12:00:00Z', 'a_prime_set', 1, 1, 1, 1); // a scan that only reached one of two frames is skipped in the total
+  db.close();
+  const one = JSON.parse((await req('GET', '/api/price-history?slug=a_prime_set')).body);
+  assert.deepEqual(one.map(x => x.avg), [12, 12, 1]);
+  const all = JSON.parse((await req('GET', '/api/price-history?slug=all')).body);
+  assert.deepEqual(all.map(x => x.avg), [34, 34]);
+  assert.equal((await req('GET', '/api/price-history?slug=a%27%3B--')).status, 400);
 });

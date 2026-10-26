@@ -10,6 +10,7 @@ A self-hosted companion for [Warframe](https://www.warframe.com/): a daily and w
 - **Relics:** every Prime item you can farm from relics right now, the current Prime Resurgence rotation, and all relics with their rewards, plus drop rates per refinement stage, a relic finder (search all relics by name or reward) and a calculator for how many relics you need to open to be sure of a drop.
 - **Builds:** Void Cascade loadouts from the Cascade Club builds guide, sorted by Warframes, Thrax killers, primers and utility, trash killers and companions, with the written notes of every build, tips and survivability options. Each build shows its mod and arcane layout, drawn with the mod pictures Orbiter already downloads; hover (or tap) a mod to see what it does, its rarity, polarity and where to get it; the names were read from the guide's screenshots by hand, so check the original document (linked on each build) if something looks off. Shard setups are only in the written notes.
 - **Spy vault loot:** the rewards of the Spy missions Pago and Pavlov with drop chances and the lowest warframe.market price of each item, plus which mission pays more.
+- **Prime prices:** a price tracker for every Prime Warframe set on warframe.market: the 10 lowest offers from online traders for each, rechecked every 6 hours, and a history diagram per Warframe or for all sets together. History is kept in the database, one point per scan.
 - **Resources:** an interactive star chart showing where to farm each resource.
 - **Guides:** this season's Nightwave acts plus every recoverable act with tips, syndicate leveling, Kahl's Garrison missions, Coda and Kuva weapon guides (how to get them, damage types, which to pick), this week's Steel Path Circuit Incarnon picks, and Baro Ki'Teer.
 - **Home:** what Orbiter is, the current game version, active events, the latest news, and your daily and weekly checklist grouped by type (with sub-tasks), which resets itself at 00:00 UTC and on Mondays.
@@ -85,7 +86,7 @@ The server only accepts a small JSON document with ticks, validates and trims it
 
 ## Live data and the internet
 
-Home and the Nightwave and Baro pages read live data from the community API at [api.warframestat.us](https://docs.warframestat.us/) (events, news, Baro, Nightwave, game version). It is requested when a page opens and then at most once an hour. The Prime set prices in the Warframes list are different: the server itself asks [warframe.market](https://warframe.market/) for each Prime Warframe set (one request, then a 10 second pause, repeated every 6 hours) and keeps the result in the database. Without a connection those parts say they are unavailable and everything else keeps working.
+Home and the Nightwave and Baro pages read live data from the community API at [api.warframestat.us](https://docs.warframestat.us/) (events, news, Baro, Nightwave, game version). It is requested when a page opens and then at most once an hour. The Prime set prices in the Warframes list are different: the server itself asks [warframe.market](https://warframe.market/) for each Prime Warframe set (one request, then a 2 second pause, repeated every 6 hours) and keeps the result in the database. Without a connection those parts say they are unavailable and everything else keeps working.
 
 ## Development
 

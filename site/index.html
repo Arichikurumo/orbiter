@@ -101,6 +101,8 @@ details.more{margin:4px 0 0}details.more summary{cursor:pointer;color:var(--cyan
 .build{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}.build h4{margin:0 0 4px;color:var(--gold);font-size:15px}.bmeta{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.bmeta span{font-size:12px;padding:2px 8px;border:1px solid var(--line);color:var(--cyan)}
 .fch{display:inline-block;margin:3px 6px 3px 0;padding:2px 9px;border:1px solid var(--line);font-size:13px;color:var(--fg)}.fch.have{border-color:var(--ok);color:var(--ok)}
 h3 small{margin-left:10px;color:var(--mut);font-weight:400}
+.ptrack tbody tr{cursor:pointer}.ptrack tbody tr:hover,.ptrack tbody tr.sel{background:rgba(201,164,92,.08)}.ptrack .lows{display:flex;flex-wrap:wrap;gap:4px}.lows span{font-size:12px;padding:1px 6px;border:1px solid var(--line);color:var(--fg)}.lows span.lo{border-color:var(--cyan);color:var(--cyan)}
+.phsvg{width:100%;height:auto;display:block;margin-top:10px}.phleg{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--mut);margin-top:6px}.phleg i{display:inline-block;width:14px;height:3px;margin-right:6px;vertical-align:middle}
 .ptable{width:100%;border-collapse:collapse}.ptable th{text-align:left;color:var(--mut);font-weight:400;font-size:13px;padding:4px 8px}.ptable td{padding:6px 8px;border-top:1px solid rgba(42,51,64,.45)}.ptable td.win{color:var(--ok);font-weight:600}
 .mods{margin:10px 0}.mloadout{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 22px;padding:14px;background:radial-gradient(ellipse at 30% 20%,rgba(60,40,80,.35),rgba(8,10,16,.85));border:1px solid var(--line)}
 .mgrid{display:grid;gap:12px;flex:0 1 640px;min-width:0}.mrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.mrow.few>:first-child{grid-column:2}
@@ -471,6 +473,7 @@ app.addEventListener('change',e=>{
  else if(t.dataset.m){S.owned["M|"+t.dataset.m]=t.checked||undefined;save();render()}
  else if(t.dataset.f){F[t.dataset.f]=t.value;frames()}
  else if(t.dataset.k){G[page()][t.dataset.k]=t.value;catalog(page())}
+ else if(t.dataset.ph){PH[t.dataset.ph]=t.value;if(t.dataset.ph=="slug"){loadHistory();pricesPage()}else if(t.dataset.ph=="range")priceChart();else pricesPage()}
  else if(t.dataset.rl){RL[t.dataset.rl]=t.value;relicFinder()}
  else if(t.dataset.rc){RC[t.dataset.rc]=t.value;if(t.dataset.rc=='part')RC.relic='';relicCalc()}
 });
@@ -502,6 +505,7 @@ const SITE=[
  {id:"helminth",group:"arsenal",title:"Helminth",short:"Subsumable abilities by frame",desc:"Each subsumable ability, what it does and which frame it comes from. Tick the ones you have.",fn:()=>catalog("helminth")},
  {id:"relics",group:"farming",title:"Relic overview",short:"What drops now, Prime Resurgence",desc:"Which Prime items you can get from relics right now and this month's Prime Resurgence.",wide:1,fn:()=>relicsPage()},
  {id:"relcalc",group:"farming",title:"Relic calculator",short:"Your odds of a drop",desc:"How many relics you need to open to be sure of a drop, for every refinement level.",wide:1,fn:()=>relicCalc()},
+ {id:"prices",group:"farming",title:"Prime prices",short:"Price tracker for Prime Warframe sets",desc:"The 10 lowest platinum offers for every Prime Warframe set on warframe.market, checked every 6 hours, with the price history as a diagram.",wide:1,fn:()=>pricesPage()},
  {id:"spy",group:"farming",title:"Spy vault loot",short:"Pago and Pavlov with plat prices",desc:"The vault rewards of the Spy missions Pago and Pavlov with drop chances and warframe.market prices, and which one pays more.",wide:1,fn:()=>spyPage()},
  {id:"resources",group:"farming",title:"Resource map",short:"Where to farm each resource",desc:"A star chart of where to farm the common resources. Click a planet, or pick a resource to highlight its planets.",fn:()=>resources()},
  {id:"cascade",group:"builds",title:"Void Cascade",short:"Loadouts for Thrax, trash and more",desc:"Community loadouts for Void Cascade from the Cascade Club builds guide: Warframes, Thrax killers, primers, trash killers and companions.",wide:1,fn:()=>cascadeHome()},
@@ -848,12 +852,12 @@ function relicsPage(){
  relicFinder();
 }
 // Prime set prices come from the server's own scan of warframe.market (/api/prices), never from the browser.
-let PRICES=null;
+let PRICES=null,PSCAN=null;
 async function loadPrices(){
  let running=false;
- try{const r=await fetch("/api/prices"),d=await r.json();running=d.scan.running;PRICES=Object.fromEntries(d.items.filter(x=>x.avg!=null).map(x=>[x.name,x]))}catch{PRICES={}}
- if(page()=="frames")render();
- if(running)setTimeout(()=>page()=="frames"&&loadPrices(),3e4); // a scan is still filling in prices
+ try{const r=await fetch("/api/prices"),d=await r.json();running=d.scan.running;PSCAN=d.scan;PRICES=Object.fromEntries(d.items.filter(x=>x.avg!=null).map(x=>[x.name,x]))}catch{PRICES={}}
+ if(["frames","prices"].includes(page()))render();
+ if(running)setTimeout(()=>["frames","prices"].includes(page())&&loadPrices(),3e4); // a scan is still filling in prices
 }
 // Spy missions: rewards and prices are written by fetch_spy.py (spy.js); the expected value is worked out here.
 function spyPage(){
@@ -869,6 +873,50 @@ function spyPage(){
   <p class="tag">Expected value is each item's drop chance times its lowest sell price from an online trader on warframe.market, prices as of ${esc(SPY.date)}. Items you cannot trade (Endo, credits, blueprints) count as 0, and so do items nobody is selling right now. The lowest price is the cheapest ask, not what you can reliably sell for, so treat the numbers as a rough guide. Items with only a few online sellers, such as relics, can swing a lot between refreshes. A Spy run gives one reward per vault you crack.</p></section>
  <div class="grid g2">${ms.map(m=>`<section><h2>${esc(m.name)}<small>${esc(m.where)} &middot; <a href="${esc(m.wiki)}" target="_blank" rel="noopener">wiki</a></small></h2>${Object.entries(m.vaults).map(([k,v])=>vault(k,v)).join("")}</section>`).join("")}</div>`;
 }
+// Price tracker: the table shows the latest scan, the diagram is drawn from /api/price-history (one point per scan).
+const PH={slug:"all",range:"30",q:"",sort:"min",show:"all",data:null};
+async function loadHistory(){
+ const slug=PH.slug;PH.data=null;priceChart();
+ try{const r=await fetch("/api/price-history?slug="+encodeURIComponent(slug));if(!r.ok)throw 0;const d=await r.json();if(PH.slug==slug)PH.data=d}catch{if(PH.slug==slug)PH.data=false}
+ if(PH.slug==slug)priceChart();
+}
+function lineChart(rows){
+ const W=820,H=300,L=52,R=14,T=14,B=30,S=[["max","Highest of 10","#7d8896"],["avg","Average of 10","#c9a45c"],["min","Lowest","#4fd1e8"]];
+ const t0=Math.min(...rows.map(r=>Date.parse(r.ts))),t1=Math.max(...rows.map(r=>Date.parse(r.ts)));
+ const lo=Math.min(...rows.map(r=>r.min)),hi=Math.max(...rows.map(r=>r.max)),pad=Math.max(1,(hi-lo)*.1),y0=Math.max(0,Math.floor(lo-pad)),y1=Math.ceil(hi+pad);
+ const x=t=>L+(t1==t0?(W-L-R)/2:(t-t0)/(t1-t0)*(W-L-R)),y=v=>T+(1-(v-y0)/(y1-y0||1))*(H-T-B);
+ const grid=[0,1,2,3,4].map(i=>{const v=y0+(y1-y0)*i/4;return`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#2a3340" stroke-width="1"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" fill="#7d8896" font-size="12">${Math.round(v)}</text>`}).join("");
+ const xt=[0,1,2,3,4].map(i=>{const t=t0+(t1-t0)*i/4;return`<text x="${x(t)}" y="${H-8}" text-anchor="${i==0?"start":i==4?"end":"middle"}" fill="#7d8896" font-size="12">${new Date(t).toLocaleDateString([],{month:"short",day:"numeric"})}</text>`}).join("");
+ const lines=S.map(([k,n,c])=>`<polyline fill="none" stroke="${c}" stroke-width="2" points="${rows.map(r=>x(Date.parse(r.ts))+","+y(r[k])).join(" ")}"/>`+(rows.length<=80?rows.map(r=>`<circle cx="${x(Date.parse(r.ts))}" cy="${y(r[k])}" r="3" fill="${c}"><title>${esc(new Date(r.ts).toLocaleString())}: ${n} ${r[k]} p</title></circle>`).join(""):"")).join("");
+ return`<svg viewBox="0 0 ${W} ${H}" class="phsvg" role="img" aria-label="Price history, ${rows.length} scans">${grid}${xt}${lines}</svg><div class="phleg">${S.slice().reverse().map(([k,n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join("")}</div>`;
+}
+function priceChart(){
+ const el=document.getElementById("phart");if(!el)return;
+ const names=Object.values(PRICES||{}).sort((a,b)=>a.name.localeCompare(b.name)),d=PH.data;
+ const cut=PH.range=="all"?0:Date.now()-Number(PH.range)*864e5,rows=Array.isArray(d)?d.filter(r=>Date.parse(r.ts)>=cut&&r.min!=null):[];
+ const opt=(v,o)=>o.map(([k,t])=>`<option value="${esc(k)}" ${v==k?"selected":""}>${esc(t)}</option>`).join("");
+ el.innerHTML=`<h2>Price history<small>${PH.slug=="all"?"all Prime sets added together":esc((names.find(x=>x.slug==PH.slug)||{}).name||"")}</small></h2>
+  <div class="bar"><select data-ph="slug" aria-label="Warframe"><option value="all" ${PH.slug=="all"?"selected":""}>All Prime sets (total)</option>${names.map(x=>`<option value="${esc(x.slug)}" ${PH.slug==x.slug?"selected":""}>${esc(x.name)}</option>`).join("")}</select>
+  <select data-ph="range" aria-label="Time range">${opt(PH.range,[["7","Last 7 days"],["30","Last 30 days"],["90","Last 90 days"],["all","Everything"]])}</select></div>
+  ${d===null?'<p class="tag">Loading history...</p>':d===false?'<p class="tag">History is unavailable right now.</p>':rows.length?lineChart(rows)+(rows.length<2?'<p class="tag">Only one scan so far. The line appears as more scans come in, one every 6 hours.</p>':`<p class="tag">${rows.length} scan${rows.length>1?"s":""} in this range. Each point is one scan; the lines use the 10 cheapest offers from online traders.</p>`):'<p class="tag">No scans in this range yet. A scan runs every 6 hours.</p>'}`;
+}
+function pricesPage(){
+ if(!PRICES)loadPrices();
+ const all=Object.values(PRICES||{});
+ let l=all.filter(x=>x.name.toLowerCase().includes(PH.q)&&(PH.show=="all"||!S.owned[x.name]));
+ l.sort(PH.sort=="name"?(a,b)=>a.name.localeCompare(b.name):(a,b)=>a[PH.sort]-b[PH.sort]||a.name.localeCompare(b.name));
+ const opt=(v,o)=>o.map(([k,t])=>`<option value="${k}" ${v==k?"selected":""}>${t}</option>`).join("");
+ const ago=t=>{const m=Math.round((Date.now()-Date.parse(t))/6e4);return m<60?`${Math.max(m,0)} min ago`:m<2880?`${Math.round(m/60)} h ago`:`${Math.round(m/1440)} days ago`};
+ app.innerHTML=`<section id="phart"></section>
+ <section><h2>Current offers<small>${all.length} Prime sets${PSCAN&&PSCAN.running?` &middot; scanning ${PSCAN.done} of ${PSCAN.total}`:""}</small></h2>
+ <div class="bar"><input type="search" id="pq" placeholder="Search" aria-label="Search Warframes" value="${esc(PH.raw||"")}"><select data-ph="show" aria-label="Show">${opt(PH.show,[["all","All Prime Warframes"],["missing","Only ones I do not own"]])}</select><select data-ph="sort" aria-label="Sort">${opt(PH.sort,[["min","Cheapest first"],["avg","Lowest average first"],["name","Name"]])}</select></div>
+ <p class="tag">The 10 lowest sell offers for each full Prime set from traders who are online or in game, cheapest first, in platinum (a warframe.market scan every 6 hours, one set every 2 seconds). Offers far below the rest are ignored as bait. Click a row to see its price history.</p>
+ <table class="ptable ptrack"><thead><tr><th>Warframe</th><th>10 lowest offers</th><th>Avg</th><th>Checked</th></tr></thead><tbody>${l.map(x=>`<tr data-ph="${esc(x.slug)}" class="${PH.slug==x.slug?"sel":""}" tabindex="0"><td><b>${esc(x.name)}</b> <a href="https://warframe.market/items/${esc(x.slug)}" target="_blank" rel="noopener" title="Open on warframe.market">&#8599;</a></td><td class="lows">${(x.lowest||[]).map((n,i)=>`<span${i?"":' class="lo"'}>${n}</span>`).join("")}</td><td>${x.avg} p</td><td class="tag">${ago(x.updated)}</td></tr>`).join("")||`<tr><td colspan="4" class="tag">${PRICES?"Nothing matches.":"Loading prices..."}</td></tr>`}</tbody></table></section>`;
+ priceChart();if(!PH._l){PH._l=1;loadHistory()}
+ const i=document.getElementById("pq");i.oninput=()=>{PH.raw=i.value;PH.q=i.value.trim().toLowerCase();const p=i.selectionStart;pricesPage();const n=document.getElementById("pq");n.focus();n.setSelectionRange(p,p)};
+}
+app.addEventListener("click",e=>{const r=e.target.closest&&e.target.closest("tr[data-ph]");if(!r||e.target.closest("a"))return;PH.slug=r.dataset.ph;loadHistory();pricesPage();document.getElementById("phart").scrollIntoView({behavior:"smooth",block:"start"})});
+app.addEventListener("keydown",e=>{if((e.key=="Enter"||e.key==" ")&&e.target.matches&&e.target.matches("tr[data-ph]")){e.preventDefault();e.target.click()}});
 // Relic calculator: chance of at least one hit in n openings = 1-(1-p)^n, with p from the refinement table above.
 const RC={n:10,stage:"Radiant",mode:"rarity",rarity:"R",part:"",relic:""};
 const pct=x=>x>=0.9999?">99.99%":x<0.0001?"<0.01%":(x*100).toFixed(x<0.1?2:1)+"%";
