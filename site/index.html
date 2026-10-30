@@ -588,16 +588,16 @@ function home(){
 `;
 }
 // Daily route: the tasks in the order I work through them. Ticks are the same S.tasks the home page uses, so both always agree.
-const ROUTE=[["login"],["forma"],["craft"],["s_hex","Syndicate: The Hex"],["s_hold","Syndicate: Angels of the Zariman"],["s_cavia","Syndicate: Cavia"],["s_simaris","Syndicate: Cephalon Simaris"],["sortie"],["incursions"],["nightmare","Nightmare Mode (low level)"]];
+const ROUTE=[["login"],["forma"],["craft"],["s_hex","Syndicate: The Hex"],["s_hold","Syndicate: Angels of the Zariman"],["s_cavia","Syndicate: Cavia"],["s_simaris","Syndicate: Cephalon Simaris"],["sortie"],["incursions"],["nightmare","Nightmare Mode (low level)"],["circuitsp","Duviri Circuit, Steel Path (5 stages)"]];
 function dailyPage(){
  rollover();const n=Date.now();
  const find=id=>{const t=ALL.find(x=>x[0]==id);if(t)return[t[0],t[1],(subs(t).length?`${subs(t).filter(s=>S.tasks[s[0]]).length} of ${subs(t).length} planets: ${subs(t).map(s=>s[1]).join(", ")}`:t[4]||"")];for(const p of ALL)for(const s of subs(p))if(s[0]==id)return[s[0],s[1],s[2]||""]};
- const steps=ROUTE.map(([id,label])=>{const t=find(id);const top=ALL.find(x=>x[0]==id);return{id,name:label||t[1],where:t[2],done:top?isDone(top):!!S.tasks[id]}}),done=steps.filter(s=>s.done).length,next=steps.findIndex(s=>!s.done);
+ const steps=ROUTE.map(([id,label])=>{const t=find(id);const top=ALL.find(x=>x[0]==id),wk=top&&SECTIONS.some(s=>s.reset=="w"&&s.items.includes(top));return{id,name:label||t[1],where:(wk?"Weekly, resets Monday. ":"")+t[2],done:top?isDone(top):!!S.tasks[id]}}),done=steps.filter(s=>s.done).length,next=steps.findIndex(s=>!s.done);
  app.innerHTML=`<div class="tsum"><div><div class="tbig">${done}<small> / ${steps.length} route steps</small></div><div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${steps.length}" aria-valuenow="${done}"><i style="width:${done/steps.length*100}%"></i></div>
   <div class="tag">${next<0?"Route finished. The rest of the dailies are on the home page.":`Next up: <b>${esc(steps[next].name)}</b>`}</div></div>
   <div class="tag">Daily reset in ${left(dayStart(n)+864e5-n)} &middot; weekly reset in ${left(weekStart(n)+6048e5-n)} (00:00 UTC)</div></div>
  <div class="dgrid"><section class="routesec"><h2>Your route<small>in this order</small></h2><ol class="route">${steps.map((s,i)=>`<li class="step${s.done?" done":""}${i==next?" next":""}"><label><span class="num">${s.done?"&#10003;":i+1}</span><input type="checkbox" data-t="${esc(s.id)}" ${s.done?"checked":""}><span class="sname">${esc(s.name)}${s.where?`<small>${esc(s.where)}</small>`:""}</span>${i==next?'<span class="nowtag">next</span>':""}</label></li>`).join("")}</ol></section>
- <div>${homeTasks("w","Weekly","completed ones hidden &middot; resets Monday 00:00 UTC, in "+left(weekStart(n)+6048e5-n),[],true)}</div></div>`;
+ <div>${homeTasks("w","Weekly","completed ones hidden &middot; resets Monday 00:00 UTC, in "+left(weekStart(n)+6048e5-n),ROUTE.map(r=>r[0]),true)}</div></div>`;
 }
 // Home checklist: the same tasks and saved ticks as before, grouped by type. Tasks not listed here fall into "Other".
 const TASKGROUPS={d:[["Login & crafting",["login","forma","craft","drones","firstwin","helminth"]],["Syndicates",["factions","factionspend","worldsyn"]],["Missions",["sortie","incursions","nightmare","nwdaily","focus"]],["Social & vendors",["kim","acrithisd","ticker","marie"]]],
