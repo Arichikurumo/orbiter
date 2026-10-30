@@ -126,7 +126,7 @@ h3 small{margin-left:10px;color:var(--mut);font-weight:400}
 .step.done .num{background:var(--ok);border-color:var(--ok);color:#06140d}.step.done .sname{color:var(--mut);text-decoration:line-through}
 .step.next .num{border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 4px rgba(201,164,92,.18)}.step.next label{background:rgba(201,164,92,.07)}.nowtag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
 .step input:focus-visible+.sname{outline:2px solid var(--cyan);outline-offset:2px}
-.routesec{max-width:760px}
+.dgrid{display:grid;grid-template-columns:minmax(0,460px) minmax(0,1fr);gap:20px;align-items:start}.dgrid .livehead{margin-top:0}.dgrid .tgrid{margin-top:10px}@media(max-width:1000px){.dgrid{grid-template-columns:minmax(0,1fr)}}
 .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;align-items:start;margin:10px 0 20px}.tgrid section{margin:0}.tgrid h2 small{color:var(--mut);margin-left:8px}
 .livehead{margin:22px 0 10px;padding:0 2px}.livehead small{margin-left:10px}
 .live{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}.livecol{display:grid;gap:20px;min-width:0}.live section{margin:0}
@@ -506,7 +506,7 @@ const CASCADE_PAGES=[
 ];
 const SITE=[
  {id:"home",title:"Home",wide:1,fn:()=>home()},
- {id:"daily",title:"Daily route",desc:"Your daily tasks in the order you do them, then the rest of the dailies and the weeklies. Ticks are shared with the home page.",wide:1,fn:()=>dailyPage()},
+ {id:"daily",title:"Daily route",desc:"Your daily tasks in the order you do them, with the weeklies next to it. The rest of the dailies are on the home page, and ticks are shared with it.",wide:1,fn:()=>dailyPage()},
  {id:"arsenal",title:"Arsenal",desc:"Everything you own and upgrade: Warframes, weapons, companions, mods, arcanes and the Helminth.",wide:1,fn:()=>arsenal()},
  {id:"frames",group:"arsenal",title:"Warframes",short:"Prime and normal, with farm info",desc:"Every frame, prime and normal. Mark what you own, sort by how easy it is to get, and filter by role.",fn:()=>frames()},
  {id:"weapons",group:"arsenal",title:"Weapons",short:"Every weapon by type",desc:"Every weapon grouped by type, with mastery rank and where to get it.",fn:()=>catalog("weapons")},
@@ -593,12 +593,11 @@ function dailyPage(){
  rollover();const n=Date.now();
  const find=id=>{const t=ALL.find(x=>x[0]==id);if(t)return[t[0],t[1],(subs(t).length?`${subs(t).filter(s=>S.tasks[s[0]]).length} of ${subs(t).length} planets: ${subs(t).map(s=>s[1]).join(", ")}`:t[4]||"")];for(const p of ALL)for(const s of subs(p))if(s[0]==id)return[s[0],s[1],s[2]||""]};
  const steps=ROUTE.map(([id,label])=>{const t=find(id);return{id,name:label||t[1],where:t[2],done:!!S.tasks[id]}}),done=steps.filter(s=>s.done).length,next=steps.findIndex(s=>!s.done);
- const skip=ROUTE.map(r=>r[0]);
  app.innerHTML=`<div class="tsum"><div><div class="tbig">${done}<small> / ${steps.length} route steps</small></div><div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${steps.length}" aria-valuenow="${done}"><i style="width:${done/steps.length*100}%"></i></div>
-  <div class="tag">${next<0?"Route finished. Rest of the dailies and the weeklies are below.":`Next up: <b>${esc(steps[next].name)}</b>`}</div></div>
+  <div class="tag">${next<0?"Route finished. The rest of the dailies are on the home page.":`Next up: <b>${esc(steps[next].name)}</b>`}</div></div>
   <div class="tag">Daily reset in ${left(dayStart(n)+864e5-n)} &middot; weekly reset in ${left(weekStart(n)+6048e5-n)} (00:00 UTC)</div></div>
- <section class="routesec"><h2>Your route<small>in this order</small></h2><ol class="route">${steps.map((s,i)=>`<li class="step${s.done?" done":""}${i==next?" next":""}"><label><span class="num">${s.done?"&#10003;":i+1}</span><input type="checkbox" data-t="${esc(s.id)}" ${s.done?"checked":""}><span class="sname">${esc(s.name)}${s.where?`<small>${esc(s.where)}</small>`:""}</span>${i==next?'<span class="nowtag">next</span>':""}</label></li>`).join("")}</ol></section>
- ${homeTasks("d","Rest of the dailies","after the route",skip)}${homeTasks("w","Weekly","Resets Monday 00:00 UTC, in "+left(weekStart(n)+6048e5-n))}`;
+ <div class="dgrid"><section class="routesec"><h2>Your route<small>in this order</small></h2><ol class="route">${steps.map((s,i)=>`<li class="step${s.done?" done":""}${i==next?" next":""}"><label><span class="num">${s.done?"&#10003;":i+1}</span><input type="checkbox" data-t="${esc(s.id)}" ${s.done?"checked":""}><span class="sname">${esc(s.name)}${s.where?`<small>${esc(s.where)}</small>`:""}</span>${i==next?'<span class="nowtag">next</span>':""}</label></li>`).join("")}</ol></section>
+ <div>${homeTasks("w","Weekly","Resets Monday 00:00 UTC, in "+left(weekStart(n)+6048e5-n))}</div></div>`;
 }
 // Home checklist: the same tasks and saved ticks as before, grouped by type. Tasks not listed here fall into "Other".
 const TASKGROUPS={d:[["Login & crafting",["login","forma","craft","drones","firstwin","helminth"]],["Syndicates",["factions","factionspend","worldsyn"]],["Missions",["sortie","incursions","nightmare","nwdaily","focus"]],["Social & vendors",["kim","acrithisd","ticker","marie"]]],
