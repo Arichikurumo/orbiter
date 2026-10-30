@@ -284,6 +284,7 @@ const SECTIONS=[
    ["s_hold","The Holdfasts","Chrysalith, Zariman. Needs Angels of the Zariman"],["s_cavia","Cavia","Sanctum Anatomica, Deimos. Needs Whispers in the Walls"],["s_hex","The Hex","Höllvania Central Mall. Needs The Hex quest"]]],
   ["nwdaily","Nightwave","Complete the daily Nightwave acts."],
   ["sortie","Sortie","Complete the 3 daily Sortie missions. It rotates at 16:00 UTC, so tick it once per day.",0,"Navigation. Needs The War Within"],
+  ["circuit5","Duviri Circuit, Steel Path: 5 stages","Today's progress towards the weekly Steel Path Circuit: play 5 stages. This does not tick the weekly task.",0,"Needs Steel Path unlocked and The Duviri Paradox"],
   ["nightmare","Nightmare missions (low level, rare: Blaze)","Run the Nightmare Mode mission on each low-level planet for Nightmare mods. They come from reward group A, which has a 1.01% chance for Blaze, the rare one. Each planet's Nightmare mission can only pay out once and comes back 8 hours after you finish it, so a daily run works. The active nodes are in the in-game World State Window.",[
    ["n_mercury","Mercury",""],["n_venus","Venus",""],["n_earth","Earth",""],["n_mars","Mars",""]],"Needs every node of that planet completed"],
   ["focus","Focus","Max out daily Focus gain, for example via Sanctuary Onslaught.",0,"Needs The Second Dream"],
@@ -584,11 +585,11 @@ function home(){
  <div class="live"><section><h2>Happening now<small>soonest to end first</small></h2>${list(now,"No active events found.","evl")}
  <h2 style="margin-top:16px">Coming up</h2>${list(soon,"Nothing announced yet. Digital Extremes only posts upcoming events shortly before they start.","evl")}</section>
  <section><h2>Latest news</h2>${list(news,"No news found.","nwl")}</section></div>
- ${homeTasks("d","Daily","Resets at 00:00 UTC, in "+left(dayStart(n)+864e5-n)+` &middot; <a href="#daily">step-by-step route</a>`)}${homeTasks("w","Weekly","Resets Monday 00:00 UTC, in "+left(weekStart(n)+6048e5-n))}
+ ${homeTasks("d","Daily","Resets at 00:00 UTC, in "+left(dayStart(n)+864e5-n)+` &middot; <a href="#daily">step-by-step route</a>`,["circuit5"])}${homeTasks("w","Weekly","Resets Monday 00:00 UTC, in "+left(weekStart(n)+6048e5-n))}
 `;
 }
 // Daily route: the tasks in the order I work through them. Ticks are the same S.tasks the home page uses, so both always agree.
-const ROUTE=[["login"],["forma"],["craft"],["s_hex","Syndicate: The Hex"],["s_hold","Syndicate: Angels of the Zariman"],["s_cavia","Syndicate: Cavia"],["s_simaris","Syndicate: Cephalon Simaris"],["sortie"],["incursions"],["nightmare","Nightmare Mode (low level)"],["circuitsp","Duviri Circuit, Steel Path (5 stages)"]];
+const ROUTE=[["login"],["forma"],["craft"],["s_hex","Syndicate: The Hex"],["s_hold","Syndicate: Angels of the Zariman"],["s_cavia","Syndicate: Cavia"],["s_simaris","Syndicate: Cephalon Simaris"],["sortie"],["incursions"],["nightmare","Nightmare Mode (low level)"],["circuit5","Duviri Circuit, Steel Path (5 stages)"]];
 function dailyPage(){
  rollover();const n=Date.now();
  const find=id=>{const t=ALL.find(x=>x[0]==id);if(t)return[t[0],t[1],(subs(t).length?`${subs(t).filter(s=>S.tasks[s[0]]).length} of ${subs(t).length} planets: ${subs(t).map(s=>s[1]).join(", ")}`:t[4]||"")];for(const p of ALL)for(const s of subs(p))if(s[0]==id)return[s[0],s[1],s[2]||""]};
