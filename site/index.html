@@ -276,6 +276,8 @@ const SECTIONS=[
    ["s_hold","The Holdfasts","Chrysalith, Zariman. Needs Angels of the Zariman"],["s_cavia","Cavia","Sanctum Anatomica, Deimos. Needs Whispers in the Walls"],["s_hex","The Hex","Höllvania Central Mall. Needs The Hex quest"]]],
   ["nwdaily","Nightwave","Complete the daily Nightwave acts."],
   ["sortie","Sortie","Complete the 3 daily Sortie missions. It rotates at 16:00 UTC, so tick it once per day.",0,"Navigation. Needs The War Within"],
+  ["nightmare","Nightmare missions (low level, rare: Blaze)","Run the Nightmare Mode mission on each low-level planet for Nightmare mods. They come from reward group A, which has a 1.01% chance for Blaze, the rare one. Each planet's Nightmare mission can only pay out once and comes back 8 hours after you finish it, so a daily run works. The active nodes are in the in-game World State Window.",[
+   ["n_mercury","Mercury",""],["n_venus","Venus",""],["n_earth","Earth",""],["n_mars","Mars",""]],"Needs every node of that planet completed"],
   ["focus","Focus","Max out daily Focus gain, for example via Sanctuary Onslaught.",0,"Needs The Second Dream"],
   ["incursions","Steel Path Incursions","Complete the daily Steel Path missions for Steel Essence.",0,"Needs Steel Path unlocked"],
   ["kim","KIM: daily chats","Chat with your protoframes and other contacts each day.",[
@@ -577,7 +579,7 @@ function home(){
 `;
 }
 // Home checklist: the same tasks and saved ticks as before, grouped by type. Tasks not listed here fall into "Other".
-const TASKGROUPS={d:[["Login & crafting",["login","forma","craft","drones","firstwin","helminth"]],["Syndicates",["factions","factionspend","worldsyn"]],["Missions",["sortie","incursions","nwdaily","focus"]],["Social & vendors",["kim","acrithisd","ticker","marie"]]],
+const TASKGROUPS={d:[["Login & crafting",["login","forma","craft","drones","firstwin","helminth"]],["Syndicates",["factions","factionspend","worldsyn"]],["Missions",["sortie","incursions","nightmare","nwdaily","focus"]],["Social & vendors",["kim","acrithisd","ticker","marie"]]],
  w:[["Missions",["maroo","clem","narmer","archon","eximus","clan","calendar"]],["Circuit & towers",["circuit","circuitsp","descendia","descendiasp"]],["Archimedea & Netracells",["pulses","netracells","eda","eta","cryobells","icebind"]],["Nightwave & vendors",["nwweekly","nwspend","palladino","yonta","acrithisw","teshin","bird3","kaya","nightcap","zorba","hunhow","melica","baro","family","voidplumes","voca","tenet","coda"]]]};
 function homeTasks(reset,title,sub){
  const other=TASKGROUPS[reset=="d"?"w":"d"].flatMap(g=>g[1]),own=SECTIONS.filter(s=>s.reset==reset).flatMap(s=>s.items).filter(t=>!other.includes(t[0])),groups=TASKGROUPS[reset].map(([t,ids])=>[t,ids.map(id=>ALL.find(x=>x[0]==id)).filter(Boolean)]);
