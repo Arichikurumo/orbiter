@@ -119,6 +119,14 @@ h3 small{margin-left:10px;color:var(--mut);font-weight:400}
 .mtip b{display:block;color:var(--gold);font-size:13px}.mtip small{display:block;color:var(--mut);margin-top:2px}.mtip .meff{display:block;margin:6px 0;color:var(--fg)}.mtip a{font-size:12px}
 @media(max-width:520px){.mgrid,.mrow{gap:8px}.mrow{grid-template-columns:repeat(2,minmax(0,1fr))}.mrow.few>:first-child{grid-column:auto}.mloadout{padding:10px}.mface{font-size:11px;padding:4px 4px 10px}.marcs{flex-direction:row;flex-basis:100%;justify-content:center}}
 .relic .bnotes,.bnotes{list-style:disc;margin:6px 0;padding-left:20px;font-size:14px}.relic .bnotes li,.bnotes li{display:list-item;margin:4px 0;padding:0}.relic .bnotes ul,.bnotes ul{list-style:circle;margin:2px 0;padding-left:20px;color:var(--mut);font-size:14px}.bsrc{display:inline-block;margin-top:10px;font-size:13px}
+.route{list-style:none;margin:0;padding:0;counter-reset:s}.step{position:relative;margin:0;padding:0 0 0 4px}.step::before{content:"";position:absolute;left:21px;top:0;bottom:0;width:2px;background:var(--line)}.step:first-child::before{top:50%}.step:last-child::before{bottom:50%}
+.step label{position:relative;display:flex;align-items:center;gap:14px;padding:10px 12px 10px 4px;cursor:pointer}.step input{position:absolute;opacity:0;pointer-events:none}
+.step .num{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--card);border:2px solid var(--line);color:var(--mut);font-weight:600;z-index:1}
+.step .sname{flex:1;min-width:0;font-size:16px}.step .sname small{display:block;color:var(--mut);font-size:12px;margin-top:1px}
+.step.done .num{background:var(--ok);border-color:var(--ok);color:#06140d}.step.done .sname{color:var(--mut);text-decoration:line-through}
+.step.next .num{border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 4px rgba(201,164,92,.18)}.step.next label{background:rgba(201,164,92,.07)}.nowtag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.step input:focus-visible+.sname{outline:2px solid var(--cyan);outline-offset:2px}
+.routesec{max-width:760px}
 .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;align-items:start;margin:10px 0 20px}.tgrid section{margin:0}.tgrid h2 small{color:var(--mut);margin-left:8px}
 .livehead{margin:22px 0 10px;padding:0 2px}.livehead small{margin-left:10px}
 .live{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}.livecol{display:grid;gap:20px;min-width:0}.live section{margin:0}
@@ -498,6 +506,7 @@ const CASCADE_PAGES=[
 ];
 const SITE=[
  {id:"home",title:"Home",wide:1,fn:()=>home()},
+ {id:"daily",title:"Daily route",desc:"Your daily tasks in the order you do them, then the rest of the dailies and the weeklies. Ticks are shared with the home page.",wide:1,fn:()=>dailyPage()},
  {id:"arsenal",title:"Arsenal",desc:"Everything you own and upgrade: Warframes, weapons, companions, mods, arcanes and the Helminth.",wide:1,fn:()=>arsenal()},
  {id:"frames",group:"arsenal",title:"Warframes",short:"Prime and normal, with farm info",desc:"Every frame, prime and normal. Mark what you own, sort by how easy it is to get, and filter by role.",fn:()=>frames()},
  {id:"weapons",group:"arsenal",title:"Weapons",short:"Every weapon by type",desc:"Every weapon grouped by type, with mastery rank and where to get it.",fn:()=>catalog("weapons")},
@@ -524,7 +533,7 @@ const SITE=[
 const curr=()=>SITE.find(p=>"#"+p.id==location.hash)||SITE[0];
 function buildNav(){
  const top=p=>`<a href="#${p.id}" id="n_${p.id}">${esc(p.title)}</a>`;
- document.getElementById("nav").innerHTML=`<a class="brand" href="#home" aria-label="Orbiter, go to the home page"><img src="favicon.svg" alt="" width="26" height="26">Orbiter</a>`+top(SITE[0])+
+ document.getElementById("nav").innerHTML=`<a class="brand" href="#home" aria-label="Orbiter, go to the home page"><img src="favicon.svg" alt="" width="26" height="26">Orbiter</a>`+top(SITE[0])+top(SITE.find(p=>p.id=="daily"))+
   GROUPS.filter(g=>g.nav!==false).map(g=>`<div class="dd"><button type="button" id="d_${g.id}" aria-haspopup="true" aria-expanded="false" aria-controls="m_${g.id}">${g.title} &#9662;</button><div class="menu" id="m_${g.id}">${SITE.some(p=>p.id==g.id)?`<a href="#${g.id}" id="n_${g.id}"><b>Overview</b><small>All ${g.title.toLowerCase()} pages</small></a>`:""}${SITE.filter(p=>p.group==g.id).sort((a,b)=>a.title.localeCompare(b.title)).map(p=>`<a href="#${p.id}" id="n_${p.id}"><b>${esc(p.title)}</b><small>${esc(p.short)}</small></a>`).join("")}</div></div>`).join("");
 }
 buildNav();
@@ -575,14 +584,27 @@ function home(){
  <div class="live"><section><h2>Happening now<small>soonest to end first</small></h2>${list(now,"No active events found.","evl")}
  <h2 style="margin-top:16px">Coming up</h2>${list(soon,"Nothing announced yet. Digital Extremes only posts upcoming events shortly before they start.","evl")}</section>
  <section><h2>Latest news</h2>${list(news,"No news found.","nwl")}</section></div>
- ${homeTasks("d","Daily","Resets at 00:00 UTC, in "+left(dayStart(n)+864e5-n))}${homeTasks("w","Weekly","Resets Monday 00:00 UTC, in "+left(weekStart(n)+6048e5-n))}
+ ${homeTasks("d","Daily","Resets at 00:00 UTC, in "+left(dayStart(n)+864e5-n)+` &middot; <a href="#daily">step-by-step route</a>`)}${homeTasks("w","Weekly","Resets Monday 00:00 UTC, in "+left(weekStart(n)+6048e5-n))}
 `;
+}
+// Daily route: the tasks in the order I work through them. Ticks are the same S.tasks the home page uses, so both always agree.
+const ROUTE=[["login"],["forma"],["craft"],["s_hex","Syndicate: The Hex"],["s_hold","Syndicate: Angels of the Zariman"],["s_cavia","Syndicate: Cavia"],["s_simaris","Syndicate: Cephalon Simaris"],["sortie"],["incursions"]];
+function dailyPage(){
+ rollover();const n=Date.now();
+ const find=id=>{const t=ALL.find(x=>x[0]==id);if(t)return[t[0],t[1],t[4]||""];for(const p of ALL)for(const s of subs(p))if(s[0]==id)return[s[0],s[1],s[2]||""]};
+ const steps=ROUTE.map(([id,label])=>{const t=find(id);return{id,name:label||t[1],where:t[2],done:!!S.tasks[id]}}),done=steps.filter(s=>s.done).length,next=steps.findIndex(s=>!s.done);
+ const skip=ROUTE.map(r=>r[0]);
+ app.innerHTML=`<div class="tsum"><div><div class="tbig">${done}<small> / ${steps.length} route steps</small></div><div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${steps.length}" aria-valuenow="${done}"><i style="width:${done/steps.length*100}%"></i></div>
+  <div class="tag">${next<0?"Route finished. Rest of the dailies and the weeklies are below.":`Next up: <b>${esc(steps[next].name)}</b>`}</div></div>
+  <div class="tag">Daily reset in ${left(dayStart(n)+864e5-n)} &middot; weekly reset in ${left(weekStart(n)+6048e5-n)} (00:00 UTC)</div></div>
+ <section class="routesec"><h2>Your route<small>in this order</small></h2><ol class="route">${steps.map((s,i)=>`<li class="step${s.done?" done":""}${i==next?" next":""}"><label><span class="num">${s.done?"&#10003;":i+1}</span><input type="checkbox" data-t="${esc(s.id)}" ${s.done?"checked":""}><span class="sname">${esc(s.name)}${s.where?`<small>${esc(s.where)}</small>`:""}</span>${i==next?'<span class="nowtag">next</span>':""}</label></li>`).join("")}</ol></section>
+ ${homeTasks("d","Rest of the dailies","after the route",skip)}${homeTasks("w","Weekly","Resets Monday 00:00 UTC, in "+left(weekStart(n)+6048e5-n))}`;
 }
 // Home checklist: the same tasks and saved ticks as before, grouped by type. Tasks not listed here fall into "Other".
 const TASKGROUPS={d:[["Login & crafting",["login","forma","craft","drones","firstwin","helminth"]],["Syndicates",["factions","factionspend","worldsyn"]],["Missions",["sortie","incursions","nightmare","nwdaily","focus"]],["Social & vendors",["kim","acrithisd","ticker","marie"]]],
  w:[["Missions",["maroo","clem","narmer","archon","eximus","clan","calendar"]],["Circuit & towers",["circuit","circuitsp","descendia","descendiasp"]],["Archimedea & Netracells",["pulses","netracells","eda","eta","cryobells","icebind"]],["Nightwave & vendors",["nwweekly","nwspend","palladino","yonta","acrithisw","teshin","bird3","kaya","nightcap","zorba","hunhow","melica","baro","family","voidplumes","voca","tenet","coda"]]]};
-function homeTasks(reset,title,sub){
- const other=TASKGROUPS[reset=="d"?"w":"d"].flatMap(g=>g[1]),own=SECTIONS.filter(s=>s.reset==reset).flatMap(s=>s.items).filter(t=>!other.includes(t[0])),groups=TASKGROUPS[reset].map(([t,ids])=>[t,ids.map(id=>ALL.find(x=>x[0]==id)).filter(Boolean)]);
+function homeTasks(reset,title,sub,skip=[]){
+ const keep=t=>!skip.includes(t[0]),other=TASKGROUPS[reset=="d"?"w":"d"].flatMap(g=>g[1]),own=SECTIONS.filter(s=>s.reset==reset).flatMap(s=>s.items).filter(t=>!other.includes(t[0])&&keep(t)),groups=TASKGROUPS[reset].map(([t,ids])=>[t,ids.map(id=>ALL.find(x=>x[0]==id)).filter(Boolean).filter(keep)]).filter(g=>g[1].length);
  const tasks=[...new Set([...own,...groups.flatMap(g=>g[1])])]; // a group may show a task from the other reset (Helminth is weekly but listed under daily)
  const rest=own.filter(t=>!groups.some(g=>g[1].includes(t)));if(rest.length)groups.push(["Other",rest]);
  const done=tasks.filter(isDone).length;
