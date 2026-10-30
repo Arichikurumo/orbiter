@@ -592,7 +592,7 @@ const ROUTE=[["login"],["forma"],["craft"],["s_hex","Syndicate: The Hex"],["s_ho
 function dailyPage(){
  rollover();const n=Date.now();
  const find=id=>{const t=ALL.find(x=>x[0]==id);if(t)return[t[0],t[1],(subs(t).length?`${subs(t).filter(s=>S.tasks[s[0]]).length} of ${subs(t).length} planets: ${subs(t).map(s=>s[1]).join(", ")}`:t[4]||"")];for(const p of ALL)for(const s of subs(p))if(s[0]==id)return[s[0],s[1],s[2]||""]};
- const steps=ROUTE.map(([id,label])=>{const t=find(id);return{id,name:label||t[1],where:t[2],done:!!S.tasks[id]}}),done=steps.filter(s=>s.done).length,next=steps.findIndex(s=>!s.done);
+ const steps=ROUTE.map(([id,label])=>{const t=find(id);const top=ALL.find(x=>x[0]==id);return{id,name:label||t[1],where:t[2],done:top?isDone(top):!!S.tasks[id]}}),done=steps.filter(s=>s.done).length,next=steps.findIndex(s=>!s.done);
  app.innerHTML=`<div class="tsum"><div><div class="tbig">${done}<small> / ${steps.length} route steps</small></div><div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${steps.length}" aria-valuenow="${done}"><i style="width:${done/steps.length*100}%"></i></div>
   <div class="tag">${next<0?"Route finished. The rest of the dailies are on the home page.":`Next up: <b>${esc(steps[next].name)}</b>`}</div></div>
   <div class="tag">Daily reset in ${left(dayStart(n)+864e5-n)} &middot; weekly reset in ${left(weekStart(n)+6048e5-n)} (00:00 UTC)</div></div>
