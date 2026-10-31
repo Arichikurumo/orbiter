@@ -114,3 +114,10 @@ test('syndicate price: lowest unranked online offer, bait ignored; crawl endpoin
   assert.equal((await req('POST', '/api/syndicate-prices', { headers: { 'content-type': 'application/json' } })).status, 503); // tests run with FETCH_PRICES=0
   assert.deepEqual(JSON.parse((await req('GET', '/api/syndicate-prices')).body).items, []);
 });
+
+test('syndicate sales: ranked entries are ignored, recent median is volume weighted', () => {
+  const { sales } = require('./syndprices.js'), now = Date.parse('2026-10-31T00:00:00Z'), e = (days, volume, median, mod_rank = 0) => ({ datetime: new Date(now - days * 864e5).toISOString(), volume, median, mod_rank });
+  const r = sales({ '48hours': [e(1, 2, 10), e(0.5, 1, 99, 10)], '90days': [e(50, 5, 100), e(10, 3, 10), e(2, 1, 20), e(2, 9, 500, 10)] }, now);
+  assert.deepEqual(r, { sold48: 2, sold90: 9, sale: 13 }); // last 14 days: (3*10 + 1*20) / 4 = 12.5, rounded up
+  assert.deepEqual(sales({}, now), { sold48: 0, sold90: 0, sale: null });
+});
