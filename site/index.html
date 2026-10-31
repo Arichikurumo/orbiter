@@ -836,7 +836,7 @@ const RAR={C:["Common","25.3%"],U:["Uncommon","11%"],R:["Rare","2%"]};
 const primeBase=n=>(/^(.*? Prime)\b/.exec(n)||[])[1];
 const primeImg=(()=>{let m;return n=>{m??=(x=>{[...FRAMES,...WEAPONS,...COMPANIONS].forEach(i=>{if(i.img&&!x.has(i.name))x.set(i.name,i.img)});return x})(new Map());return m.get(n)}})();
 const TIER_NAME=["","Lith","Meso","Neo","Axi"];
-const cleanPack=s=>s.replace(/^T(\d) Void Projection (.*) Vault ([AB]) (\w+)$/,(m,t,names,v,c)=>`${TIER_NAME[t]||"?"} relic pack (${c}): ${names} vault ${v}`).replace(/^M P V /,"").replace(/ Prime (Single|Dual) Pack$/," Prime ($1 pack)").replace(/ Prime Dual Pack$/," Prime");
+const cleanPack=s=>(s||"").replace(/^T(\d) Void Projection (.*) Vault ([AB]) (\w+)$/,(m,t,names,v,c)=>`${TIER_NAME[t]||"?"} relic pack (${c}): ${names} vault ${v}`).replace(/^M P V /,"").replace(/ Prime (Single|Dual) Pack$/," Prime ($1 pack)").replace(/ Prime Dual Pack$/," Prime");
 // The finder is a section of the relic overview; typing or filtering redraws only this section.
 function finderHtml(){
  const tiers=["Lith","Meso","Neo","Axi","Requiem"],terms=RL.q.split(/\s+/).filter(Boolean);
@@ -868,7 +868,7 @@ function relicsPage(){
  let res='<p class="tag">Loading live data...</p>';
  if(W===false||(W&&!W.vaultTrader))res='<p class="tag">Live Prime Resurgence data is unavailable right now (needs an internet connection).</p>';
  else if(W){const v=W.vaultTrader,act=ms(v.activation)<=n&&n<ms(v.expiry);
-  const sched=(v.schedule||[]).filter(s=>ms(s.expiry)>n).slice(0,4);
+  const sched=(v.schedule||[]).filter(s=>s.item&&ms(s.expiry)>n).slice(0,4); // the API sometimes lists a slot without an item
   res=`<p class="tag">${act?`<b>${esc(v.character)}</b> at ${esc(v.location)}: this rotation ends in ${left(ms(v.expiry)-n)}.`:"Prime Resurgence is not active right now."} Items cost Aya (the API calls the price "ducats").</p>`+
    (act?`<div class="relgrid">${(v.inventory||[]).map(i=>`<div class="relic"><b>${esc(cleanPack(i.item))}</b><small class="tag">${esc(i.ducats??"?")} Aya</small></div>`).join("")}</div>`:"")+
    (sched.length>1?`<p class="tag">Coming up: ${sched.slice(1).map(s=>`${esc(cleanPack(s.item))} (from ${new Date(ms(sched[sched.indexOf(s)-1].expiry)).toLocaleDateString([], {month:"short",day:"numeric"})})`).join(", ")}</p>`:"")}
