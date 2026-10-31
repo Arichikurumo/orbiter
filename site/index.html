@@ -103,7 +103,8 @@ details.more{margin:4px 0 0}details.more summary{cursor:pointer;color:var(--cyan
 h3 small{margin-left:10px;color:var(--mut);font-weight:400}
 .ptrack tbody tr{cursor:pointer}.ptrack tbody tr:hover,.ptrack tbody tr.sel{background:rgba(201,164,92,.08)}.ptrack .lows{display:flex;flex-wrap:wrap;gap:4px}.lows span{font-size:12px;padding:1px 6px;border:1px solid var(--line);color:var(--fg)}.lows span.lo{border-color:var(--cyan);color:var(--cyan)}
 .phsvg{width:100%;height:auto;display:block;margin-top:10px}.phleg{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--mut);margin-top:6px}.phleg i{display:inline-block;width:14px;height:3px;margin-right:6px;vertical-align:middle}
-.ptable{width:100%;border-collapse:collapse}.ptable th{text-align:left;color:var(--mut);font-weight:400;font-size:13px;padding:4px 8px}.ptable td{padding:6px 8px;border-top:1px solid rgba(42,51,64,.45)}.ptable td.win{color:var(--ok);font-weight:600}
+.ptable{width:100%;border-collapse:collapse}.ptable th{text-align:left;color:var(--mut);font-weight:400;font-size:13px;padding:4px 8px}.ptable td{padding:6px 8px;border-top:1px solid rgba(42,51,64,.45)}.ptable tr.top td:first-child{box-shadow:inset 3px 0 0 var(--ok)}.ptable td small.tag{display:block}
+.ptable td.win{color:var(--ok);font-weight:600}
 .mods{margin:10px 0}.mloadout{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 22px;padding:14px;background:radial-gradient(ellipse at 30% 20%,rgba(60,40,80,.35),rgba(8,10,16,.85));border:1px solid var(--line)}
 .mgrid{display:grid;gap:12px;flex:0 1 640px;min-width:0}.mrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.mrow.few>:first-child{grid-column:2}
 .mtile{position:relative;display:block;aspect-ratio:150/84;cursor:help;outline:none}
@@ -264,6 +265,7 @@ main.wide{max-width:1280px}
 <script src="cascade.js"></script>
 <script src="cascade_mods.js"></script>
 <script src="spy.js"></script>
+<script src="syndicates.js"></script>
 <script src="baro_icons.js"></script>
 <script>
 // Daily resets 00:00 UTC, weekly Monday 00:00 UTC. Edit SECTIONS to taste.
@@ -518,6 +520,7 @@ const SITE=[
  {id:"relics",group:"farming",title:"Relic overview",short:"What drops now, Prime Resurgence",desc:"Which Prime items you can get from relics right now and this month's Prime Resurgence.",wide:1,fn:()=>relicsPage()},
  {id:"relcalc",group:"farming",title:"Relic calculator",short:"Your odds of a drop",desc:"How many relics you need to open to be sure of a drop, for every refinement level.",wide:1,fn:()=>relicCalc()},
  {id:"prices",group:"farming",title:"Prime prices",short:"Price tracker for Prime Warframe sets",desc:"The 10 lowest platinum offers for every Prime Warframe set on warframe.market, checked every 6 hours, with the price history as a diagram.",wide:1,fn:()=>pricesPage()},
+ {id:"syndprofit",group:"farming",title:"Syndicate mod profit",short:"What to buy with standing for plat",desc:"Which mods from Arbiters of Hexis, Cephalon Suda and Cephalon Simaris give the most platinum on warframe.market for the standing they cost. Prices are looked up when you press the button.",wide:1,fn:()=>syndPage()},
  {id:"spy",group:"farming",title:"Spy vault loot",short:"Pago and Pavlov with plat prices",desc:"The vault rewards of the Spy missions Pago and Pavlov with drop chances and warframe.market prices, and which one pays more.",wide:1,fn:()=>spyPage()},
  {id:"resources",group:"farming",title:"Resource map",short:"Where to farm each resource",desc:"A star chart of where to farm the common resources. Click a planet, or pick a resource to highlight its planets.",fn:()=>resources()},
  {id:"cascade",group:"builds",title:"Void Cascade",short:"Loadouts for Thrax, trash and more",desc:"Community loadouts for Void Cascade from the Cascade Club builds guide: Warframes, Thrax killers, primers, trash killers and companions.",wide:1,fn:()=>cascadeHome()},
@@ -941,6 +944,34 @@ function pricesPage(){
 }
 app.addEventListener("click",e=>{const r=e.target.closest&&e.target.closest("tr[data-ph]");if(!r||e.target.closest("a"))return;PH.slug=r.dataset.ph;loadHistory();pricesPage();document.getElementById("phart").scrollIntoView({behavior:"smooth",block:"start"})});
 app.addEventListener("keydown",e=>{if((e.key=="Enter"||e.key==" ")&&e.target.matches&&e.target.matches("tr[data-ph]")){e.preventDefault();e.target.click()}});
+// Syndicate mod profit: offers come from syndicates.js, prices from a crawl the server runs when asked (/api/syndicate-prices).
+const SP={data:null,err:false,timer:0,msg:""};
+const snorm=s=>s.toLowerCase().replace(/[^a-z0-9]/g,""),sstrip=n=>n.replace(/\s*\([^)]*\)$/,"");
+async function loadSynd(){
+ clearTimeout(SP.timer);
+ try{const r=await fetch("/api/syndicate-prices");if(!r.ok)throw 0;SP.data=await r.json();SP.err=false}catch{SP.err=true}
+ if(page()=="syndprofit"){syndPage(true);if(SP.data&&SP.data.scan.running)SP.timer=setTimeout(loadSynd,5e3)}
+}
+async function startSynd(){
+ SP.msg="";
+ try{const r=await fetch("/api/syndicate-prices",{method:"POST",headers:{"content-type":"application/json"},body:"{}"});SP.msg=r.status==503?"Price crawling is switched off on this server.":r.ok?"":"Could not start the crawl.";}catch{SP.msg="Could not reach the server."}
+ loadSynd();
+}
+function syndPage(loaded){
+ if(!loaded&&!SP.data)loadSynd();
+ const d=SP.data,rows=Object.fromEntries((d?d.items:[]).map(x=>[x.key,x])),ago=t=>{const m=Math.round((Date.now()-Date.parse(t))/6e4);return m<60?`${Math.max(m,0)} min ago`:m<2880?`${Math.round(m/60)} h ago`:`${Math.round(m/1440)} days ago`};
+ const run=d&&d.scan.running,last=d&&d.items.map(x=>x.updated).filter(Boolean).sort().pop();
+ const price=it=>rows[snorm(it.n)]||rows[snorm(sstrip(it.n))];
+ const sec=s=>{const l=s.items.map(it=>({it,r:price(it)})).filter(x=>x.r);
+  const ok=l.filter(x=>x.r.min!=null).map(x=>({...x,per:x.r.min/x.it.cost*1e4})).sort((a,b)=>b.per-a.per),none=l.filter(x=>x.r.min==null);
+  return`<section><h2>${esc(s.name)}<small>${ok.length} mods priced &middot; <a href="${esc(s.wiki)}" target="_blank" rel="noopener">wiki</a></small></h2>${ok.length?`<table class="ptable"><thead><tr><th>Mod</th><th>Standing</th><th>Price</th><th>Plat per 10,000 standing</th></tr></thead><tbody>${ok.map((x,i)=>`<tr${i<3?' class="top"':""}><td><b>${esc(sstrip(x.it.n))}</b>${x.it.rank?`<small class="tag">${esc(x.it.rank)}</small>`:""}</td><td>${x.it.cost.toLocaleString()}</td><td>${x.r.min} p <a href="https://warframe.market/items/${esc(x.r.slug)}" target="_blank" rel="noopener" title="Open on warframe.market">&#8599;</a></td><td><b>${x.per.toFixed(1)}</b></td></tr>`).join("")}</tbody></table>`:`<p class="tag">${d&&d.items.length?"No priced mods yet.":"No prices yet. Press the button above to look them up."}</p>`}${none.length?`<p class="tag">No online offer right now: ${none.map(x=>esc(sstrip(x.it.n))).join(", ")}.</p>`:""}</section>`};
+ app.innerHTML=`<section><h2>Price crawl<small>${run?`running, ${d.scan.done} of ${d.scan.total}`:last?`last run ${ago(last)}`:"not run yet"}</small></h2>
+  <p>Looks up every mod that Arbiters of Hexis, Cephalon Suda and Cephalon Simaris sell for standing on warframe.market, then ranks them by platinum per 10,000 standing. The higher, the better your standing is spent.</p>
+  <p><button type="button" class="btn" id="syndgo" ${run?"disabled":""}>${run?"Crawling...":"Crawl prices now"}</button> <span class="tag">${esc(SP.msg)}${SP.err?"The server could not be reached.":""}</span></p>
+  <p class="tag">A crawl asks warframe.market for one mod at a time with a 2 second pause, so it takes a few minutes. Price = the lowest sell offer of an unranked mod from a trader who is online or in game; offers far below the rest are ignored as bait. A plat price is not a guaranteed sale, and your daily standing is limited (the Faction Syndicates share one daily cap), so spend it on the top of each list. Simaris standing is earned separately from the others.</p></section>
+  ${SYNDICATES.map(sec).join("")}`;
+ const b=document.getElementById("syndgo");if(b)b.onclick=startSynd;
+}
 // Relic calculator: chance of at least one hit in n openings = 1-(1-p)^n, with p from the refinement table above.
 const RC={n:10,stage:"Radiant",mode:"rarity",rarity:"R",part:"",relic:""};
 const pct=x=>x>=0.9999?">99.99%":x<0.0001?"<0.01%":(x*100).toFixed(x<0.1?2:1)+"%";

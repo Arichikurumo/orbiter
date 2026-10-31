@@ -2,12 +2,13 @@
 const http = require('http'), fs = require('fs'), path = require('path');
 const { DatabaseSync } = require('node:sqlite');
 const ROOT = path.join(__dirname, 'site'), DB = process.env.DB || '/data/state.db', PORT = process.env.PORT || 8080;
-const IMG_DIR = process.env.IMG_DIR || path.join(ROOT, 'img'), images = require('./fetch-images'), prices = require('./prices');
+const IMG_DIR = process.env.IMG_DIR || path.join(ROOT, 'img'), images = require('./fetch-images'), prices = require('./prices'), synd = require('./syndprices');
 // A fully ticked collection (every frame, weapon, mod... collected and mastered) is about 75 KB, so leave generous room to grow.
 const MAX_BODY = 512 * 1024, MAX_KEYS = 20000;
 fs.mkdirSync(path.dirname(DB), { recursive: true });
 const db = new DatabaseSync(DB);
 prices.init(db);
+synd.init(db);
 db.exec('CREATE TABLE IF NOT EXISTS state (id INTEGER PRIMARY KEY CHECK (id = 1), json TEXT NOT NULL, updated TEXT NOT NULL)');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
 // Inline script/styles are used by the page, so 'unsafe-inline' stays; everything else is locked to this origin plus the live-data API.
@@ -51,6 +52,16 @@ function handle(req, res) {
   if (url.pathname === '/healthz') return send(res, 200, 'ok');
   if (url.pathname === '/api/images') return send(res, 200, JSON.stringify(images.status), { 'content-type': 'application/json', 'cache-control': 'no-store' });
   if (url.pathname === '/api/prices') return send(res, 200, JSON.stringify({ scan: prices.status, items: prices.list(db) }), { 'content-type': 'application/json', 'cache-control': 'no-store' });
+  if (url.pathname === '/api/syndicate-prices') {
+    if (req.method === 'POST') { // starts a crawl; same rules as saving state, so another website cannot trigger it
+      if (!sameOrigin(req)) return send(res, 403, 'forbidden');
+      if (!/^application\/json\b/i.test(req.headers['content-type'] || '')) return send(res, 415, 'content-type must be application/json');
+      if (process.env.FETCH_PRICES === '0') return send(res, 503, 'price crawling is switched off');
+      req.resume();
+      return synd.crawl({ db, siteDir: ROOT }).then(started => send(res, 202, JSON.stringify({ started }), { 'content-type': 'application/json' }));
+    }
+    return send(res, 200, JSON.stringify({ scan: synd.status, items: synd.list(db) }), { 'content-type': 'application/json', 'cache-control': 'no-store' });
+  }
   if (url.pathname === '/api/price-history') {
     const slug = url.searchParams.get('slug') || 'all';
     if (!/^[a-z0-9_]{1,60}$/.test(slug)) return send(res, 400, 'bad slug');

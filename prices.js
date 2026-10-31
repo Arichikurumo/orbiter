@@ -74,4 +74,4 @@ const list = db => db.prepare('SELECT slug, name, min, max, avg, offers, lowest,
 const history = (db, slug) => slug === 'all'
   ? db.prepare('SELECT scan ts, SUM(min) min, SUM(avg) avg, SUM(max) max FROM price_history GROUP BY scan HAVING COUNT(*) >= 0.9 * (SELECT COUNT(DISTINCT slug) FROM price_history) ORDER BY scan').all()
   : db.prepare('SELECT scan ts, min, avg, max FROM price_history WHERE slug = ? ORDER BY scan').all(slug);
-module.exports = { run, init, status, list, history, summarize, slug };
+module.exports = { run, init, status, list, history, summarize, slug, fetchOrders, sleep };

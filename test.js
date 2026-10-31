@@ -102,3 +102,15 @@ test('price history: one frame, all frames added up, bad slugs rejected', async 
   assert.deepEqual(all.map(x => x.avg), [34, 34]);
   assert.equal((await req('GET', '/api/price-history?slug=a%27%3B--')).status, 400);
 });
+
+test('syndicate price: lowest unranked online offer, bait ignored; crawl endpoint is protected', async () => {
+  const { lowest, norm, strip } = require('./syndprices.js');
+  const o = (platinum, rank, status = 'ingame') => ({ type: 'sell', platinum, rank, visible: true, user: { status } });
+  assert.deepEqual(lowest([o(1), o(40), o(42), o(45), o(50), o(55), o(3, 10), o(2, 0, 'offline')]), { min: 40, offers: 5 }); // 1 p is bait, the ranked 3 p and the offline 2 p do not count
+  assert.deepEqual(lowest([]), { min: null, offers: 0 });
+  assert.equal(norm(strip('Entropy Spike (Bolto)')), 'entropyspike');
+  assert.equal((await req('POST', '/api/syndicate-prices', { headers: { 'content-type': 'text/plain' } })).status, 415);
+  assert.equal((await req('POST', '/api/syndicate-prices', { headers: { 'content-type': 'application/json', origin: 'http://evil.example' } })).status, 403);
+  assert.equal((await req('POST', '/api/syndicate-prices', { headers: { 'content-type': 'application/json' } })).status, 503); // tests run with FETCH_PRICES=0
+  assert.deepEqual(JSON.parse((await req('GET', '/api/syndicate-prices')).body).items, []);
+});
